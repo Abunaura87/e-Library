@@ -552,6 +552,10 @@
         <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Suasana Hening</span>
       </button>
+      <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
+        <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+        <span class="hidden md:inline">Atur Musik</span>
+      </button>
       <button type="button" id="header-share-btn" title="Salin Tautan Baca" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
         <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Salin Tautan</span>
@@ -862,9 +866,36 @@
           </div>
         </section>
 
-        <!-- 4. Generator Tautan Berbagi -->
+        <!-- 4. Pengaturan Musik & Suasana Perpustakaan -->
         <section class="space-y-3 pt-4 border-t border-[#D4AF37]/50">
-          <h3 class="text-sm font-bold font-serif-editorial text-[#072A20]">04. Generator Tautan Berbagi</h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold font-serif-editorial text-[#072A20]">04. Musik & Suasana Pustaka</h3>
+            <span id="admin-music-active-badge" class="text-[11px] font-mono-tabular text-[#9E7B1C] font-bold">Hening Klasik</span>
+          </div>
+          <div class="p-3.5 rounded-lg border border-[#D4AF37]/60 bg-[#FBF9F5] space-y-2.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-[#072A20] font-medium">Status Audio Latar:</span>
+              <button type="button" id="admin-toggle-ambient-btn" class="px-2.5 py-1 text-xs font-semibold rounded btn-emerald-gold shadow-2xs">
+                Putar Audio
+              </button>
+            </div>
+            <div>
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="text-[#0B3B2C] font-medium">Volume Suasana:</span>
+                <span id="admin-music-volume-label" class="font-mono-tabular text-[#9E7B1C] font-semibold">50%</span>
+              </div>
+              <input id="admin-music-volume-slider" type="range" min="0" max="100" value="50" class="w-full h-1.5 accent-[#0B3B2C] cursor-pointer" />
+            </div>
+            <button type="button" id="admin-open-music-settings-btn" class="w-full py-2 px-3 text-xs font-semibold btn-emerald-gold rounded-lg flex items-center justify-center gap-1.5 shadow-xs">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              <span>Pilih Musik & Suasana (6 Pilihan)</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- 05. Generator Tautan Berbagi -->
+        <section class="space-y-3 pt-4 border-t border-[#D4AF37]/50">
+          <h3 class="text-sm font-bold font-serif-editorial text-[#072A20]">05. Generator Tautan Berbagi</h3>
           <div class="flex items-center gap-2">
             <input id="share-url-output" type="text" readonly class="flex-1 px-3 py-2 text-xs font-mono-tabular bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#0B3B2C] select-all" />
             <button type="button" id="btn-copy-share" class="px-3.5 py-2 text-xs font-semibold btn-emerald-gold rounded-lg whitespace-nowrap">
@@ -1011,6 +1042,10 @@
                 <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
                 <span id="toolbar-ambient-text">Suasana Senyap</span>
               </button>
+              <button type="button" id="toolbar-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] flex items-center gap-1.5 transition-all">
+                <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span id="toolbar-music-label">Atur Musik</span>
+              </button>
               <button type="button" id="toolbar-print-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Cetak</button>
               <button type="button" id="toolbar-download-btn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB]">Unduh PDF</button>
               <button type="button" id="toolbar-share-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Bagikan</button>
@@ -1149,6 +1184,121 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Pengaturan Musik & Suasana Perpustakaan (Music Settings Modal) -->
+  <div id="modal-music-settings" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-[#072A20]/85 backdrop-blur-xs">
+    <div class="w-full max-w-2xl bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl p-5 sm:p-6 text-[#FBF9F5] shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-[#072A20] border border-[#D4AF37] flex items-center justify-center shadow-xs">
+            <i data-lucide="music" class="w-5 h-5 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold font-serif-editorial text-[#F3E5AB]">Pengaturan Musik & Suasana Perpustakaan</h3>
+            <p class="text-[11px] text-[#F3E5AB]/75">Pilih alunan latar suara yang menemani Anda membaca atau gunakan musik sendiri.</p>
+          </div>
+        </div>
+        <button type="button" id="btn-close-music-modal" class="text-[#F3E5AB] hover:text-white p-1 rounded-lg hover:bg-[#072A20]">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Master Control Banner (Play/Pause Toggle, Status, Volume Slider) -->
+      <div class="py-3 px-4 my-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 shadow-inner">
+        <div class="flex items-center gap-3">
+          <button type="button" id="music-modal-play-btn" class="w-10 h-10 rounded-full bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] flex items-center justify-center font-bold shadow-md transition-transform active:scale-95 shrink-0" title="Putar / Jeda Musik">
+            <i id="music-modal-play-icon" data-lucide="play" class="w-5 h-5 ml-0.5"></i>
+          </button>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="music-modal-status-badge" class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/60 text-[#D4AF37]">
+                SENYAP
+              </span>
+              <span id="music-modal-active-theme-name" class="text-xs sm:text-sm font-serif-editorial font-bold text-[#F3E5AB]">
+                Hening Perpustakaan Klasik
+              </span>
+            </div>
+            <p id="music-modal-status-desc" class="text-[11px] text-[#E6E1D6]/70 mt-0.5">
+              Klik tombol putar untuk mengaktifkan alunan audio latar.
+            </p>
+          </div>
+        </div>
+
+        <!-- Volume Slider -->
+        <div class="flex items-center gap-2.5 sm:w-56 shrink-0 bg-[#0B3B2C]/70 px-3 py-1.5 rounded-lg border border-[#D4AF37]/30">
+          <button type="button" id="music-modal-mute-btn" class="text-[#D4AF37] hover:text-white p-0.5" title="Mute / Unmute">
+            <i id="music-modal-volume-icon" data-lucide="volume-2" class="w-4 h-4"></i>
+          </button>
+          <input id="music-modal-volume-slider" type="range" min="0" max="100" value="50" class="flex-1 h-1.5 accent-[#D4AF37] cursor-pointer" />
+          <span id="music-modal-volume-label" class="text-[11px] font-mono-tabular text-[#F3E5AB] w-8 text-right">50%</span>
+        </div>
+      </div>
+
+      <!-- Theme Selection Grid & Custom Panel -->
+      <div class="flex-1 overflow-y-auto pr-1 py-1 space-y-2.5">
+        <p class="text-[11px] font-classical-label uppercase tracking-widest text-[#D4AF37] font-semibold">
+          Koleksi Pilihan Tema Musik & Suasana:
+        </p>
+        <div id="music-themes-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <!-- Diisi dinamis oleh JavaScript -->
+        </div>
+
+        <!-- Custom Audio Input Panel (Tampil saat 'custom' dipilih) -->
+        <div id="music-custom-panel" class="hidden mt-3 p-3.5 rounded-xl bg-[#072A20] border border-[#D4AF37]/60 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-serif-editorial font-bold text-[#F3E5AB] flex items-center gap-1.5">
+              <i data-lucide="radio" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              Sumber Musik Kustom Pengguna
+            </span>
+            <span class="text-[10px] text-[#D4AF37] font-mono-tabular font-bold">Streaming / File Lokal</span>
+          </div>
+          <div>
+            <label for="music-custom-url-input" class="block text-[11px] text-[#F3E5AB]/90 mb-1">
+              Masukkan Direct URL Audio Streaming (MP3, OGG, AAC):
+            </label>
+            <div class="flex items-center gap-2">
+              <input id="music-custom-url-input" type="url" placeholder="https://.../audio.mp3 atau radio streaming..." class="flex-1 px-3 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white placeholder:text-[#F3E5AB]/40 focus:outline-none focus:border-[#D4AF37]" />
+              <button type="button" id="btn-load-custom-music-url" class="px-3.5 py-1.5 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg whitespace-nowrap shadow-xs">
+                Terapkan URL
+              </button>
+            </div>
+            <!-- Preset Quick Link Samples -->
+            <div class="flex items-center gap-2 mt-2 flex-wrap text-[10px]">
+              <span class="text-[#E6E1D6]/70">Contoh Sampel Relaksasi:</span>
+              <button type="button" class="btn-preset-music-url text-[#F3E5AB] hover:underline cursor-pointer" data-url="https://commondatastorage.googleapis.com/codeskulptor-demos/riceracer_assets/music/menu.ogg">
+                Musik Akustik Santai 1
+              </button>
+              <span class="text-[#D4AF37]/50">·</span>
+              <button type="button" class="btn-preset-music-url text-[#F3E5AB] hover:underline cursor-pointer" data-url="https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3">
+                Musik Ambient Fokus 2
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2.5 border-t border-[#D4AF37]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span class="block text-[11px] font-medium text-[#F3E5AB]">Atau Unggah File Audio dari Perangkat Anda:</span>
+              <span id="music-custom-file-name" class="block text-[10px] text-[#E6E1D6]/70">Mendukung format .mp3, .wav, .ogg, .m4a</span>
+            </div>
+            <label for="music-custom-file-input" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer whitespace-nowrap shrink-0 shadow-2xs">
+              <i data-lucide="upload" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              <span>Pilih File Audio</span>
+              <input id="music-custom-file-input" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" class="sr-only" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-[#D4AF37]/40 flex items-center justify-between text-xs text-[#F3E5AB]/70 shrink-0">
+        <span>Pengaturan musik & volume tersimpan otomatis.</span>
+        <button type="button" id="btn-done-music-modal" class="px-4 py-1.5 font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] shadow-xs">
+          Selesai & Terapkan
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1390,14 +1540,80 @@
       }
 
       // =========================================================
-      // SISTEM AMBIENT SUASANA PERPUSTAKAAN (AUDIBLE DI SEMUA DEVICE)
-      // Desau udara ruangan hangat, pendulum jam kayu, & kristal bell
+      // SISTEM PENGATURAN MUSIK & AMBIENT SUASANA PERPUSTAKAAN
+      // 6 Pilihan Tema Suasana, Pengatur Volume, & Audio Kustom
       // =========================================================
+      const STORAGE_MUSIC_THEME_KEY = 'elibrary_music_theme_v2';
+      const STORAGE_MUSIC_VOL_KEY = 'elibrary_music_volume_v2';
+      const STORAGE_CUSTOM_URL_KEY = 'elibrary_custom_music_url_v2';
+
+      const MUSIC_THEMES = {
+        library: {
+          id: 'library',
+          name: 'Hening Perpustakaan Klasik',
+          icon: 'library',
+          badge: 'Akustik Ruang',
+          desc: 'Desau akustik ruang hangat, pendulum jam kayu antik, & lonceng kristal kontemplatif.'
+        },
+        rain: {
+          id: 'rain',
+          name: 'Gemercik Rintik Hujan',
+          icon: 'cloud-rain',
+          badge: 'Hujan & Jendela',
+          desc: 'Rintik tetesan air hujan lembut di kaca jendela ruang baca dan gemuruh tenang meredakan penat.'
+        },
+        piano: {
+          id: 'piano',
+          name: 'Harmoni Piano Kontemplasi',
+          icon: 'music',
+          badge: 'Piano & Rhodes',
+          desc: 'Alunan arpeggio piano pentatonik & akor Rhodes relaksasi yang mengalir anggun dan damai.'
+        },
+        morning: {
+          id: 'morning',
+          name: 'Pagi Paviliun Membaca',
+          icon: 'sun',
+          badge: 'Angin & Burung',
+          desc: 'Semilir angin sepoi-sepoi melewati kanopi taman pustaka dan kicauan burung pagi yang asri.'
+        },
+        fireplace: {
+          id: 'fireplace',
+          name: 'Perapian & Piringan Hitam',
+          icon: 'flame',
+          badge: 'Vinyl & Bara Api',
+          desc: 'Gemertak bara perapian kayu yang hangat berpadu dengan desis piringan hitam vinyl vintage.'
+        },
+        custom: {
+          id: 'custom',
+          name: 'Kustom / Musik Sendiri',
+          icon: 'radio',
+          badge: 'Audio Sendiri',
+          desc: 'Putar alunan audio streaming pilihan Anda atau unggah file musik dari perangkat Anda.'
+        }
+      };
+
+      let currentMusicTheme = 'library';
+      let musicVolume = 0.50; // 0 to 1
       let isAmbientPlaying = false;
       let ambientMasterGain = null;
       let ambientNodes = [];
-      let ambientClockTimer = null;
-      let ambientBellTimer = null;
+      let ambientTimers = [];
+      let customAudioElement = null;
+      let customMusicUrl = '';
+      let isMuted = false;
+      let previousVolume = 0.50;
+
+      // Muat preferensi musik dari LocalStorage
+      try {
+        const savedTheme = localStorage.getItem(STORAGE_MUSIC_THEME_KEY);
+        if (savedTheme && MUSIC_THEMES[savedTheme]) currentMusicTheme = savedTheme;
+        const savedVol = localStorage.getItem(STORAGE_MUSIC_VOL_KEY);
+        if (savedVol !== null && !isNaN(parseFloat(savedVol))) {
+          musicVolume = Math.max(0, Math.min(1, parseFloat(savedVol)));
+        }
+        const savedUrl = localStorage.getItem(STORAGE_CUSTOM_URL_KEY);
+        if (savedUrl) customMusicUrl = savedUrl;
+      } catch(e) {}
 
       function startLibraryAmbience() {
         const ctx = getOrCreateAudioContext();
@@ -1405,16 +1621,37 @@
 
         stopLibraryAmbienceNodes();
 
-        // 1. Master Gain Node dengan fade-in
+        // Master Gain Node dengan kurva volume responsif
         ambientMasterGain = ctx.createGain();
+        const effectiveGain = Math.max(0.0001, musicVolume * 0.45);
         ambientMasterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        ambientMasterGain.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime + 0.8);
+        ambientMasterGain.gain.exponentialRampToValueAtTime(effectiveGain, ctx.currentTime + 0.6);
         ambientMasterGain.connect(ctx.destination);
 
-        // Bunyikan nada pembuka agar user langsung mendengar suara aktif seketika
+        // Bunyikan nada lonceng penyambutan singkat
         playAmbienceWelcomeChime(ctx);
 
-        // 2. Desau Suasana Ruang Baca Perpustakaan (Bandpass 750Hz - 1800Hz agar terdengar jelas di speaker HP)
+        // Rute ke tema musik yang dipilih
+        if (currentMusicTheme === 'library') {
+          startThemeLibrary(ctx, ambientMasterGain);
+        } else if (currentMusicTheme === 'rain') {
+          startThemeRain(ctx, ambientMasterGain);
+        } else if (currentMusicTheme === 'piano') {
+          startThemePiano(ctx, ambientMasterGain);
+        } else if (currentMusicTheme === 'morning') {
+          startThemeMorning(ctx, ambientMasterGain);
+        } else if (currentMusicTheme === 'fireplace') {
+          startThemeFireplace(ctx, ambientMasterGain);
+        } else if (currentMusicTheme === 'custom') {
+          startThemeCustom();
+        }
+
+        isAmbientPlaying = true;
+        updateAmbientButtonsUI();
+      }
+
+      // --- TEMA 1: HENING PERPUSTAKAAN KLASIK ---
+      function startThemeLibrary(ctx, masterGain) {
         const bufferSec = 5;
         const sampleRate = ctx.sampleRate;
         const frameCount = sampleRate * bufferSec;
@@ -1423,10 +1660,8 @@
         const rightChannel = noiseBuffer.getChannelData(1);
 
         for (let i = 0; i < frameCount; i++) {
-          const wL = Math.random() * 2 - 1;
-          const wR = Math.random() * 2 - 1;
-          leftChannel[i] = wL * 0.18;
-          rightChannel[i] = wR * 0.18;
+          leftChannel[i] = (Math.random() * 2 - 1) * 0.16;
+          rightChannel[i] = (Math.random() * 2 - 1) * 0.16;
         }
 
         const roomToneSource = ctx.createBufferSource();
@@ -1439,9 +1674,8 @@
         roomFilter.Q.setValueAtTime(1.1, ctx.currentTime);
 
         const roomGain = ctx.createGain();
-        roomGain.gain.setValueAtTime(0.35, ctx.currentTime);
+        roomGain.gain.setValueAtTime(0.32, ctx.currentTime);
 
-        // LFO pernapasan desau ruangan perpustakaan
         const breathLfo = ctx.createOscillator();
         breathLfo.type = 'sine';
         breathLfo.frequency.setValueAtTime(0.12, ctx.currentTime);
@@ -1452,14 +1686,14 @@
 
         roomToneSource.connect(roomFilter);
         roomFilter.connect(roomGain);
-        roomGain.connect(ambientMasterGain);
+        roomGain.connect(masterGain);
         roomToneSource.start(0);
         breathLfo.start(0);
         ambientNodes.push(roomToneSource, breathLfo);
 
-        // 3. Detak Jam Kayu Antik (Pendulum Tick-Tock Alternating)
+        // Detak jam pendulum kayu
         let clockTickToggle = false;
-        function playSubtleClockTick() {
+        const clockTimer = setInterval(() => {
           if (!isAmbientPlaying || !ambientMasterGain) return;
           try {
             const now = ctx.currentTime;
@@ -1476,17 +1710,17 @@
             tickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
 
             tickOsc.connect(tickGain);
-            tickGain.connect(ambientMasterGain);
+            tickGain.connect(masterGain);
             tickOsc.start(now);
             tickOsc.stop(now + 0.05);
           } catch(e) {}
-        }
-        ambientClockTimer = setInterval(playSubtleClockTick, 1500);
+        }, 1500);
+        ambientTimers.push(clockTimer);
 
-        // 4. Lonceng Meditasi / Crystal Bell Tenang Setiap 9 Detik
+        // Lonceng kristal meditasi
         let bellIndex = 0;
         const bellPitches = [659.25, 880.0, 783.99, 987.77];
-        function playSereneChime() {
+        const bellTimer = setInterval(() => {
           if (!isAmbientPlaying || !ambientMasterGain) return;
           try {
             const now = ctx.currentTime;
@@ -1503,22 +1737,317 @@
             chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.8);
 
             chimeOsc.connect(chimeGain);
-            chimeGain.connect(ambientMasterGain);
+            chimeGain.connect(masterGain);
             chimeOsc.start(now);
             chimeOsc.stop(now + 4.0);
           } catch(e) {}
+        }, 9000);
+        ambientTimers.push(bellTimer);
+      }
+
+      // --- TEMA 2: GEMERCIK RINTIK HUJAN DI JENDELA ---
+      function startThemeRain(ctx, masterGain) {
+        const bufferSec = 4;
+        const sampleRate = ctx.sampleRate;
+        const frameCount = sampleRate * bufferSec;
+        const rainBuffer = ctx.createBuffer(2, frameCount, sampleRate);
+        const chL = rainBuffer.getChannelData(0);
+        const chR = rainBuffer.getChannelData(1);
+
+        for (let i = 0; i < frameCount; i++) {
+          chL[i] = (Math.random() * 2 - 1) * 0.22;
+          chR[i] = (Math.random() * 2 - 1) * 0.22;
         }
-        ambientBellTimer = setInterval(playSereneChime, 9000);
+
+        const rainSource = ctx.createBufferSource();
+        rainSource.buffer = rainBuffer;
+        rainSource.loop = true;
+
+        const lowFilter = ctx.createBiquadFilter();
+        lowFilter.type = 'lowpass';
+        lowFilter.frequency.setValueAtTime(1850, ctx.currentTime);
+
+        const highFilter = ctx.createBiquadFilter();
+        highFilter.type = 'highpass';
+        highFilter.frequency.setValueAtTime(380, ctx.currentTime);
+
+        const rainGain = ctx.createGain();
+        rainGain.gain.setValueAtTime(0.28, ctx.currentTime);
+
+        rainSource.connect(lowFilter);
+        lowFilter.connect(highFilter);
+        highFilter.connect(rainGain);
+        rainGain.connect(masterGain);
+        rainSource.start(0);
+        ambientNodes.push(rainSource);
+
+        // Tetesan air hujan berkala di kaca jendela
+        const dropTimer = setInterval(() => {
+          if (!isAmbientPlaying || !ambientMasterGain) return;
+          if (Math.random() > 0.45) return;
+          try {
+            const now = ctx.currentTime;
+            const startF = 1200 + Math.random() * 600;
+            const dropOsc = ctx.createOscillator();
+            dropOsc.type = 'sine';
+            dropOsc.frequency.setValueAtTime(startF, now);
+            dropOsc.frequency.exponentialRampToValueAtTime(500, now + 0.038);
+
+            const dropGain = ctx.createGain();
+            dropGain.gain.setValueAtTime(0.0001, now);
+            dropGain.gain.linearRampToValueAtTime(0.06, now + 0.008);
+            dropGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.038);
+
+            dropOsc.connect(dropGain);
+            dropGain.connect(masterGain);
+            dropOsc.start(now);
+            dropOsc.stop(now + 0.04);
+          } catch(e) {}
+        }, 280);
+        ambientTimers.push(dropTimer);
+
+        // Gemuruh guntur jauh lembut setiap 16 detik
+        const thunderTimer = setInterval(() => {
+          if (!isAmbientPlaying || !ambientMasterGain) return;
+          try {
+            const now = ctx.currentTime;
+            const thOsc = ctx.createOscillator();
+            thOsc.type = 'sine';
+            thOsc.frequency.setValueAtTime(95, now);
+            thOsc.frequency.linearRampToValueAtTime(55, now + 3.2);
+
+            const thGain = ctx.createGain();
+            thGain.gain.setValueAtTime(0.0001, now);
+            thGain.gain.linearRampToValueAtTime(0.08, now + 1.2);
+            thGain.gain.exponentialRampToValueAtTime(0.0001, now + 4.5);
+
+            thOsc.connect(thGain);
+            thGain.connect(masterGain);
+            thOsc.start(now);
+            thOsc.stop(now + 4.8);
+          } catch(e) {}
+        }, 16000);
+        ambientTimers.push(thunderTimer);
+      }
+
+      // --- TEMA 3: HARMONI PIANO KONTEMPLASI ---
+      function startThemePiano(ctx, masterGain) {
+        // Drone dasar lembut
+        const droneOsc = ctx.createOscillator();
+        droneOsc.type = 'sine';
+        droneOsc.frequency.setValueAtTime(130.81, ctx.currentTime); // C3
+        const droneGain = ctx.createGain();
+        droneGain.gain.setValueAtTime(0.03, ctx.currentTime);
+        droneOsc.connect(droneGain);
+        droneGain.connect(masterGain);
+        droneOsc.start(0);
+        ambientNodes.push(droneOsc);
+
+        // Siklus akor piano pentatonik kontemplatif
+        const chords = [
+          [261.63, 329.63, 392.00, 493.88, 587.33], // Cmaj9 (C, E, G, B, D)
+          [220.00, 261.63, 329.63, 392.00, 493.88], // Am9 (A, C, E, G, B)
+          [174.61, 220.00, 261.63, 329.63, 392.00], // Fmaj7 (F, A, C, E, G)
+          [164.81, 196.00, 246.94, 293.66, 392.00]  // Em7 (E, G, B, D, G)
+        ];
+        let chordIdx = 0;
+
+        function playPianoArpeggio() {
+          if (!isAmbientPlaying || !ambientMasterGain) return;
+          try {
+            const currentChord = chords[chordIdx % chords.length];
+            chordIdx++;
+            const noteCount = 2 + Math.floor(Math.random() * 2);
+
+            for (let i = 0; i < noteCount; i++) {
+              const noteFreq = currentChord[Math.floor(Math.random() * currentChord.length)];
+              const noteDelay = i * (0.28 + Math.random() * 0.18);
+              const now = ctx.currentTime + noteDelay;
+
+              const noteOsc = ctx.createOscillator();
+              noteOsc.type = 'sine';
+              noteOsc.frequency.setValueAtTime(noteFreq, now);
+
+              // Harmonik overtone segitiga halus untuk timbre piano/Rhodes
+              const overtoneOsc = ctx.createOscillator();
+              overtoneOsc.type = 'triangle';
+              overtoneOsc.frequency.setValueAtTime(noteFreq * 2, now);
+
+              const noteGain = ctx.createGain();
+              noteGain.gain.setValueAtTime(0.0001, now);
+              noteGain.gain.linearRampToValueAtTime(0.09, now + 0.025);
+              noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.6);
+
+              const overGain = ctx.createGain();
+              overGain.gain.setValueAtTime(0.0001, now);
+              overGain.gain.linearRampToValueAtTime(0.025, now + 0.02);
+              overGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+
+              noteOsc.connect(noteGain);
+              overtoneOsc.connect(overGain);
+              noteGain.connect(masterGain);
+              overGain.connect(masterGain);
+
+              noteOsc.start(now);
+              overtoneOsc.start(now);
+              noteOsc.stop(now + 3.8);
+              overtoneOsc.stop(now + 2.0);
+            }
+          } catch(e) {}
+        }
+
+        playPianoArpeggio();
+        const pianoTimer = setInterval(playPianoArpeggio, 3200);
+        ambientTimers.push(pianoTimer);
+      }
+
+      // --- TEMA 4: PAGI PAVILIUN MEMBACA ---
+      function startThemeMorning(ctx, masterGain) {
+        // Desau angin pagi
+        const bufferSec = 5;
+        const sampleRate = ctx.sampleRate;
+        const frameCount = sampleRate * bufferSec;
+        const windBuffer = ctx.createBuffer(2, frameCount, sampleRate);
+        const wL = windBuffer.getChannelData(0);
+        const wR = windBuffer.getChannelData(1);
+
+        for (let i = 0; i < frameCount; i++) {
+          wL[i] = (Math.random() * 2 - 1) * 0.14;
+          wR[i] = (Math.random() * 2 - 1) * 0.14;
+        }
+
+        const windSource = ctx.createBufferSource();
+        windSource.buffer = windBuffer;
+        windSource.loop = true;
+
+        const windFilter = ctx.createBiquadFilter();
+        windFilter.type = 'bandpass';
+        windFilter.frequency.setValueAtTime(680, ctx.currentTime);
+        windFilter.Q.setValueAtTime(0.9, ctx.currentTime);
+
+        const windGain = ctx.createGain();
+        windGain.gain.setValueAtTime(0.24, ctx.currentTime);
+
+        const windLfo = ctx.createOscillator();
+        windLfo.type = 'sine';
+        windLfo.frequency.setValueAtTime(0.08, ctx.currentTime);
+        const windLfoGain = ctx.createGain();
+        windLfoGain.gain.setValueAtTime(0.07, ctx.currentTime);
+        windLfo.connect(windLfoGain);
+        windLfoGain.connect(windGain.gain);
+
+        windSource.connect(windFilter);
+        windFilter.connect(windGain);
+        windGain.connect(masterGain);
+        windSource.start(0);
+        windLfo.start(0);
+        ambientNodes.push(windSource, windLfo);
+
+        // Kicauan burung pagi
+        function playBirdChirps() {
+          if (!isAmbientPlaying || !ambientMasterGain) return;
+          try {
+            const now = ctx.currentTime;
+            const chirpCount = 2 + Math.floor(Math.random() * 2);
+
+            for (let i = 0; i < chirpCount; i++) {
+              const chirpTime = now + i * 0.12;
+              const bOsc = ctx.createOscillator();
+              bOsc.type = 'sine';
+
+              bOsc.frequency.setValueAtTime(2600 + Math.random() * 200, chirpTime);
+              bOsc.frequency.exponentialRampToValueAtTime(3600, chirpTime + 0.04);
+              bOsc.frequency.exponentialRampToValueAtTime(2900, chirpTime + 0.08);
+
+              const bGain = ctx.createGain();
+              bGain.gain.setValueAtTime(0.0001, chirpTime);
+              bGain.gain.linearRampToValueAtTime(0.07, chirpTime + 0.015);
+              bGain.gain.exponentialRampToValueAtTime(0.0001, chirpTime + 0.09);
+
+              bOsc.connect(bGain);
+              bGain.connect(masterGain);
+              bOsc.start(chirpTime);
+              bOsc.stop(chirpTime + 0.1);
+            }
+          } catch(e) {}
+        }
+
+        const birdTimer = setInterval(playBirdChirps, 5400);
+        ambientTimers.push(birdTimer);
+      }
+
+      // --- TEMA 5: PERAPIAN & PIRINGAN HITAM ---
+      function startThemeFireplace(ctx, masterGain) {
+        // Desis piringan hitam vinyl vintage
+        const bufferSec = 4;
+        const sampleRate = ctx.sampleRate;
+        const frameCount = sampleRate * bufferSec;
+        const vinylBuffer = ctx.createBuffer(1, frameCount, sampleRate);
+        const vData = vinylBuffer.getChannelData(0);
+
+        for (let i = 0; i < frameCount; i++) {
+          vData[i] = (Math.random() * 2 - 1) * 0.08;
+        }
+
+        const vinylSource = ctx.createBufferSource();
+        vinylSource.buffer = vinylBuffer;
+        vinylSource.loop = true;
+
+        const vinylFilter = ctx.createBiquadFilter();
+        vinylFilter.type = 'highpass';
+        vinylFilter.frequency.setValueAtTime(2400, ctx.currentTime);
+
+        const vinylGain = ctx.createGain();
+        vinylGain.gain.setValueAtTime(0.12, ctx.currentTime);
+
+        vinylSource.connect(vinylFilter);
+        vinylFilter.connect(vinylGain);
+        vinylGain.connect(masterGain);
+        vinylSource.start(0);
+        ambientNodes.push(vinylSource);
+
+        // Gemertak bara perapian kayu
+        const emberTimer = setInterval(() => {
+          if (!isAmbientPlaying || !ambientMasterGain) return;
+          if (Math.random() > 0.55) return;
+          try {
+            const now = ctx.currentTime;
+            const popOsc = ctx.createOscillator();
+            popOsc.type = 'triangle';
+            popOsc.frequency.setValueAtTime(1200 + Math.random() * 1400, now);
+
+            const popGain = ctx.createGain();
+            popGain.gain.setValueAtTime(0.09, now);
+            popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.018);
+
+            popOsc.connect(popGain);
+            popGain.connect(masterGain);
+            popOsc.start(now);
+            popOsc.stop(now + 0.02);
+          } catch(e) {}
+        }, 180);
+        ambientTimers.push(emberTimer);
+      }
+
+      // --- TEMA 6: KUSTOM / MUSIK SENDIRI ---
+      function startThemeCustom() {
+        const streamUrl = customMusicUrl || 'https://commondatastorage.googleapis.com/codeskulptor-demos/riceracer_assets/music/menu.ogg';
+        if (!customAudioElement) {
+          customAudioElement = new Audio();
+          customAudioElement.loop = true;
+          customAudioElement.crossOrigin = 'anonymous';
+        }
+        customAudioElement.src = streamUrl;
+        customAudioElement.volume = musicVolume;
+        customAudioElement.play().catch(() => {
+          showToast('Klik untuk mengizinkan pemutaran audio kustom di browser.');
+        });
       }
 
       function stopLibraryAmbienceNodes() {
-        if (ambientClockTimer) {
-          clearInterval(ambientClockTimer);
-          ambientClockTimer = null;
-        }
-        if (ambientBellTimer) {
-          clearInterval(ambientBellTimer);
-          ambientBellTimer = null;
+        if (ambientTimers.length > 0) {
+          ambientTimers.forEach(t => clearInterval(t));
+          ambientTimers = [];
         }
         if (ambientNodes.length > 0) {
           ambientNodes.forEach(node => {
@@ -1527,11 +2056,19 @@
           });
           ambientNodes = [];
         }
+        if (customAudioElement) {
+          try {
+            customAudioElement.pause();
+            customAudioElement.currentTime = 0;
+          } catch(e) {}
+        }
       }
 
       function stopLibraryAmbience() {
+        isAmbientPlaying = false;
         if (!ambientMasterGain || !audioCtx) {
           stopLibraryAmbienceNodes();
+          updateAmbientButtonsUI();
           return;
         }
         try {
@@ -1549,30 +2086,115 @@
         } catch(e) {
           stopLibraryAmbienceNodes();
         }
+        updateAmbientButtonsUI();
       }
 
       function toggleLibraryAmbience() {
-        isAmbientPlaying = !isAmbientPlaying;
         if (isAmbientPlaying) {
-          startLibraryAmbience();
-          showToast('Suasana hening perpustakaan diaktifkan (suara latar tenang)');
-        } else {
           stopLibraryAmbience();
-          showToast('Suasana perpustakaan dinonaktifkan');
+          showToast('Suasana musik latar perpustakaan dinonaktifkan.');
+        } else {
+          startLibraryAmbience();
+          const themeName = MUSIC_THEMES[currentMusicTheme]?.name || 'Suasana Tenang';
+          showToast('Memutar musik: ' + themeName);
         }
         updateAmbientButtonsUI();
+      }
+
+      function setMusicTheme(themeId) {
+        if (!MUSIC_THEMES[themeId]) return;
+        currentMusicTheme = themeId;
+        try {
+          localStorage.setItem(STORAGE_MUSIC_THEME_KEY, currentMusicTheme);
+        } catch(e) {}
+
+        if (isAmbientPlaying) {
+          stopLibraryAmbienceNodes();
+          startLibraryAmbience();
+        }
+
+        renderMusicThemesGrid();
+        updateAmbientButtonsUI();
+        showToast('Tema musik diubah ke: ' + MUSIC_THEMES[themeId].name);
+      }
+
+      function setMusicVolume(valPercent) {
+        const pct = Math.max(0, Math.min(100, parseInt(valPercent, 10) || 0));
+        musicVolume = pct / 100;
+        try {
+          localStorage.setItem(STORAGE_MUSIC_VOL_KEY, musicVolume.toString());
+        } catch(e) {}
+
+        if (ambientMasterGain && audioCtx) {
+          try {
+            const now = audioCtx.currentTime;
+            const targetGain = Math.max(0.0001, musicVolume * 0.45);
+            ambientMasterGain.gain.cancelScheduledValues(now);
+            ambientMasterGain.gain.linearRampToValueAtTime(targetGain, now + 0.08);
+          } catch(e) {}
+        }
+        if (customAudioElement) {
+          customAudioElement.volume = musicVolume;
+        }
+
+        syncVolumeUI(pct);
+      }
+
+      function toggleMute() {
+        if (isMuted) {
+          isMuted = false;
+          setMusicVolume(Math.round(previousVolume * 100));
+        } else {
+          isMuted = true;
+          previousVolume = musicVolume || 0.5;
+          setMusicVolume(0);
+        }
+      }
+
+      function syncVolumeUI(pct) {
+        const slider = document.getElementById('music-modal-volume-slider');
+        const label = document.getElementById('music-modal-volume-label');
+        const adminSlider = document.getElementById('admin-music-volume-slider');
+        const adminLabel = document.getElementById('admin-music-volume-label');
+        const muteIcon = document.getElementById('music-modal-volume-icon');
+
+        if (slider) slider.value = pct;
+        if (label) label.textContent = pct + '%';
+        if (adminSlider) adminSlider.value = pct;
+        if (adminLabel) adminLabel.textContent = pct + '%';
+
+        if (muteIcon) {
+          if (pct === 0) {
+            muteIcon.setAttribute('data-lucide', 'volume-x');
+          } else if (pct < 50) {
+            muteIcon.setAttribute('data-lucide', 'volume-1');
+          } else {
+            muteIcon.setAttribute('data-lucide', 'volume-2');
+          }
+        }
+        if (window.lucide) window.lucide.createIcons();
       }
 
       function updateAmbientButtonsUI() {
         const headerBtn = document.getElementById('header-ambient-btn');
         const toolbarBtn = document.getElementById('toolbar-ambient-btn');
         const toolbarText = document.getElementById('toolbar-ambient-text');
+        const toolbarMusicLabel = document.getElementById('toolbar-music-label');
+        const adminToggleBtn = document.getElementById('admin-toggle-ambient-btn');
+        const adminActiveBadge = document.getElementById('admin-music-active-badge');
+        const modalPlayBtn = document.getElementById('music-modal-play-btn');
+        const modalPlayIcon = document.getElementById('music-modal-play-icon');
+        const modalStatusBadge = document.getElementById('music-modal-status-badge');
+        const modalStatusDesc = document.getElementById('music-modal-status-desc');
+        const modalActiveTheme = document.getElementById('music-modal-active-theme-name');
+
+        const activeTheme = MUSIC_THEMES[currentMusicTheme] || MUSIC_THEMES.library;
 
         if (headerBtn) {
           if (isAmbientPlaying) {
             headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] shadow-md ring-2 ring-[#D4AF37]/80 transition-all whitespace-nowrap animate-pulse';
-            headerBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span class="hidden md:inline">Suasana: Aktif</span>';
-            headerBtn.title = 'Suasana Perpustakaan Sedang Aktif (Klik untuk Matikan)';
+            headerBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span class="hidden md:inline">' + activeTheme.name.slice(0, 14) + '...</span>';
+            headerBtn.title = 'Musik Aktif: ' + activeTheme.name + ' (Klik untuk Berhenti)';
           } else {
             headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold transition-all whitespace-nowrap shadow-xs';
             headerBtn.innerHTML = '<i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i><span class="hidden md:inline">Suasana Hening</span>';
@@ -1583,8 +2205,8 @@
         if (toolbarBtn) {
           if (isAmbientPlaying) {
             toolbarBtn.className = 'px-2.5 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] shadow-md ring-2 ring-[#D4AF37]/80 flex items-center gap-1.5 whitespace-nowrap transition-all';
-            toolbarBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span id="toolbar-ambient-text">Suasana Tenang</span>';
-            toolbarBtn.title = 'Suasana Perpustakaan Sedang Aktif (Klik untuk Matikan)';
+            toolbarBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span id="toolbar-ambient-text">Musik Aktif</span>';
+            toolbarBtn.title = 'Musik Aktif: ' + activeTheme.name + ' (Klik untuk Berhenti)';
           } else {
             toolbarBtn.className = 'px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] flex items-center gap-1.5 transition-all';
             toolbarBtn.innerHTML = '<i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i><span id="toolbar-ambient-text">Suasana Senyap</span>';
@@ -1592,7 +2214,118 @@
           }
         }
 
+        if (toolbarMusicLabel) {
+          toolbarMusicLabel.textContent = 'Musik: ' + (activeTheme.badge || 'Pilihan');
+        }
+
+        if (adminToggleBtn) {
+          adminToggleBtn.textContent = isAmbientPlaying ? 'Matikan Audio' : 'Putar Audio';
+          adminToggleBtn.className = isAmbientPlaying
+            ? 'px-2.5 py-1 text-xs font-bold rounded bg-[#D4AF37] text-[#072A20] shadow-xs'
+            : 'px-2.5 py-1 text-xs font-semibold rounded btn-emerald-gold shadow-2xs';
+        }
+
+        if (adminActiveBadge) {
+          adminActiveBadge.textContent = activeTheme.name;
+        }
+
+        if (modalPlayBtn && modalPlayIcon) {
+          if (isAmbientPlaying) {
+            modalPlayIcon.setAttribute('data-lucide', 'pause');
+            modalPlayBtn.className = 'w-10 h-10 rounded-full bg-[#D4AF37] text-[#072A20] flex items-center justify-center font-bold shadow-md transition-transform active:scale-95 shrink-0 ring-2 ring-[#F3E5AB]';
+            if (modalStatusBadge) {
+              modalStatusBadge.textContent = 'MEMUTAR';
+              modalStatusBadge.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#12543F] border border-[#D4AF37] text-[#F3E5AB]';
+            }
+            if (modalStatusDesc) {
+              modalStatusDesc.textContent = 'Suasana audio sedang mengalun menemani Anda membaca.';
+            }
+          } else {
+            modalPlayIcon.setAttribute('data-lucide', 'play');
+            modalPlayBtn.className = 'w-10 h-10 rounded-full bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] flex items-center justify-center font-bold shadow-md transition-transform active:scale-95 shrink-0';
+            if (modalStatusBadge) {
+              modalStatusBadge.textContent = 'SENYAP';
+              modalStatusBadge.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/60 text-[#D4AF37]';
+            }
+            if (modalStatusDesc) {
+              modalStatusDesc.textContent = 'Klik tombol putar untuk mengaktifkan alunan audio latar.';
+            }
+          }
+        }
+
+        if (modalActiveTheme) {
+          modalActiveTheme.textContent = activeTheme.name;
+        }
+
         if (window.lucide) window.lucide.createIcons();
+      }
+
+      function renderMusicThemesGrid() {
+        const grid = document.getElementById('music-themes-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        Object.values(MUSIC_THEMES).forEach((theme) => {
+          const isSelected = theme.id === currentMusicTheme;
+          const card = document.createElement('div');
+          card.className =
+            'p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ' +
+            (isSelected
+              ? 'bg-[#072A20] border-[#D4AF37] shadow-[0_4px_16px_rgba(212,175,55,0.25)] ring-1 ring-[#D4AF37]'
+              : 'bg-[#072A20]/60 border-[#D4AF37]/35 hover:border-[#D4AF37]/80 hover:bg-[#072A20]');
+
+          card.innerHTML =
+            '<div>' +
+              '<div class="flex items-center justify-between mb-2">' +
+                '<div class="flex items-center gap-2">' +
+                  '<div class="w-7 h-7 rounded-lg flex items-center justify-center ' + (isSelected ? 'bg-[#D4AF37] text-[#072A20]' : 'bg-[#0B3B2C] text-[#D4AF37] border border-[#D4AF37]/40') + '">' +
+                    '<i data-lucide="' + theme.icon + '" class="w-3.5 h-3.5"></i>' +
+                  '</div>' +
+                  '<span class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded ' + (isSelected ? 'bg-[#0B3B2C] text-[#F3E5AB] border border-[#D4AF37]' : 'bg-[#0B3B2C]/50 text-[#D4AF37]/80') + '">' +
+                    theme.badge +
+                  '</span>' +
+                '</div>' +
+                (isSelected
+                  ? '<span class="w-5 h-5 rounded-full bg-[#D4AF37] text-[#072A20] flex items-center justify-center font-bold text-xs"><i data-lucide="check" class="w-3 h-3"></i></span>'
+                  : '<span class="w-4 h-4 rounded-full border border-[#D4AF37]/40"></span>') +
+              '</div>' +
+              '<h4 class="text-sm font-bold font-serif-editorial ' + (isSelected ? 'text-[#F3E5AB]' : 'text-white') + '">' +
+                theme.name +
+              '</h4>' +
+              '<p class="text-xs text-[#E6E1D6]/75 mt-1 leading-relaxed">' +
+                theme.desc +
+              '</p>' +
+            '</div>';
+
+          card.onclick = () => {
+            setMusicTheme(theme.id);
+          };
+
+          grid.appendChild(card);
+        });
+
+        // Tampilkan panel kustom jika tema 'custom' dipilih
+        const customPanel = document.getElementById('music-custom-panel');
+        if (customPanel) {
+          customPanel.classList.toggle('hidden', currentMusicTheme !== 'custom');
+        }
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function openMusicSettingsModal() {
+        const modal = document.getElementById('modal-music-settings');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        renderMusicThemesGrid();
+        syncVolumeUI(Math.round(musicVolume * 100));
+        updateAmbientButtonsUI();
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function closeMusicSettingsModal() {
+        const modal = document.getElementById('modal-music-settings');
+        if (modal) modal.classList.add('hidden');
       }
 
       // Helper Pembungkus Baris Kanvas Anti-Tabrakan
@@ -3115,11 +3848,88 @@
       document.getElementById('header-share-btn').onclick = copyShareLink;
       document.getElementById('toolbar-share-btn').onclick = copyShareLink;
 
-      // Toggle Ambient Suasana Perpustakaan
+      // Toggle Ambient Suasana Perpustakaan & Pengaturan Musik
       const headerAmbientBtn = document.getElementById('header-ambient-btn');
       if (headerAmbientBtn) headerAmbientBtn.onclick = toggleLibraryAmbience;
       const toolbarAmbientBtn = document.getElementById('toolbar-ambient-btn');
       if (toolbarAmbientBtn) toolbarAmbientBtn.onclick = toggleLibraryAmbience;
+
+      const headerMusicBtn = document.getElementById('header-music-settings-btn');
+      if (headerMusicBtn) headerMusicBtn.onclick = openMusicSettingsModal;
+      const toolbarMusicBtn = document.getElementById('toolbar-music-settings-btn');
+      if (toolbarMusicBtn) toolbarMusicBtn.onclick = openMusicSettingsModal;
+      const adminMusicBtn = document.getElementById('admin-open-music-settings-btn');
+      if (adminMusicBtn) adminMusicBtn.onclick = openMusicSettingsModal;
+      const adminToggleAmbientBtn = document.getElementById('admin-toggle-ambient-btn');
+      if (adminToggleAmbientBtn) adminToggleAmbientBtn.onclick = toggleLibraryAmbience;
+
+      const btnCloseMusic = document.getElementById('btn-close-music-modal');
+      if (btnCloseMusic) btnCloseMusic.onclick = closeMusicSettingsModal;
+      const btnDoneMusic = document.getElementById('btn-done-music-modal');
+      if (btnDoneMusic) btnDoneMusic.onclick = closeMusicSettingsModal;
+
+      const modalPlayBtn = document.getElementById('music-modal-play-btn');
+      if (modalPlayBtn) modalPlayBtn.onclick = toggleLibraryAmbience;
+      const modalMuteBtn = document.getElementById('music-modal-mute-btn');
+      if (modalMuteBtn) modalMuteBtn.onclick = toggleMute;
+
+      const modalVolSlider = document.getElementById('music-modal-volume-slider');
+      if (modalVolSlider) {
+        modalVolSlider.oninput = (e) => setMusicVolume(e.target.value);
+      }
+      const adminVolSlider = document.getElementById('admin-music-volume-slider');
+      if (adminVolSlider) {
+        adminVolSlider.oninput = (e) => setMusicVolume(e.target.value);
+      }
+
+      // Custom Music URL & File
+      const btnLoadCustomUrl = document.getElementById('btn-load-custom-music-url');
+      if (btnLoadCustomUrl) {
+        btnLoadCustomUrl.onclick = () => {
+          const inp = document.getElementById('music-custom-url-input');
+          const val = inp ? inp.value.trim() : '';
+          if (val) {
+            customMusicUrl = val;
+            try { localStorage.setItem(STORAGE_CUSTOM_URL_KEY, customMusicUrl); } catch(e) {}
+            setMusicTheme('custom');
+            showToast('Tautan musik kustom diterapkan.');
+          } else {
+            showToast('Masukkan URL audio terlebih dahulu.');
+          }
+        };
+      }
+
+      document.querySelectorAll('.btn-preset-music-url').forEach((btn) => {
+        btn.onclick = () => {
+          const url = btn.getAttribute('data-url');
+          if (url) {
+            customMusicUrl = url;
+            const inp = document.getElementById('music-custom-url-input');
+            if (inp) inp.value = url;
+            try { localStorage.setItem(STORAGE_CUSTOM_URL_KEY, customMusicUrl); } catch(e) {}
+            setMusicTheme('custom');
+          }
+        };
+      });
+
+      const fileInputCustom = document.getElementById('music-custom-file-input');
+      if (fileInputCustom) {
+        fileInputCustom.onchange = (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (file) {
+            const blobUrl = URL.createObjectURL(file);
+            customMusicUrl = blobUrl;
+            const nameEl = document.getElementById('music-custom-file-name');
+            if (nameEl) nameEl.textContent = 'File aktif: ' + file.name;
+            setMusicTheme('custom');
+            showToast('Memutar file musik: ' + file.name);
+          }
+        };
+      }
+
+      // Inisialisasi tampilan awal UI Musik & Volume
+      syncVolumeUI(Math.round(musicVolume * 100));
+      updateAmbientButtonsUI();
 
       document.getElementById('toolbar-thumbs-btn').onclick = () => {
         document.getElementById('thumbnail-drawer').classList.toggle('hidden');
