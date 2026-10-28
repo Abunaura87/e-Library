@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>e-Library — Perpustakaan Elektronik Interaktif 3D</title>
+  <meta name="description" content="e-Library — Perpustakaan Elektronik Interaktif 3D dengan Dashboard Rak Buku Klasikal 3D, Etalase Koleksi Buku Premium, dan Ruang Baca Flipbook Resolusi Tinggi." />
+  <meta property="og:title" content="e-Library — Perpustakaan Elektronik Interaktif 3D" />
+  <meta property="og:description" content="e-Library — Perpustakaan Elektronik Interaktif 3D dengan Dashboard Rak Buku Klasikal 3D, Etalase Koleksi Buku Premium, dan Ruang Baca Flipbook Resolusi Tinggi." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- 1. Pustaka Eksternal via CDN Publik Terpercaya -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font-display: 'Cormorant Garamond', 'Fraunces', Georgia, serif;
+      --font-classical: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --emerald-deep: #072A20;
+      --emerald-royal: #0B3B2C;
+      --emerald-mid: #12543F;
+      --gold-royal: #D4AF37;
+      --gold-soft: #F3E5AB;
+      --gold-dark: #9E7B1C;
+    }
+    body {
+      font-family: var(--font-sans);
+      color: var(--emerald-deep);
+    }
+    .font-serif-editorial {
+      font-family: var(--font-display);
+      letter-spacing: 0.01em;
+    }
+    .font-classical-label {
+      font-family: var(--font-classical);
+      letter-spacing: 0.08em;
+    }
+    .font-mono-tabular {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* =========================================================
+       ARSITEKTUR DINDING CERAH, LAMPU GANTUNG & RAK KOTAK PUTIH 3D
+       (Nuansa Cerah Elegan dengan Kombinasi Hijau Zamrud & Emas)
+       ========================================================= */
+    .wall-plank-backdrop {
+      background-color: #EAE6DF;
+      background-image:
+        radial-gradient(circle at 50% 8%, rgba(255, 249, 225, 0.85) 0%, rgba(234, 230, 223, 0.2) 58%, rgba(210, 204, 192, 0.45) 100%),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.45) 0px,
+          rgba(255, 255, 255, 0.45) 1px,
+          transparent 1px,
+          transparent 110px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(11, 59, 44, 0.04) 0px,
+          rgba(11, 59, 44, 0.04) 2px,
+          transparent 2px,
+          transparent 110px
+        );
+    }
+
+    /* Lampu Gantung Edison dengan Fitting Hijau Zamrud & Gold */
+    .pendant-cord {
+      background: linear-gradient(90deg, #072A20, #12543F, #072A20);
+    }
+    .pendant-socket {
+      background: linear-gradient(180deg, #0B3B2C 0%, #D4AF37 100%);
+      border: 1px solid #D4AF37;
+    }
+    .pendant-bulb-glow {
+      background: radial-gradient(circle, #FFFDF5 28%, #FDE68A 58%, rgba(212, 175, 55, 0) 74%);
+      box-shadow:
+        0 0 24px 8px rgba(254, 243, 199, 0.9),
+        0 0 54px 18px rgba(212, 175, 55, 0.35);
+    }
+
+    /* Struktur Utama Lemari Rak Buku Kotak Putih 3D */
+    .white-bookcase-frame {
+      background: linear-gradient(180deg, #FCFBF9 0%, #F2EFE9 100%);
+      padding: 18px;
+      border-radius: 6px;
+      box-shadow:
+        0 28px 60px -12px rgba(7, 42, 32, 0.28),
+        0 4px 16px rgba(7, 42, 32, 0.10),
+        inset 0 2px 0 #FFFFFF,
+        inset 0 -3px 6px rgba(11, 59, 44, 0.06);
+      border: 2px solid #D4AF37;
+    }
+
+    .bookcase-grid {
+      background-color: #F5F2EB;
+      gap: 8px;
+    }
+    @media (min-width: 640px) {
+      .bookcase-grid {
+        gap: 12px;
+      }
+    }
+    @media (min-width: 1024px) {
+      .bookcase-grid {
+        gap: 16px;
+      }
+    }
+
+    /* Rongga Kotak Rak (3D Recessed Cubby) - Kompak di HP & Proporsional di Desktop */
+    .cubby-box {
+      position: relative;
+      min-height: 156px;
+      background: linear-gradient(135deg, #DDD8CE 0%, #EBE7DF 38%, #F4F1EA 78%, #E5E0D6 100%);
+      box-shadow:
+        inset 0 10px 18px -6px rgba(7, 42, 32, 0.18),
+        inset 8px 0 14px -8px rgba(7, 42, 32, 0.12),
+        inset -5px 0 12px -8px rgba(7, 42, 32, 0.10),
+        inset 0 -5px 8px -4px rgba(255, 255, 255, 0.8),
+        0 1px 0 #FFFFFF;
+      border: 1px solid #C9C1B4;
+      perspective: 1200px;
+      transform-style: preserve-3d;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+    @media (min-width: 640px) {
+      .cubby-box {
+        min-height: 198px;
+      }
+    }
+    @media (min-width: 1024px) {
+      .cubby-box {
+        min-height: 236px;
+      }
+    }
+
+    /* Bibir Lantai Kotak Rak Tempat Buku Berdiri */
+    .cubby-box::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 8px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #E8E3D9 65%, #D4CEC2 100%);
+      box-shadow: 0 -2px 5px rgba(7, 42, 32, 0.10);
+      pointer-events: none;
+      z-index: 4;
+    }
+    @media (min-width: 640px) {
+      .cubby-box::after {
+        height: 10px;
+      }
+    }
+
+    .cubby-interactive:hover,
+    .cubby-interactive:focus-within {
+      background: linear-gradient(135deg, #E2DDD3 0%, #F4F1EA 45%, #FCFBF8 85%, #EAE5DC 100%);
+      box-shadow:
+        inset 0 10px 24px -4px rgba(212, 175, 55, 0.22),
+        0 16px 32px -8px rgba(7, 42, 32, 0.28),
+        0 0 0 2px #D4AF37;
+      z-index: 30;
+    }
+
+    /* Label Klasikal Buku (Emerald Green & Gold Plaque) */
+    .classical-plaque {
+      background: linear-gradient(180deg, #0F4C3A 0%, #072A20 100%);
+      border: 1.2px solid #D4AF37;
+      box-shadow:
+        0 4px 10px rgba(7, 42, 32, 0.25),
+        inset 0 1px 0 rgba(243, 229, 171, 0.35);
+      transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Saat dihover, sembunyikan plakat bawah & badge atas agar TIDAK bertabrakan dengan Pop-Out Card */
+    .cubby-interactive:hover .classical-plaque,
+    .cubby-interactive:focus-within .classical-plaque,
+    .cubby-interactive:hover .cubby-top-meta,
+    .cubby-interactive:focus-within .cubby-top-meta {
+      opacity: 0;
+      transform: scale(0.95);
+      pointer-events: none;
+    }
+
+    /* Efek Menyembul Kompak (3D Pop-Out Detail Card) Hijau Zamrud & Gold Tanpa Tabrakan */
+    .cubby-popout-card {
+      opacity: 0;
+      pointer-events: none;
+      background: linear-gradient(145deg, rgba(11, 59, 44, 0.98) 0%, rgba(7, 42, 32, 0.99) 100%);
+      border: 1.5px solid #D4AF37;
+      transform: translateY(8px) scale(0.95);
+      transition:
+        opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow:
+        0 16px 36px -6px rgba(7, 42, 32, 0.65),
+        inset 0 1px 0 rgba(243, 229, 171, 0.35);
+    }
+
+    .cubby-interactive:hover .cubby-popout-card,
+    .cubby-interactive:focus-within .cubby-popout-card {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Animasi Buku 3D di Dalam Kotak Rak Saat Dihover */
+    .shelf-book-item {
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease;
+      box-shadow: -2px 3px 6px rgba(7, 42, 32, 0.25);
+    }
+    .cubby-interactive:hover .shelf-book-item {
+      transform: translateY(-4px) scale(1.02);
+      filter: brightness(1.04);
+    }
+
+    /* Mode Tampilan Halaman Penuh / Full Height */
+    .full-page-fit #pages-spread-Mount img {
+      height: 68vh !important;
+      max-height: 680px !important;
+    }
+    @media (min-width: 640px) {
+      .full-page-fit #pages-spread-Mount img {
+        height: 75vh !important;
+        max-height: 750px !important;
+      }
+    }
+    @media (min-width: 1024px) {
+      .full-page-fit #pages-spread-Mount img {
+        height: 80vh !important;
+        max-height: 820px !important;
+      }
+    }
+    .cubby-interactive:hover .shelf-book-item {
+      transform: translateY(-5px) scale(1.03);
+      filter: brightness(1.05);
+    }
+
+    /* Lantai Kayu Perspektif di Bawah Rak Buku */
+    .wood-plank-floor {
+      background:
+        linear-gradient(180deg, rgba(7, 42, 32, 0.38) 0%, rgba(180, 134, 92, 0.05) 28%, rgba(120, 78, 44, 0.25) 100%),
+        repeating-linear-gradient(
+          90deg,
+          #C49A6C 0px,
+          #C49A6C 88px,
+          #7C532E 88px,
+          #7C532E 91px,
+          #B68B5E 91px,
+          #B68B5E 180px,
+          #704927 180px,
+          #704927 183px
+        );
+      box-shadow: inset 0 12px 20px -8px rgba(7, 42, 32, 0.45);
+    }
+
+    /* =========================================================
+       ETALASE BUKU 3D INTERAKTIF PREMIUM (TAHAP 2 - LATAR CERAH)
+       ========================================================= */
+    .showcase-3d-perspective {
+      perspective: 1800px;
+    }
+    .book-3d-showcase-card {
+      transform-style: preserve-3d;
+      transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.42s ease;
+    }
+    .book-3d-showcase-card:hover {
+      transform: translateY(-10px) rotateY(-16deg) rotateX(4deg);
+    }
+    /* Ketebalan Kertas Samping Buku 3D */
+    .book-3d-pages-edge {
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      right: -10px;
+      width: 11px;
+      background: repeating-linear-gradient(
+        90deg,
+        #FBF9F5 0px,
+        #FBF9F5 2px,
+        #D4AF37 2px,
+        #E5DEC9 3px
+      );
+      transform: rotateY(90deg) translateZ(5px);
+      transform-origin: left center;
+      box-shadow: inset 0 0 4px rgba(7, 42, 32, 0.22);
+    }
+    /* Punggung Buku 3D */
+    .book-3d-spine-highlight {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 14px;
+      background: linear-gradient(
+        90deg,
+        rgba(7, 42, 32, 0.55) 0%,
+        rgba(243, 229, 171, 0.35) 38%,
+        rgba(7, 42, 32, 0.30) 78%,
+        transparent 100%
+      );
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       ENGINE 3D FLIPBOOK READER (TAHAP 3 - PERTAHANKAN 100%)
+       ========================================================= */
+    .flipbook-stage {
+      perspective: 2400px;
+    }
+    .book-3d-shell {
+      transform-style: preserve-3d;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .page-turn-forward {
+      animation: flipForward3D 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: left center;
+    }
+    .page-turn-backward {
+      animation: flipBackward3D 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: right center;
+    }
+    @keyframes flipForward3D {
+      0% { transform: rotateY(-34deg) scale(0.985); filter: brightness(0.88); }
+      55% { transform: rotateY(-8deg) scale(0.996); filter: brightness(0.96); }
+      100% { transform: rotateY(0deg) scale(1); filter: brightness(1); }
+    }
+    @keyframes flipBackward3D {
+      0% { transform: rotateY(34deg) scale(0.985); filter: brightness(0.88); }
+      55% { transform: rotateY(8deg) scale(0.996); filter: brightness(0.96); }
+      100% { transform: rotateY(0deg) scale(1); filter: brightness(1); }
+    }
+    /* Bilah Rak Hijau Zamrud & Gold */
+    .wood-shelf-ledge {
+      background: linear-gradient(180deg, #0F4C3A 0%, #0B3B2C 55%, #072A20 100%);
+      border-top: 2px solid #D4AF37;
+      border-bottom: 1px solid #9E7B1C;
+      box-shadow: 0 12px 24px -6px rgba(7, 42, 32, 0.45), inset 0 1px 2px rgba(243, 229, 171, 0.35);
+    }
+    /* Tombol Utama Hijau Kombinasi Gold */
+    .btn-emerald-gold {
+      background: linear-gradient(135deg, #0F4C3A 0%, #0B3B2C 100%);
+      color: #F3E5AB;
+      border: 1px solid #D4AF37;
+      box-shadow: 0 4px 12px rgba(7, 42, 32, 0.18);
+      transition: all 0.25s ease;
+    }
+    .btn-emerald-gold:hover {
+      background: linear-gradient(135deg, #14634C 0%, #0F4C3A 100%);
+      color: #FFFFFF;
+      border-color: #F3E5AB;
+      box-shadow: 0 6px 16px rgba(212, 175, 55, 0.28);
+    }
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
+  <!-- ========================================================= -->
+  <!-- 1. HEADER REBRANDING & NAVIGASI BREADCRUMB / TAB          -->
+  <!-- ========================================================= -->
+  <header class="no-print shrink-0 flex items-center justify-between gap-2 sm:gap-6 px-3 sm:px-6 py-2 sm:py-3 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5]/95 backdrop-blur-xs z-40 shadow-xs">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+      <a href="#view=lobby" id="brand-home" class="flex items-center gap-2 sm:gap-3 text-[#072A20] group whitespace-nowrap shrink-0">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg btn-emerald-gold flex items-center justify-center shadow-sm">
+          <i data-lucide="book-open" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#D4AF37]"></i>
+        </div>
+        <div class="hidden sm:block">
+          <span class="text-lg sm:text-xl font-bold tracking-tight font-serif-editorial text-[#072A20] leading-none block">
+            e-Library
+          </span>
+          <span class="text-[9px] sm:text-[10px] text-[#12543F] font-classical-label tracking-widest uppercase hidden md:block mt-0.5">
+            Perpustakaan Elektronik 3D
+          </span>
+        </div>
+      </a>
+
+      <!-- Breadcrumb Lintas Tahap -->
+      <nav aria-label="Breadcrumb Perpustakaan" class="hidden md:flex items-center gap-2 text-xs font-medium text-[#12543F] border-l border-[#D4AF37]/50 pl-4 py-0.5">
+        <button type="button" id="bc-lobby-btn" class="hover:text-[#072A20] transition-colors flex items-center gap-1.5">
+          <i data-lucide="library" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
+          <span class="font-serif-editorial text-sm font-semibold">Lobi Rak Klasikal</span>
+        </button>
+        <span class="text-[#D4AF37]">/</span>
+        <button type="button" id="bc-shelf-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[220px] font-serif-editorial text-sm font-semibold">
+          Etalase Koleksi
+        </button>
+        <span id="bc-sep-reader" class="text-[#D4AF37] hidden">/</span>
+        <button type="button" id="bc-reader-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[220px] text-[#072A20] font-serif-editorial text-sm font-bold hidden">
+          Ruang Baca 3D
+        </button>
+      </nav>
+    </div>
+
+    <!-- Tab Navigasi 3 Tahap -->
+    <nav aria-label="Navigasi Utama" class="flex items-center gap-1 sm:gap-2 text-xs font-medium">
+      <button type="button" id="tab-lobby-btn" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg btn-emerald-gold font-semibold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+        <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+        <span class="text-[11px] sm:text-xs">Rak 3D</span>
+      </button>
+      <button type="button" id="tab-shelf-btn" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+        <i data-lucide="layers" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
+        <span id="tab-shelf-label" class="text-[11px] sm:text-xs">Etalase</span>
+      </button>
+      <button type="button" id="tab-reader-btn" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+        <i data-lucide="book-marked" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
+        <span class="text-[11px] sm:text-xs">Ruang Baca</span>
+      </button>
+    </nav>
+
+    <!-- Tombol Aksi Header -->
+    <div class="flex items-center gap-2 shrink-0">
+      <button type="button" id="header-share-btn" title="Salin Tautan Baca" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
+        <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+        <span class="hidden md:inline">Salin Tautan</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Notifikasi Toast Mengambang -->
+  <div id="toast-box" role="status" aria-live="polite" class="no-print hidden fixed bottom-20 right-6 z-50 px-4 py-2.5 rounded-lg btn-emerald-gold text-xs font-medium shadow-xl flex items-center gap-2"></div>
+
+  <!-- ========================================================= -->
+  <!-- KONTEN APLIKASI (3 TAMPILAN UTAMA)                         -->
+  <!-- ========================================================= -->
+  <div class="flex-1 min-h-0 relative overflow-hidden flex flex-col">
+
+    <!-- ------------------------------------------------------- -->
+    <!-- TAHAP 1: LOBI RAK BUKU ARSITEKTURAL KLASIKAL (VIEW 1)   -->
+    <!-- ------------------------------------------------------- -->
+    <section id="view-lobby" aria-label="Lobi Rak Klasifikasi Perpustakaan" class="flex-1 overflow-y-auto wall-plank-backdrop flex flex-col justify-between">
+      <!-- Deretan Lampu Gantung Edison dengan Fitting Hijau & Gold -->
+      <div class="max-w-7xl w-full mx-auto px-6 pt-0 pb-2 relative select-none pointer-events-none">
+        <div class="grid grid-cols-5 sm:grid-cols-9 gap-4 justify-items-center">
+          <div class="flex flex-col items-center">
+            <div class="w-[2px] h-11 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-7 h-8 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="w-[2px] h-6 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-6 h-7 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="w-[2px] h-13 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-7 h-8 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="w-[2px] h-7 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-6 h-7 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="w-[2px] h-12 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-7 h-8 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="hidden sm:flex flex-col items-center">
+            <div class="w-[2px] h-8 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-6 h-7 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="hidden sm:flex flex-col items-center">
+            <div class="w-[2px] h-14 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-7 h-8 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="hidden sm:flex flex-col items-center">
+            <div class="w-[2px] h-6 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-6 h-7 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+          <div class="hidden sm:flex flex-col items-center">
+            <div class="w-[2px] h-12 pendant-cord"></div>
+            <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket"></div>
+            <div class="w-7 h-8 rounded-full pendant-bulb-glow -mt-0.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar Kontrol & Pencarian di Atas Lemari Rak Putih -->
+      <div class="max-w-7xl w-full mx-auto px-3 sm:px-8 mb-2.5 sm:mb-3 flex flex-col md:flex-row md:items-end justify-between gap-2.5 sm:gap-3 z-20">
+        <div>
+          <span class="text-[10px] sm:text-[11px] font-classical-label uppercase tracking-widest text-[#9E7B1C] font-bold block">
+            Katalog Klasifikasi Perpustakaan Digital
+          </span>
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight">
+            e-Library
+          </h1>
+          <p class="text-[11px] sm:text-sm text-[#12543F] font-serif-editorial italic mt-0.5">
+            Arahkan kursor ke kotak rak untuk meninjau detail klasifikasi, lalu klik untuk membuka etalase koleksi buku 3D.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-2.5">
+          <div class="relative flex-1 sm:w-64">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input id="lobby-search-input" type="text" placeholder="Cari rak atau buku..." class="w-full pl-8 pr-3 py-1.5 sm:py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C] shadow-xs" />
+          </div>
+          <button type="button" id="btn-add-shelf-modal" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0">
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+            <span class="hidden xs:inline">Tambah Kotak Rak</span>
+            <span class="xs:hidden">+ Rak</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- LEMARI RAK BUKU PUTIH MODULAR: 2 KOTAK BERJEJER DI HP (GRID-COLS-2) -->
+      <div class="max-w-7xl w-full mx-auto px-2 sm:px-8 z-10">
+        <div class="white-bookcase-frame">
+          <div id="shelves-grid-container" class="bookcase-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-12 auto-rows-auto">
+            <!-- Kotak-kotak rak buku klasikal dirender secara dinamis oleh JS (2 kolom di HP) -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Lantai Kayu Perspektif Sesuai Gambar Referensi -->
+      <div class="w-full h-14 sm:h-18 wood-plank-floor mt-2 shrink-0 flex items-center justify-center">
+        <p class="text-[11px] font-classical-label text-[#F3E5AB] tracking-widest uppercase btn-emerald-gold px-4 py-1 rounded-full">
+          Pilih salah satu kotak rak klasikal di atas untuk mengeksplorasi pustaka 3D
+        </p>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- -->
+    <!-- TAHAP 2: ETALASE KOLEKSI BUKU 3D CERAH & ELEGAN (VIEW 2)-->
+    <!-- ------------------------------------------------------- -->
+    <section id="view-shelf" aria-label="Etalase Koleksi Buku 3D" class="hidden flex-1 overflow-y-auto wall-plank-backdrop text-[#072A20] flex flex-col justify-between">
+      <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-10 space-y-6">
+        <!-- Header Etalase Rak Klasikal (Nuansa Cerah & Hijau Gold) -->
+        <div class="white-bookcase-frame p-6 sm:p-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div class="space-y-2.5">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button type="button" id="btn-back-to-lobby" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg btn-emerald-gold text-xs font-semibold transition-all">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span>Kembali ke Lemari Rak 3D</span>
+              </button>
+              <span id="active-shelf-badge" class="text-xs font-classical-label uppercase tracking-widest px-3 py-1 rounded-md bg-[#0B3B2C]/10 border border-[#D4AF37] text-[#0B3B2C] font-bold">
+                KLASIKAL 000
+              </span>
+              <span id="active-shelf-count-badge" class="text-xs font-mono-tabular font-semibold text-[#9E7B1C] bg-[#F3E5AB]/50 px-2.5 py-1 rounded-md border border-[#D4AF37]/50">
+                0 Buku Tersedia
+              </span>
+            </div>
+            <h1 id="active-shelf-title" class="text-2xl md:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight">
+              Nama Klasifikasi Rak Buku
+            </h1>
+            <p id="active-shelf-desc" class="text-sm sm:text-base font-serif-editorial italic text-[#12543F] max-w-2xl leading-relaxed">
+              Deskripsi kuratorial mengenai koleksi buku yang tersimpan dalam kotak rak klasifikasi ini.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative w-full sm:w-64">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input id="shelf-search-input" type="text" placeholder="Cari judul atau penulis..." class="w-full pl-8 pr-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C]" />
+            </div>
+            <button type="button" id="btn-upload-to-shelf" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
+              <i data-lucide="plus-circle" class="w-4 h-4 text-[#D4AF37]"></i>
+              <span>+ Unggah PDF Baru ke Rak Ini</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bar Navigasi Cepat Antar Kotak Rak Klasikal -->
+        <div id="shelf-quick-switcher" class="flex items-center gap-2 overflow-x-auto pb-2">
+          <!-- Tombol-tombol rak klasikal dirender oleh JS -->
+        </div>
+
+        <!-- Panggung Etalase Koleksi Buku 3D Interaktif dalam Bingkai Rak Putih Cerah -->
+        <div class="white-bookcase-frame p-6 sm:p-8 space-y-8 showcase-3d-perspective">
+          <div id="shelf-books-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 pt-2">
+            <!-- Kartu Buku Hardcover 3D dirender oleh JS -->
+          </div>
+
+          <!-- Bilah Panggung Rak Hijau Zamrud & Gold 3D -->
+          <div class="w-full h-6 wood-shelf-ledge rounded-sm flex items-center justify-between px-6">
+            <span class="text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">ETALASE KOLEKSI KLASIKAL 3D INTERAKTIF</span>
+            <span class="text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">KLIK SAMPUL BUKU UNTUK MEMBUKA FLIPBOOK 3D</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lantai Kayu Perspektif di Bawah Etalase -->
+      <div class="w-full h-14 sm:h-16 wood-plank-floor shrink-0 flex items-center justify-center">
+        <p class="text-[11px] font-classical-label text-[#F3E5AB] tracking-widest uppercase btn-emerald-gold px-4 py-1 rounded-full">
+          Koleksi Pustaka Digital Resolusi Tinggi · e-Library 3D
+        </p>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- -->
+    <!-- TAHAP 3: RUANG BACA 3D FLIPBOOK & PANEL ADMIN (VIEW 3)    -->
+    <!-- ------------------------------------------------------- -->
+    <div id="view-reader" class="hidden flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+      <!-- A. PANEL ADMIN CREATOR SIDEBAR (HIDDEN DI HP SECARA DEFAULT, DAPAT DIBUKA DENGAN TOMBOL ADMIN) -->
+      <aside id="admin-sidebar" aria-label="Panel Kendali Penerbit" class="no-print hidden lg:block w-full lg:w-[420px] xl:w-[440px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#D4AF37]/60 bg-[#F7F4EE] text-[#072A20] overflow-y-auto p-4 sm:p-6 space-y-6">
+        <div class="border-b border-[#D4AF37]/50 pb-4">
+          <p class="text-xs font-classical-label uppercase tracking-widest text-[#9E7B1C] font-bold">01. Studio Penerbit Perpustakaan</p>
+          <h2 class="text-2xl font-bold font-serif-editorial text-[#072A20] mt-1">Konfigurasi & Penerbitan Buku</h2>
+          <p class="text-xs text-[#12543F] mt-1 leading-relaxed">
+            Unggah dokumen PDF lokal, muat URL eksternal, atau sesuaikan hak akses dan rak klasifikasi buku.
+          </p>
+        </div>
+
+        <!-- 1. Sumber Dokumen PDF -->
+        <section class="space-y-3.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold font-serif-editorial text-[#072A20]">01. Sumber Dokumen PDF</h3>
+            <span id="source-badge" class="text-xs text-[#9E7B1C] font-mono-tabular font-semibold">Katalog Bawaan</span>
+          </div>
+
+          <label id="dropzone-label" for="pdf-file-input" class="flex flex-col items-center justify-center p-5 rounded-lg border border-dashed border-[#D4AF37] bg-[#FBF9F5] hover:border-[#0B3B2C] transition-colors cursor-pointer text-center">
+            <i data-lucide="upload" class="w-5 h-5 text-[#0B3B2C] mb-2"></i>
+            <span class="text-xs font-semibold text-[#072A20]">Tarik & Lepas File PDF Lokal atau Klik untuk Memilih</span>
+            <span id="file-name-label" class="text-xs text-[#12543F] mt-1">Dirender tajam pada layar Retina (window.devicePixelRatio)</span>
+            <input id="pdf-file-input" type="file" accept="application/pdf,.pdf" class="sr-only" />
+          </label>
+
+          <form id="pdf-url-form" class="space-y-1.5" novalidate>
+            <label for="pdf-url-input" class="block text-xs font-medium text-[#0B3B2C]">Atau Masukkan Direct URL PDF</label>
+            <div class="flex items-center gap-2">
+              <input id="pdf-url-input" type="url" placeholder="https://.../dokumen.pdf" class="flex-1 px-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20] placeholder:text-[#12543F]/50 focus:outline-none focus:border-[#0B3B2C]" />
+              <button type="submit" class="px-3.5 py-2 text-xs font-semibold btn-emerald-gold rounded-lg whitespace-nowrap shrink-0">
+                Muat URL
+              </button>
+            </div>
+          </form>
+
+          <div id="error-box" role="alert" class="hidden p-3 rounded-lg bg-red-950/10 border border-red-800/30 text-red-900 text-xs leading-relaxed"></div>
+        </section>
+
+        <!-- 2. Pengaturan Identitas Buku & Pilihan Rak Klasifikasi -->
+        <section class="space-y-3.5 pt-4 border-t border-[#D4AF37]/50">
+          <h3 class="text-sm font-bold font-serif-editorial text-[#072A20]">02. Identitas Buku & Rak Perpustakaan</h3>
+
+          <div>
+            <label for="select-shelf-target" class="block text-xs font-medium text-[#0B3B2C] mb-1">
+              Pilih Kotak Rak Klasifikasi Buku
+            </label>
+            <select id="select-shelf-target" class="w-full px-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20] focus:outline-none focus:border-[#0B3B2C]">
+              <!-- Diisi secara dinamis dari daftar rak -->
+            </select>
+          </div>
+
+          <div>
+            <label for="inp-title" class="block text-xs font-medium text-[#0B3B2C] mb-1">Judul Buku</label>
+            <input id="inp-title" type="text" class="w-full px-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20]" />
+          </div>
+          <div>
+            <label for="inp-author" class="block text-xs font-medium text-[#0B3B2C] mb-1">Penulis / Penerbit</label>
+            <input id="inp-author" type="text" class="w-full px-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20]" />
+          </div>
+          <div>
+            <label for="inp-desc" class="block text-xs font-medium text-[#0B3B2C] mb-1">Deskripsi Singkat</label>
+            <textarea id="inp-desc" rows="2" class="w-full px-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20] leading-relaxed"></textarea>
+          </div>
+
+          <!-- Tombol Simpan ke Rak Perpustakaan -->
+          <button type="button" id="btn-save-to-shelf" class="w-full py-2.5 px-4 text-xs font-semibold btn-emerald-gold rounded-lg flex items-center justify-center gap-2">
+            <i data-lucide="bookmark-plus" class="w-4 h-4 text-[#D4AF37]"></i>
+            <span>Simpan Buku ke Rak Perpustakaan</span>
+          </button>
+        </section>
+
+        <!-- 3. Panel Kontrol Hak Akses & Fitur Pembaca -->
+        <section class="space-y-3 pt-4 border-t border-[#D4AF37]/50">
+          <h3 class="text-sm font-bold font-serif-editorial text-[#072A20]">03. Hak Akses & Fitur Pembaca</h3>
+          <div class="divide-y divide-[#D4AF37]/30 border border-[#D4AF37]/60 rounded-lg bg-[#FBF9F5] px-3.5">
+            <label class="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
+              <div>
+                <span class="block text-xs font-medium text-[#072A20]">Izinkan Unduh PDF Asli</span>
+                <span class="block text-[11px] text-[#12543F]">Sembunyikan tombol & blokir klik kanan jika nonaktif</span>
+              </div>
+              <input id="chk-download" type="checkbox" class="w-4 h-4 accent-[#0B3B2C] rounded" />
+            </label>
+            <label class="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
+              <div>
+                <span class="block text-xs font-medium text-[#072A20]">Izinkan Cetak (Print)</span>
+                <span class="block text-[11px] text-[#12543F]">Tampilkan tombol cetak halaman di toolbar pembaca</span>
+              </div>
+              <input id="chk-print" type="checkbox" class="w-4 h-4 accent-[#0B3B2C] rounded" />
+            </label>
+            <label class="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
+              <div>
+                <span class="block text-xs font-medium text-[#072A20]">Efek Suara Lembaran Kertas</span>
+                <span class="block text-[11px] text-[#12543F]">Sintesis suara gesekan kertas via Web Audio API</span>
+              </div>
+              <input id="chk-sound" type="checkbox" class="w-4 h-4 accent-[#0B3B2C] rounded" />
+            </label>
+            <label class="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
+              <div>
+                <span class="block text-xs font-medium text-[#072A20]">Navigasi Thumbnail & Slider Halaman</span>
+                <span class="block text-[11px] text-[#12543F]">Tampilkan penggeser halaman & laci daftar isi</span>
+              </div>
+              <input id="chk-thumbs" type="checkbox" class="w-4 h-4 accent-[#0B3B2C] rounded" />
+            </label>
+            <div class="py-2.5 space-y-2">
+              <label class="flex items-center justify-between gap-3 cursor-pointer">
+                <div>
+                  <span class="block text-xs font-medium text-[#072A20]">Proteksi Kata Sandi</span>
+                  <span class="block text-[11px] text-[#12543F]">Wajibkan kata sandi untuk membuka buku</span>
+                </div>
+                <input id="chk-password" type="checkbox" class="w-4 h-4 accent-[#0B3B2C] rounded" />
+              </label>
+              <div id="password-config-row" class="hidden flex items-center gap-2 pt-1">
+                <input id="inp-password" type="text" placeholder="Kata sandi buku..." class="flex-1 px-2.5 py-1.5 text-xs bg-white border border-[#D4AF37] rounded font-mono-tabular text-[#072A20]" />
+                <button type="button" id="btn-test-lock" class="px-2.5 py-1.5 text-xs font-semibold btn-emerald-gold rounded whitespace-nowrap">
+                  Uji Kunci
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Generator Tautan Berbagi -->
+        <section class="space-y-3 pt-4 border-t border-[#D4AF37]/50">
+          <h3 class="text-sm font-bold font-serif-editorial text-[#072A20]">04. Generator Tautan Berbagi</h3>
+          <div class="flex items-center gap-2">
+            <input id="share-url-output" type="text" readonly class="flex-1 px-3 py-2 text-xs font-mono-tabular bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#0B3B2C] select-all" />
+            <button type="button" id="btn-copy-share" class="px-3.5 py-2 text-xs font-semibold btn-emerald-gold rounded-lg whitespace-nowrap">
+              Salin URL
+            </button>
+          </div>
+          <button type="button" id="btn-open-reader-mode" class="w-full py-2.5 px-4 text-xs font-semibold btn-emerald-gold rounded-lg">
+            Tampilan Layar Baca Penuh (Tanpa Sidebar)
+          </button>
+        </section>
+      </aside>
+
+      <!-- B. KANVAS PEMBACA 3D FLIPBOOK VIEWER -->
+      <section id="reader-stage" aria-label="Kanvas Pembaca 3D Flipbook" class="relative flex-1 flex flex-col justify-between overflow-hidden select-none wall-plank-backdrop text-[#072A20] transition-colors duration-200">
+        <!-- Bar Informasi Atas Pembaca dengan Kontrol Mode Tampilan 1 Hal / 2 Hal / Full Hal -->
+        <div id="reader-top-strip" class="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 px-3 sm:px-5 py-2 sm:py-3 border-b border-[#D4AF37]/60 bg-[#FBF9F5]/95 z-20">
+          <div class="min-w-0 flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+            <button type="button" id="btn-back-to-shelf-from-reader" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              <span class="hidden sm:inline">Kembali ke Etalase Rak</span>
+              <span class="sm:hidden">Kembali</span>
+            </button>
+
+            <div class="min-w-0 truncate">
+              <div class="flex items-center gap-1.5 text-[11px] text-[#12543F] truncate">
+                <span id="reader-author-label" class="truncate font-medium">Studio Kuratorial</span>
+                <span>·</span>
+                <span id="reader-spread-mode-label" class="font-mono-tabular text-[#9E7B1C] font-semibold truncate">2 Halaman</span>
+              </div>
+              <h2 id="reader-title-label" class="text-xs sm:text-base md:text-lg font-bold font-serif-editorial text-[#072A20] truncate">
+                Arsitektur Cahaya & Ruang Nusantara
+              </h2>
+            </div>
+          </div>
+
+          <!-- OPSI MODE TAMPILAN: 1 HALAMAN, 2 HALAMAN, & FULL HALAMAN -->
+          <div class="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 shrink-0">
+            <div role="group" aria-label="Pilihan Format Halaman" class="inline-flex items-center rounded-lg border border-[#D4AF37] bg-[#072A20] p-0.5 shadow-xs">
+              <button type="button" id="btn-reader-mode-1p" title="Tampilkan 1 Halaman Buku" class="px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB] hover:text-white transition-all whitespace-nowrap">
+                1 Halaman
+              </button>
+              <button type="button" id="btn-reader-mode-2p" title="Tampilkan 2 Halaman Berdampingan (Spread)" class="px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB] hover:text-white transition-all whitespace-nowrap">
+                2 Halaman
+              </button>
+              <button type="button" id="btn-reader-mode-full" title="Tampilkan Full Halaman / Fit Layar" class="px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB] hover:text-white transition-all flex items-center gap-1 whitespace-nowrap">
+                <i data-lucide="maximize" class="w-3 h-3 text-[#D4AF37]"></i>
+                <span class="hidden xs:inline">Full Halaman</span>
+                <span class="xs:hidden">Full</span>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="btn-toggle-admin-drawer" class="px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
+                Admin
+              </button>
+              <button type="button" id="btn-stage-theme" title="Ubah Tema Warna Pembaca" class="px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#D4AF37] bg-[#FBF9F5] text-[#072A20] hover:bg-[#F3E5AB]/40">
+                Tema
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Layar Kunci Kata Sandi (Password Protection Overlay) -->
+        <div id="password-gate-modal" class="hidden absolute inset-0 z-30 flex items-center justify-center p-6 bg-[#072A20]/80 backdrop-blur-sm">
+          <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37] text-[#F3E5AB]">
+                <i data-lucide="lock" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <span class="text-[11px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">Publikasi Terproteksi</span>
+                <h3 class="text-xl font-bold font-serif-editorial text-white">Masukkan Kata Sandi Buku</h3>
+              </div>
+            </div>
+            <p class="text-xs text-[#F3E5AB]/90 leading-relaxed">Penerbit membatasi akses buku ini. Masukkan kata sandi resmi untuk membuka pembaca 3D Flipbook.</p>
+            <form id="unlock-form" class="space-y-3">
+              <input id="unlock-password-input" type="password" placeholder="Ketik kata sandi..." class="w-full px-3.5 py-2 text-xs bg-[#072A20] border border-[#D4AF37] rounded-lg text-white" />
+              <p id="unlock-error-msg" class="hidden text-xs text-amber-300 font-medium"></p>
+              <button type="submit" class="w-full py-2.5 text-xs font-bold bg-[#D4AF37] hover:bg-[#C59B27] text-[#072A20] rounded-lg">
+                Buka Publikasi 3D
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Indikator Loading Render PDF -->
+        <div id="loading-overlay" class="hidden absolute inset-0 z-25 flex flex-col items-center justify-center bg-[#072A20]/80 backdrop-blur-xs text-[#FBF9F5] p-6">
+          <div class="w-56 h-2 bg-[#0B3B2C] border border-[#D4AF37]/50 rounded-full overflow-hidden mb-3">
+            <div id="loading-bar" class="h-full bg-[#D4AF37] transition-all duration-200" style="width: 25%"></div>
+          </div>
+          <p class="text-base font-bold font-serif-editorial text-[#F3E5AB]">Merender Halaman PDF Resolusi Tinggi (Retina DPI)...</p>
+          <p id="loading-progress-text" class="text-xs text-[#FBF9F5]/80 font-mono-tabular mt-1">Halaman 1</p>
+        </div>
+
+        <!-- Kanvas Utama Buku 3D Flipbook -->
+        <div class="relative flex-1 flex items-center justify-center px-4 py-4 md:px-10 overflow-hidden flipbook-stage">
+          <button type="button" id="stage-prev-arrow" aria-label="Halaman Sebelumnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-lg z-20 mr-4 disabled:opacity-25">
+            <i data-lucide="chevron-left" class="w-5 h-5 text-[#D4AF37]"></i>
+          </button>
+
+          <div id="book-3d-object" class="book-3d-shell relative flex items-center justify-center cursor-grab active:cursor-grabbing">
+            <div class="relative flex items-center justify-center rounded-sm p-2 sm:p-3 bg-[#0B3B2C] border-2 border-[#D4AF37] shadow-[0_32px_64px_-12px_rgba(7,42,32,0.55)]">
+              <div id="left-paper-stack" class="hidden sm:block w-2 self-stretch bg-gradient-to-r from-[#D4AF37] via-[#FBF9F5] to-[#E5DFD3] border-r border-[#D4AF37]/50 rounded-l-xs"></div>
+              <div id="pages-spread-Mount" class="relative flex items-center justify-center bg-[#FBF9F5]"></div>
+              <div id="center-spine-shadow" class="pointer-events-none absolute inset-y-2 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-[#072A20]/30 to-transparent"></div>
+              <div class="hidden sm:block w-2 self-stretch bg-gradient-to-l from-[#D4AF37] via-[#FBF9F5] to-[#E5DFD3] border-l border-[#D4AF37]/50 rounded-r-xs"></div>
+            </div>
+          </div>
+
+          <button type="button" id="stage-next-arrow" aria-label="Halaman Berikutnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-lg z-20 ml-4 disabled:opacity-25">
+            <i data-lucide="chevron-right" class="w-5 h-5 text-[#D4AF37]"></i>
+          </button>
+        </div>
+
+        <!-- Floating Toolbar Pembaca di Bagian Bawah (Hijau Zamrud & Gold) -->
+        <div class="no-print w-full px-4 pb-4 pt-1 flex flex-col items-center gap-2 z-20">
+          <div id="slider-bar-container" class="w-full max-w-4xl flex items-center gap-3 px-4 py-1.5 rounded-lg border border-[#D4AF37] bg-[#0B3B2C]/95 text-[#F3E5AB] text-xs shadow-md">
+            <span id="slider-page-label" class="font-mono-tabular text-[11px] whitespace-nowrap">Halaman 1 dari 8</span>
+            <input id="page-range-slider" type="range" min="1" max="8" value="1" class="flex-1 h-1.5 accent-[#D4AF37] cursor-pointer" />
+            <span id="slider-percent-label" class="font-mono-tabular text-[11px] whitespace-nowrap">0%</span>
+          </div>
+
+          <div role="toolbar" aria-label="Kontrol Pembaca Flipbook" class="w-full max-w-4xl rounded-xl border-2 border-[#D4AF37] bg-[#072A20]/95 text-[#FBF9F5] px-3.5 py-2.5 shadow-2xl flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="toolbar-prev-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] disabled:opacity-35">Sebelumnya</button>
+              <form id="page-jump-form" class="flex items-center gap-1.5 px-1">
+                <input id="page-num-input" type="text" value="1" class="w-11 text-center py-1 text-xs font-mono-tabular rounded bg-[#0B3B2C] border border-[#D4AF37] text-[#F3E5AB]" />
+                <span id="total-pages-label" class="text-xs font-mono-tabular text-[#F3E5AB]/80">dari 8</span>
+              </form>
+              <button type="button" id="toolbar-next-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] disabled:opacity-35">Berikutnya</button>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <button type="button" id="zoom-out-btn" class="px-2 py-1 text-xs rounded hover:bg-[#12543F] text-[#F3E5AB]">-</button>
+              <span id="zoom-value-label" class="text-xs font-mono-tabular px-1.5 text-[#F3E5AB]">100%</span>
+              <button type="button" id="zoom-in-btn" class="px-2 py-1 text-xs rounded hover:bg-[#12543F] text-[#F3E5AB]">+</button>
+              <button type="button" id="zoom-reset-btn" class="px-2 py-1 text-[11px] text-[#D4AF37] hover:text-white">Reset</button>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" id="toolbar-thumbs-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Daftar Isi</button>
+              <button type="button" id="toolbar-sound-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Suara Aktif</button>
+              <button type="button" id="toolbar-print-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Cetak</button>
+              <button type="button" id="toolbar-download-btn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB]">Unduh PDF</button>
+              <button type="button" id="toolbar-share-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Bagikan</button>
+              <button type="button" id="toolbar-fullscreen-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Layar Penuh</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Laci Geser (Drawer Modal) Daftar Isi & Grid Thumbnail Halaman -->
+        <div id="thumbnail-drawer" class="no-print hidden absolute inset-y-0 right-0 z-30 w-full max-w-md bg-[#072A20] border-l-2 border-[#D4AF37] text-[#FBF9F5] shadow-2xl flex flex-col">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-[#D4AF37]/40">
+            <div>
+              <h3 class="text-base font-bold font-serif-editorial text-[#F3E5AB]">Daftar Isi & Grid Thumbnail Halaman</h3>
+              <p class="text-xs text-[#FBF9F5]/70">Klik halaman untuk melompat langsung ke lembaran terkait.</p>
+            </div>
+            <button type="button" id="close-thumbs-btn" class="px-3 py-1 text-xs font-semibold rounded bg-[#0B3B2C] border border-[#D4AF37] text-[#F3E5AB]">Tutup</button>
+          </div>
+          <div id="thumbnail-grid" class="flex-1 overflow-y-auto p-5 grid grid-cols-2 gap-4"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Kotak Rak Klasifikasi Baru (Hijau Zamrud & Gold) -->
+  <div id="modal-add-shelf" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#072A20]/75 backdrop-blur-xs">
+    <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
+        <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Tambah Kotak Rak Klasikal Baru</h3>
+        <button type="button" id="btn-close-shelf-modal" class="text-[#F3E5AB] hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <form id="form-new-shelf" class="space-y-3.5">
+        <div>
+          <label for="new-shelf-code" class="block text-xs font-medium text-[#F3E5AB] mb-1">Kode Klasikal (cth: KLASIKAL 900)</label>
+          <input id="new-shelf-code" type="text" required placeholder="KLASIKAL 900" class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white" />
+        </div>
+        <div>
+          <label for="new-shelf-name" class="block text-xs font-medium text-[#F3E5AB] mb-1">Nama Klasifikasi Buku</label>
+          <input id="new-shelf-name" type="text" required placeholder="cth: Sejarah, Geografi & Biografi" class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white" />
+        </div>
+        <div>
+          <label for="new-shelf-desc" class="block text-xs font-medium text-[#F3E5AB] mb-1">Deskripsi Detail Label Buku</label>
+          <textarea id="new-shelf-desc" rows="2" placeholder="Penjelasan singkat yang akan menyembul saat kursor diarahkan ke kotak rak..." class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white"></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="btn-cancel-shelf-modal" class="px-3.5 py-2 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">Batal</button>
+          <button type="submit" class="px-4 py-2 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg">
+            Simpan Kotak Rak
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 2. LOGIKA UTAMA APLIKASI (VANILLA JAVASCRIPT)              -->
+  <!-- ========================================================= -->
+  <script>
+    (function () {
+      if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      const STORAGE_SHELVES_KEY = 'elibrary_cubby_shelves_v4';
+      const STORAGE_BOOKS_KEY = 'elibrary_cubby_books_v4';
+
+      // 8 Kotak Rak Klasikal Utama (Nuansa Hijau Zamrud & Emas Klasik)
+      const DEFAULT_SHELVES = [
+        {
+          id: 'rak-01',
+          code: 'KLASIKAL 000',
+          name: 'Karya Umum, Kurikulum & Bahan Ajar',
+          description: 'Modul ajar kurikulum nasional, ensiklopedia pendidikan, metodologi pedagogik, dan panduan pendidik.',
+          accent: '#0B3B2C',
+          colSpan: 'lg:col-span-4',
+          bookStyle: 'leaning-left'
+        },
+        {
+          id: 'rak-02',
+          code: 'KLASIKAL 200',
+          name: 'Literasi Islam & Khazanah Nusantara',
+          description: 'Studi manuskrip klasik Jawi & Pegon, sejarah peradaban Islam maritim, fiqih kontemporer, dan tafsir.',
+          accent: '#14532D',
+          colSpan: 'lg:col-span-4',
+          bookStyle: 'stacked-and-leaning'
+        },
+        {
+          id: 'rak-03',
+          code: 'KLASIKAL 700',
+          name: 'Arsitektur, Seni Rupa & Desain',
+          description: 'Monografi pencahayaan arsitektur tropis vernakular, tektonika beton ekspos, dan dokumentasi bangunan.',
+          accent: '#0F4C3A',
+          colSpan: 'lg:col-span-4',
+          bookStyle: 'standing-row'
+        },
+        {
+          id: 'rak-04',
+          code: 'KLASIKAL 500',
+          name: 'Sains Alam, Botani & Ekologi',
+          description: 'Atlas taksonomi flora endemik kepulauan, ekspedisi hutan kabut pegunungan, dan konservasi hayati.',
+          accent: '#15803D',
+          colSpan: 'lg:col-span-3',
+          bookStyle: 'vertical-pile'
+        },
+        {
+          id: 'rak-05',
+          code: 'KLASIKAL 100',
+          name: 'Filsafat, Logika & Psikologi',
+          description: 'Kajian epistemologi klasik, filsafat ilmu pengetahuan, etika humaniora, dan psikologi perkembangan.',
+          accent: '#9E7B1C',
+          colSpan: 'lg:col-span-5',
+          bookStyle: 'leaning-right'
+        },
+        {
+          id: 'rak-06',
+          code: 'KLASIKAL 800',
+          name: 'Sastra, Tipografi & Antologi Esai',
+          description: 'Pedoman kanon proporsi halaman buku, sistem grid tipografi modern, dan antologi esai kuratorial.',
+          accent: '#0B3B2C',
+          colSpan: 'lg:col-span-4',
+          bookStyle: 'mixed-stack'
+        },
+        {
+          id: 'rak-07',
+          code: 'KLASIKAL 300',
+          name: 'Ilmu Sosial, Ekonomi & Hukum',
+          description: 'Literatur sosiologi masyarakat kepulauan, tata kelola kebijakan publik, dan hukum perdata modern.',
+          accent: '#115E59',
+          colSpan: 'lg:col-span-6',
+          bookStyle: 'standing-row'
+        },
+        {
+          id: 'rak-08',
+          code: 'KLASIKAL 600',
+          name: 'Teknologi Terapan & Rekayasa',
+          description: 'Inovasi rekayasa perangkat lunak, instrumen optik, konservasi energi pasif, dan otomasi industri.',
+          accent: '#0F766E',
+          colSpan: 'lg:col-span-6',
+          bookStyle: 'stacked-and-leaning'
+        }
+      ];
+
+      // Sampel Halaman Monografi Arsitektur
+      const SAMPLE_CHAPTERS_ARCH = [
+        { kicker: 'SAMPUL DEPAN · EDISI KOLEKTOR', title: 'Arsitektur Cahaya & Ruang Nusantara', subtitle: 'Dialog Antara Bayangan Tropis, Void, dan Materialitas Jujur', body: 'Katalog Pameran Tahunan & Dokumentasi Tektonik Asia Tenggara. Diterbitkan oleh Studio Kuratorial Atelier Meridien.' },
+        { kicker: '01 / PENGANTAR KURATORIAL', title: 'Cahaya Sebagai Elemen Struktural Utama', subtitle: 'Membaca ulang batas antara interior terlindung dan lanskap terbuka', body: 'Selama pergeseran arsitektur pertengahan abad, cahaya matahari khatulistiwa tidak lagi diperlakukan sekadar sebagai penerang pasif, melainkan instrumen struktural aktif.' },
+        { kicker: '02 / TEKTONIKA MATERIAL', title: 'Kejujuran Beton Ekspos & Kayu Reklamasi', subtitle: 'Patinasi alami terhadap kelembapan dan hujan monsun', body: 'Permukaan beton cor di tempat menyimpan jejak serat papan kayu cetakannya. Ketika disandingkan dengan balok jati tua, tercipta keseimbangan suhu visual.' },
+        { kicker: '03 / SIRKULASI UDARA & VOID', title: 'Halaman Dalam Sebagai Paru-Paru Bangunan', subtitle: 'Ventilasi silang pasif tanpa ketergantungan mekanis', body: 'Penempatan kolam reflektif di sisi angin datang menurunkan suhu mikro udara hingga 3,4 derajat Celsius sebelum mengalir melintasi ruang baca utama.' },
+        { kicker: '04 / STUDI KASUS PAVILIUN', title: 'Paviliun Kontemplasi Lembah Ubud', subtitle: 'Struktur kantilever bambu hitam dan fondasi batu kali lokal', body: 'Berdiri di atas kontur lereng curam, struktur paviliun ini bertumpu hanya pada enam titik fondasi batu kali untuk menjaga keutuhan sistem akar pohon.' },
+        { kicker: '05 / TIPOLOGI RUANG BACA', title: 'Perpustakaan Cahaya Utara & Arsip Kertas', subtitle: 'Konservasi naskah melalui pengendalian luminansi tidak langsung', body: 'Koleksi naskah langka menuntut pencahayaan stabil di bawah 150 lux tanpa paparan sinar ultraviolet langsung melalui sirip aluminium anodized.' },
+        { kicker: '06 / INDEKS & SPESIFIKASI TEKNIS', title: 'Data Kuratorial & Matriks Dimensi Proyek', subtitle: 'Dokumentasi terukur dari enam belas monumen terpilih', body: 'Seluruh pengukuran lapangan dilakukan menggunakan pemindaian laser fotogrametri presisi milimeter selama periode kemarau dan penghujan.' },
+        { kicker: 'KOLOFON · SAMPUL BELAKANG', title: 'Catatan Penerbitan & Hak Cipta', subtitle: 'Disusun dengan standar tipografi arsip museum internasional', body: 'Dicetak secara digital dan dipublikasikan melalui e-Library Interactive 3D Flipbook Platform. Seluruh hak cipta dilindungi undang-undang.' }
+      ];
+
+      let shelves = [];
+      let books = [];
+      let activeShelfId = 'rak-03';
+      let activeBookId = 'book-arch';
+
+      let config = {
+        title: 'Arsitektur Cahaya & Ruang Nusantara',
+        author: 'Studio Kuratorial Atelier Meridien',
+        description: 'Monografi edisi koleksi mengenai dialog antara struktur tropis vernakular, pencahayaan alami, dan tektonika beton kontemporer.',
+        allowDownload: true,
+        allowPrint: true,
+        enableSound: true,
+        showThumbnails: true,
+        passwordProtected: false,
+        password: '',
+        readerTheme: 'archival',
+        pdfUrl: '',
+        shelfId: 'rak-03'
+      };
+
+      let pagesDataUrls = [];
+      let currentPage = 1;
+      let zoomLevel = 1;
+      let currentView = 'lobby';
+      let isLocked = false;
+      let rawPdfBlobUrl = null;
+      let audioCtx = null;
+
+      function showToast(msg) {
+        const box = document.getElementById('toast-box');
+        box.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4 text-[#D4AF37]"></i><span>' + msg + '</span>';
+        box.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+        clearTimeout(box._timer);
+        box._timer = setTimeout(() => box.classList.add('hidden'), 2800);
+      }
+
+      // Sintesis Suara Kertas via Web Audio API
+      function playPaperSound(dir) {
+        if (!config.enableSound) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+
+          const duration = 0.22;
+          const sampleRate = audioCtx.sampleRate;
+          const frameCount = Math.floor(sampleRate * duration);
+          const buffer = audioCtx.createBuffer(1, frameCount, sampleRate);
+          const data = buffer.getChannelData(0);
+
+          let b0 = 0, b1 = 0, b2 = 0;
+          for (let i = 0; i < frameCount; i++) {
+            const t = i / frameCount;
+            const white = Math.random() * 2 - 1;
+            b0 = 0.997 * b0 + white * 0.029;
+            b1 = 0.985 * b1 + white * 0.032;
+            b2 = 0.950 * b2 + white * 0.048;
+            const env = Math.sin(Math.min(1, t * 1.4) * Math.PI) * Math.pow(1 - t, 1.35);
+            data[i] = (b0 + b1 + b2 + white * 0.18) * env;
+          }
+
+          const src = audioCtx.createBufferSource();
+          src.buffer = buffer;
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(dir === 'prev' ? 820 : 950, audioCtx.currentTime);
+          filter.frequency.exponentialRampToValueAtTime(2300, audioCtx.currentTime + duration * 0.55);
+
+          const gain = audioCtx.createGain();
+          gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+          src.connect(filter);
+          filter.connect(gain);
+          gain.connect(audioCtx.destination);
+          src.start();
+        } catch (e) {}
+      }
+
+      // Helper Pembungkus Baris Kanvas Anti-Tabrakan
+      function drawWrappedCanvasText(ctx, text, x, startY, maxWidth, lineHeight, maxLines) {
+        const words = (text || '').split(' ');
+        let line = '';
+        let y = startY;
+        let linesDrawn = 0;
+        for (let i = 0; i < words.length; i++) {
+          const testLine = line ? line + ' ' + words[i] : words[i];
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && line) {
+            ctx.fillText(line, x, y);
+            linesDrawn++;
+            y += lineHeight;
+            line = words[i];
+            if (maxLines && linesDrawn >= maxLines - 1) {
+              break;
+            }
+          } else {
+            line = testLine;
+          }
+        }
+        if (line && (!maxLines || linesDrawn < maxLines)) {
+          ctx.fillText(line, x, y);
+          y += lineHeight;
+        }
+        return y;
+      }
+
+      // Generator Halaman & Sampul Buku Kanvas Retina DPI (Nuansa Hijau Zamrud & Gold Elegan)
+      function generateCanvasPageDataUrl(title, subtitle, kicker, author, body, isCover, totalPages, pageIdx, accentHex) {
+        const dpr = Math.min(window.devicePixelRatio || 2, 2.5);
+        const w = 580, h = 800;
+        const canvas = document.createElement('canvas');
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        if (isCover) {
+          // Latar Sampul Buku: Gradasi Hijau Zamrud Kerajaan & Bingkai Gold Kembar
+          const grad = ctx.createLinearGradient(0, 0, w, h);
+          grad.addColorStop(0, '#0F4C3A');
+          grad.addColorStop(0.55, '#0B3B2C');
+          grad.addColorStop(1, '#072A20');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, w, h);
+
+          // Bingkai Emas Luar & Dalam
+          ctx.strokeStyle = '#D4AF37';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(32, 32, w - 64, h - 64);
+          ctx.strokeStyle = 'rgba(243, 229, 171, 0.45)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(40, 40, w - 80, h - 80);
+        } else {
+          // Halaman Isi: Kertas Gading Cerah & Bingkai Emas Halus
+          ctx.fillStyle = '#FBF9F5';
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = '#D4AF37';
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(36, 36, w - 72, h - 72);
+        }
+
+        // Kicker Klasikal
+        ctx.fillStyle = isCover ? '#F3E5AB' : '#9E7B1C';
+        ctx.font = '600 11px "Cinzel", Georgia, serif';
+        ctx.fillText((kicker || 'KOLEKSI PUSTAKA').toUpperCase(), 60, 78);
+
+        // Garis Aksen Gold
+        ctx.fillStyle = '#D4AF37';
+        ctx.fillRect(60, 92, 76, 2.5);
+
+        // Judul Buku dengan Pembungkus Baris (Anti-Tabrakan)
+        ctx.fillStyle = isCover ? '#FFFFFF' : '#072A20';
+        ctx.font = '700 26px "Cormorant Garamond", Georgia, serif';
+        const afterTitleY = drawWrappedCanvasText(ctx, title, 60, 132, w - 120, 32, 2);
+
+        // Subjudul
+        ctx.fillStyle = isCover ? '#F3E5AB' : '#12543F';
+        ctx.font = 'italic 600 15px "Cormorant Garamond", Georgia, serif';
+        drawWrappedCanvasText(ctx, subtitle, 60, afterTitleY + 6, w - 120, 20, 2);
+
+        // Ornamen Medali Arsitektural Emas di Tengah
+        ctx.fillStyle = isCover ? 'rgba(212, 175, 55, 0.08)' : '#F4F1EA';
+        ctx.fillRect(60, 225, w - 120, 210);
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 1.8;
+        ctx.strokeRect(60, 225, w - 120, 210);
+
+        ctx.beginPath();
+        ctx.arc(w / 2, 330, 62, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(w / 2, 330, 46, 0, Math.PI * 2);
+        ctx.strokeStyle = isCover ? 'rgba(243, 229, 171, 0.5)' : 'rgba(11, 59, 44, 0.35)';
+        ctx.stroke();
+
+        // Paragraf Deskripsi
+        ctx.fillStyle = isCover ? '#F5F2EB' : '#0B3B2C';
+        ctx.font = '400 14px "Plus Jakarta Sans", sans-serif';
+        drawWrappedCanvasText(ctx, body, 60, 480, w - 120, 23, 8);
+
+        // Kolofon Bawah
+        ctx.fillStyle = isCover ? '#D4AF37' : '#9E7B1C';
+        ctx.font = '600 11px "JetBrains Mono", monospace';
+        ctx.fillText('FOLIO 0' + (pageIdx + 1) + ' / 0' + totalPages + '  ·  ' + (author || '').slice(0, 34), 60, h - 56);
+
+        return canvas.toDataURL('image/jpeg', 0.92);
+      }
+
+      function initShelvesAndBooks() {
+        try {
+          const savedShelves = localStorage.getItem(STORAGE_SHELVES_KEY);
+          shelves = savedShelves ? JSON.parse(savedShelves) : DEFAULT_SHELVES;
+        } catch (e) {
+          shelves = DEFAULT_SHELVES;
+        }
+
+        try {
+          const savedBooks = localStorage.getItem(STORAGE_BOOKS_KEY);
+          if (savedBooks) {
+            books = JSON.parse(savedBooks);
+          }
+        } catch (e) {}
+
+        if (!books || books.length === 0) {
+          books = [
+            {
+              id: 'book-kurikulum',
+              shelfId: 'rak-01',
+              title: 'Panduan Kurikulum Merdeka & Modul Ajar',
+              author: 'Pusat Kurikulum & Pembelajaran',
+              description: 'Pedoman implementasi pembelajaran intrakurikuler dan projek penguatan profil pelajar berbasis kompetensi.',
+              pageCount: 6,
+              passwordProtected: false,
+              accent: '#1E3A8A',
+              spineColor: '#1E3A8A',
+              coverUrl: generateCanvasPageDataUrl('Panduan Kurikulum Merdeka', 'Pedoman Pembelajaran Intrakurikuler & Asesmen', 'KLASIKAL 000', 'Pusat Kurikulum', 'Prinsip pembelajaran dan asesmen mendalam yang berfokus pada diferensiasi peserta didik.', true, 6, 0, '#1E3A8A')
+            },
+            {
+              id: 'book-metodologi',
+              shelfId: 'rak-01',
+              title: 'Metodologi Pembelajaran Aktif & Kreatif',
+              author: 'Dr. Hendra Wijaya, M.Pd.',
+              description: 'Model-model instruksional inquiry, problem-based learning, dan diferensiasi kelas modern.',
+              pageCount: 5,
+              passwordProtected: false,
+              accent: '#B45309',
+              spineColor: '#B45309',
+              coverUrl: generateCanvasPageDataUrl('Metodologi Pembelajaran Aktif', 'Model Instruksional Berbasis Masalah & Kolaborasi', 'KLASIKAL 000', 'Dr. Hendra Wijaya', 'Eksplorasi strategi kelas aktif yang meningkatkan partisipasi kritis peserta didik.', true, 5, 0, '#B45309')
+            },
+            {
+              id: 'book-manuskrip',
+              shelfId: 'rak-02',
+              title: 'Khazanah Manuskrip & Peradaban Nusantara',
+              author: 'Lembaga Filologi & Sejarah Islam',
+              description: 'Inventarisasi naskah kuno pegon, jawi, dan tradisi intelektual ulama kepulauan abad ke-17 hingga ke-19.',
+              pageCount: 7,
+              passwordProtected: true,
+              password: 'buku2026',
+              accent: '#14532D',
+              spineColor: '#14532D',
+              coverUrl: generateCanvasPageDataUrl('Khazanah Manuskrip Nusantara', 'Inventarisasi Filologi Naskah Pesantren Klasik', 'KLASIKAL 200', 'Lembaga Filologi', 'Kajian komparatif naskah aksara Jawi dan Pegon dari berbagai pusat keilmuan pulau Jawa dan Sumatra.', true, 7, 0, '#14532D')
+            },
+            {
+              id: 'book-fiqih',
+              shelfId: 'rak-02',
+              title: 'Kajian Fiqih Kontemporer & Etika Sosial',
+              author: 'Prof. Dr. Ahmad Zarkasyi',
+              description: 'Ijtihad hukum perdata Islam mengenai transaksi digital, bioetika, dan kelestarian ekologis.',
+              pageCount: 6,
+              passwordProtected: false,
+              accent: '#78350F',
+              spineColor: '#78350F',
+              coverUrl: generateCanvasPageDataUrl('Kajian Fiqih Kontemporer', 'Ijtihad Terhadap Realitas Transaksi Digital', 'KLASIKAL 200', 'Prof. Dr. Ahmad Zarkasyi', 'Merumuskan kerangka etika hukum Islam dalam menjawab disrupsi ekonomi dan teknologi digital modern.', true, 6, 0, '#78350F')
+            },
+            {
+              id: 'book-arch',
+              shelfId: 'rak-03',
+              title: 'Arsitektur Cahaya & Ruang Nusantara',
+              author: 'Studio Kuratorial Atelier Meridien',
+              description: 'Monografi edisi koleksi mengenai dialog antara struktur tropis vernakular, pencahayaan alami, dan tektonika beton.',
+              pageCount: 8,
+              passwordProtected: false,
+              accent: '#9A3412',
+              spineColor: '#9A3412',
+              coverUrl: generateCanvasPageDataUrl('Arsitektur Cahaya & Ruang', 'Dialog Bayangan Tropis dan Materialitas Jujur', 'KLASIKAL 700', 'Atelier Meridien', 'Monografi pameran mengenai tektonika beton ekspos berpadu dengan kisi-kisi kayu ulin.', true, 8, 0, '#9A3412')
+            },
+            {
+              id: 'book-interior',
+              shelfId: 'rak-03',
+              title: 'Estetika Ruang & Tektonika Kayu Tropis',
+              author: 'Ir. Bagus Pradipta, IAI',
+              description: 'Kajian proporsi ruang dalam, akustik kayu jati, dan sambungan konstruksi tradisional Nusantara.',
+              pageCount: 6,
+              passwordProtected: false,
+              accent: '#334155',
+              spineColor: '#334155',
+              coverUrl: generateCanvasPageDataUrl('Estetika Ruang & Kayu Tropis', 'Proporsi Interior & Konstruksi Tradisional', 'KLASIKAL 700', 'Ir. Bagus Pradipta', 'Dokumentasi terukur ragam sambungan kayu tanpa paku pada arsitektur vernakular.', true, 6, 0, '#334155')
+            },
+            {
+              id: 'book-botani',
+              shelfId: 'rak-04',
+              title: 'Atlas Botani & Flora Endemik Kepulauan',
+              author: 'Herbarium Nasional & Dr. Ratna Pramesti',
+              description: 'Dokumentasi taksonomi anggrek hutan hujan pegunungan dan spesies paku-pakuan langka.',
+              pageCount: 6,
+              passwordProtected: false,
+              accent: '#15803D',
+              spineColor: '#15803D',
+              coverUrl: generateCanvasPageDataUrl('Atlas Botani & Flora Endemik', 'Taksonomi Anggrek Hutan Hujan Pegunungan', 'KLASIKAL 500', 'Dr. Ratna Pramesti', 'Katalog morfologi dan catatan lapangan konservasi ex-situ keanekaragaman flora kepulauan.', true, 6, 0, '#15803D')
+            },
+            {
+              id: 'book-filsafat',
+              shelfId: 'rak-05',
+              title: 'Epistemologi Ilmu & Logika Saintifik',
+              author: 'Prof. Dr. Karlina Hadi',
+              description: 'Pengantar filsafat ilmu pengetahuan, struktur penalaran deduktif-induktif, dan etika riset.',
+              pageCount: 5,
+              passwordProtected: false,
+              accent: '#78350F',
+              spineColor: '#78350F',
+              coverUrl: generateCanvasPageDataUrl('Epistemologi & Logika Saintifik', 'Struktur Penalaran Ilmiah & Etika Riset', 'KLASIKAL 100', 'Prof. Dr. Karlina Hadi', 'Telaah kritis mengenai bagaimana pengetahuan ilmiah dibangun, diuji, dan diverifikasi.', true, 5, 0, '#78350F')
+            },
+            {
+              id: 'book-tipografi',
+              shelfId: 'rak-06',
+              title: 'Tipografi Editorial & Sistem Grid Modern',
+              author: 'Lukas Hendrawan · Swiss-Indo Press',
+              description: 'Pedoman arsitektur halaman buku, proporsi margin kanonik, dan ritme vertikal baseline bacaan panjang.',
+              pageCount: 4,
+              passwordProtected: false,
+              accent: '#4C1D95',
+              spineColor: '#4C1D95',
+              coverUrl: generateCanvasPageDataUrl('Tipografi Editorial & Grid', 'Kanonik Proporsi Halaman dan Keterbacaan', 'KLASIKAL 800', 'Lukas Hendrawan', 'Pedoman tata letak buku, proporsi Villard de Honnecourt, dan harmonisasi leading teks bacaan.', true, 4, 0, '#4C1D95')
+            },
+            {
+              id: 'book-sosiologi',
+              shelfId: 'rak-07',
+              title: 'Sosiologi Maritim & Masyarakat Kepulauan',
+              author: 'Dr. Surya Darmawan',
+              description: 'Jaringan niaga laut, pertukaran budaya pesisir, dan dinamika sosial ekonomi masyarakat bahari.',
+              pageCount: 6,
+              passwordProtected: false,
+              accent: '#831843',
+              spineColor: '#831843',
+              coverUrl: generateCanvasPageDataUrl('Sosiologi Maritim Kepulauan', 'Dinamika Sosial Ekonomi Masyarakat Bahari', 'KLASIKAL 300', 'Dr. Surya Darmawan', 'Menelusuri sejarah dan sosiologi jaringan pelayaran antarpulau di Nusantara.', true, 6, 0, '#831843')
+            },
+            {
+              id: 'book-teknologi',
+              shelfId: 'rak-08',
+              title: 'Rekayasa Energi Terbarukan & Mikrohidro',
+              author: 'Tim Riset Politeknik Nasional',
+              description: 'Panduan rancang bangun turbin mikrohidro dan sistem fotovoltaik mandiri untuk wilayah terpencil.',
+              pageCount: 6,
+              passwordProtected: false,
+              accent: '#0F766E',
+              spineColor: '#0F766E',
+              coverUrl: generateCanvasPageDataUrl('Rekayasa Energi Terbarukan', 'Rancang Bangun Mikrohidro & Fotovoltaik', 'KLASIKAL 600', 'Tim Riset Politeknik', 'Spesifikasi teknis dan panduan instalasi pembangkit listrik ramah lingkungan.', true, 6, 0, '#0F766E')
+            }
+          ];
+          saveBooksToStorage();
+        }
+
+        populateShelfDropdown();
+      }
+
+      function saveShelvesToStorage() {
+        try { localStorage.setItem(STORAGE_SHELVES_KEY, JSON.stringify(shelves)); } catch (e) {}
+      }
+
+      function saveBooksToStorage() {
+        try { localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(books)); } catch (e) {}
+      }
+
+      function populateShelfDropdown() {
+        const select = document.getElementById('select-shelf-target');
+        if (!select) return;
+        select.innerHTML = '';
+        shelves.forEach((s) => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.code + ' — ' + s.name;
+          if (s.id === config.shelfId) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      // =========================================================
+      // VISUALISASI SUSUNAN BUKU 3D DI DALAM KOTAK RAK PUTIH (KOMPAK)
+      // =========================================================
+      function buildCubbyBooksVisual(shelf, shelfBooks) {
+        const spinePalette = ['#0B3B2C', '#9E7B1C', '#14532D', '#0F4C3A', '#854D0E', '#1E3A8A', '#78350F', '#115E59'];
+        let html = '<div class="flex items-end justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 lg:px-4 pt-1 sm:pt-2.5 pb-[5px] h-20 sm:h-28 lg:h-32 relative z-10">';
+
+        // Tumpukan buku horizontal di sisi kiri pada rak tertentu (seperti gambar referensi)
+        if (shelf.bookStyle === 'stacked-and-leaning' || shelf.bookStyle === 'mixed-stack') {
+          html +=
+            '<div class="flex flex-col justify-end mr-1 sm:mr-2 shrink-0">' +
+              '<div class="shelf-book-item w-8 sm:w-14 h-2 sm:h-3.5 rounded-[1px] bg-[#D4AF37] border-b border-[#072A20]/30"></div>' +
+              '<div class="shelf-book-item w-9 sm:w-16 h-2.5 sm:h-4 rounded-[1px] bg-[#0B3B2C] border-b border-[#D4AF37]/40"></div>' +
+              '<div class="shelf-book-item w-8.5 sm:w-15 h-2 sm:h-3.5 rounded-[1px] bg-[#14532D] border-b border-[#D4AF37]/30"></div>' +
+              '<div class="shelf-book-item w-9 sm:w-16 h-2.5 sm:h-4 rounded-[1px] bg-[#9E7B1C]"></div>' +
+            '</div>';
+        }
+
+        // Deretan buku berdiri & miring dengan sampul/punggung asli (skala adaptif HP)
+        const count = Math.max(3, Math.min(6, shelfBooks.length + 2));
+        for (let i = 0; i < count; i++) {
+          const matchedBook = shelfBooks[i];
+          const color = matchedBook ? (matchedBook.spineColor || shelf.accent) : spinePalette[(i + shelf.id.length) % spinePalette.length];
+          const heightClass = i % 3 === 0 ? 'h-14 sm:h-20 lg:h-24' : i % 2 === 0 ? 'h-11 sm:h-16 lg:h-20' : 'h-12 sm:h-18 lg:h-22';
+          const tiltStyle = (i === count - 1 && shelf.bookStyle !== 'standing-row')
+            ? 'transform: rotate(10deg); margin-left: 2px;'
+            : (i === 0 && shelf.bookStyle === 'leaning-left')
+            ? 'transform: rotate(-8deg); margin-right: 2px;'
+            : '';
+
+          if (matchedBook && i < 2) {
+            // Tampilkan miniatur sampul 3D buku asli
+            html +=
+              '<div class="shelf-book-item relative w-7 sm:w-10 lg:w-11 ' + heightClass + ' rounded-[2px] overflow-hidden border border-[#D4AF37]/60 shrink-0" style="' + tiltStyle + '">' +
+                '<img src="' + matchedBook.coverUrl + '" alt="' + matchedBook.title + '" class="w-full h-full object-cover" />' +
+                '<div class="absolute inset-y-0 left-0 w-1 sm:w-1.5 bg-[#072A20]/60"></div>' +
+              '</div>';
+          } else {
+            // Punggung buku hardcover klasik
+            html +=
+              '<div class="shelf-book-item relative w-2.5 sm:w-4 lg:w-5 ' + heightClass + ' rounded-t-[2px] shrink-0 flex flex-col justify-between py-1.5 sm:py-2 px-0.5 border-l border-[#F3E5AB]/30" style="background-color:' + color + '; ' + tiltStyle + '">' +
+                '<div class="w-full h-[1.5px] sm:h-[2px] bg-[#D4AF37]/80"></div>' +
+                '<div class="w-full h-[1.5px] sm:h-[2px] bg-[#D4AF37]/60"></div>' +
+              '</div>';
+          }
+        }
+
+        html += '</div>';
+        return html;
+      }
+
+      // =========================================================
+      // RENDER TAHAP 1: LEMARI RAK BUKU KLASIKAL (2 KOTAK BERJEJER DI HP)
+      // =========================================================
+      function renderLobbyView(searchQuery) {
+        const container = document.getElementById('shelves-grid-container');
+        container.innerHTML = '';
+        const q = (searchQuery || '').toLowerCase().trim();
+
+        const filteredShelves = shelves.filter((s) => {
+          if (!q) return true;
+          const matchShelf = s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q) || s.description.toLowerCase().includes(q);
+          const matchBook = books.some((b) => b.shelfId === s.id && (b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)));
+          return matchShelf || matchBook;
+        });
+
+        if (filteredShelves.length === 0) {
+          container.innerHTML =
+            '<div class="col-span-full py-12 sm:py-16 text-center text-[#0B3B2C] text-xs">' +
+              '<p class="font-bold font-serif-editorial text-[#072A20] text-base sm:text-lg">Tidak ada kotak rak atau buku yang cocok dengan pencarian "' + searchQuery + '".</p>' +
+              '<p class="mt-1 text-[#0B3B2C]/75">Silakan hapus kata kunci pencarian atau tambah kotak rak baru.</p>' +
+            '</div>';
+          return;
+        }
+
+        filteredShelves.forEach((shelf, idx) => {
+          const shelfBooks = books.filter((b) => b.shelfId === shelf.id);
+          const spanClass = shelf.colSpan || 'lg:col-span-4';
+
+          const cubby = document.createElement('article');
+          cubby.setAttribute('tabindex', '0');
+          cubby.setAttribute('role', 'button');
+          cubby.setAttribute('aria-label', shelf.code + ' ' + shelf.name + ' (' + shelfBooks.length + ' buku)');
+          // Di layar HP: 2 kolom berjejer (col-span-1), di tablet 3 kolom (md:col-span-1), di desktop spanClass (lg:col-span-X)
+          cubby.className = 'cubby-box cubby-interactive group col-span-1 md:col-span-1 ' + spanClass + ' rounded-[2px] flex flex-col justify-between p-2 sm:p-3.5 cursor-pointer select-none';
+          cubby.onclick = () => openShelfView(shelf.id);
+          cubby.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openShelfView(shelf.id);
+            }
+          };
+
+          const previewTitles = shelfBooks.length > 0
+            ? shelfBooks.slice(0, 2).map((b) => '<li class="truncate flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0"></span><span class="truncate">' + b.title + '</span></li>').join('')
+            : '<li class="italic text-[#F3E5AB]/75">Belum ada buku — klik untuk mengunggah PDF</li>';
+
+          cubby.innerHTML =
+            '<!-- Baris Atas: Nomor Rak & Badge Jumlah Buku (Otomatis Meredup Saat Hover) -->' +
+            '<div class="cubby-top-meta flex items-center justify-between gap-1 sm:gap-2 z-10">' +
+              '<span class="text-[8px] sm:text-[10px] font-display-classical uppercase tracking-wider px-1.5 sm:px-2.5 py-0.5 rounded bg-[#0B3B2C]/10 text-[#072A20] font-bold border border-[#D4AF37]/50 truncate">' +
+                'KOTAK #' + String(idx + 1).padStart(2, '0') +
+              '</span>' +
+              '<span class="text-[8px] sm:text-[11px] font-mono-tabular font-semibold px-1.5 sm:px-2.5 py-0.5 rounded bg-[#0B3B2C] text-[#F3E5AB] border border-[#D4AF37]/60 shadow-2xs shrink-0">' +
+                shelfBooks.length + ' Buku' +
+              '</span>' +
+            '</div>' +
+
+            '<!-- Visualisasi Deretan Buku 3D di Dalam Kotak Rak Kompak -->' +
+            buildCubbyBooksVisual(shelf, shelfBooks) +
+
+            '<!-- Plakat Label Klasikal Buku di Bibir Rak (Otomatis Meredup Saat Hover agar Tidak Bertabrakan) -->' +
+            '<div class="relative z-20 mt-auto pt-0.5 sm:pt-1 flex justify-center">' +
+              '<div class="classical-plaque w-full max-w-[96%] rounded-sm sm:rounded-md px-1.5 py-1 sm:px-3 sm:py-1.5 text-center">' +
+                '<div class="text-[8px] sm:text-[10px] font-display-classical uppercase tracking-wider text-[#F3E5AB] font-bold leading-none truncate">' +
+                  shelf.code +
+                '</div>' +
+                '<h3 class="text-[11px] sm:text-base font-bold font-serif-editorial text-white truncate mt-0.5">' +
+                  shelf.name +
+                '</h3>' +
+              '</div>' +
+            '</div>' +
+
+            '<!-- TAMPILAN DETAIL LABEL BUKU MENYEMBUL SAAT KURSOR MENGARAH (KOMPAK & BEBAS TABRAKAN) -->' +
+            '<div class="cubby-popout-card absolute inset-1 sm:inset-2 z-40 rounded-md sm:rounded-xl p-2 sm:p-3 text-left text-[#F9F6EE] flex flex-col justify-between">' +
+              '<div>' +
+                '<div class="flex items-center justify-between gap-1 border-b border-[#D4AF37]/30 pb-1 mb-1">' +
+                  '<span class="text-[8px] sm:text-[10px] font-display-classical uppercase tracking-wider text-[#F3E5AB] font-bold truncate">' +
+                    shelf.code +
+                  '</span>' +
+                  '<span class="text-[8px] sm:text-[10px] font-mono-tabular px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded bg-[#D4AF37] text-[#072A20] font-bold shrink-0">' +
+                    shelfBooks.length + ' Buku' +
+                  '</span>' +
+                '</div>' +
+                '<h4 class="text-xs sm:text-sm md:text-base font-bold font-serif-editorial text-white leading-tight line-clamp-1 sm:line-clamp-2">' +
+                  shelf.name +
+                '</h4>' +
+                '<p class="text-[9px] sm:text-[11px] text-[#E6E1D6] mt-0.5 line-clamp-1 sm:line-clamp-2 leading-tight">' +
+                  shelf.description +
+                '</p>' +
+                '<ul class="hidden sm:block mt-1.5 space-y-0.5 text-[10px] sm:text-[11px] text-[#F3E5AB] font-sans border-t border-[#D4AF37]/25 pt-1">' +
+                  previewTitles +
+                '</ul>' +
+              '</div>' +
+              '<div class="pt-1 border-t border-[#D4AF37]/30 flex items-center justify-between text-[9px] sm:text-[11px] font-bold text-[#F3E5AB]">' +
+                '<span>Buka Koleksi 3D</span>' +
+                '<i data-lucide="arrow-up-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37]"></i>' +
+              '</div>' +
+            '</div>';
+
+          container.appendChild(cubby);
+        });
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // =========================================================
+      // RENDER TAHAP 2: ETALASE KOLEKSI BUKU 3D CERAH & ELEGAN
+      // =========================================================
+      function openShelfView(shelfId) {
+        activeShelfId = shelfId;
+        currentView = 'shelf';
+        switchViewTo('shelf');
+
+        const shelf = shelves.find((s) => s.id === shelfId) || shelves[0];
+        const shelfBooks = books.filter((b) => b.shelfId === shelf.id);
+
+        document.getElementById('active-shelf-badge').textContent = shelf.code;
+        document.getElementById('active-shelf-title').textContent = shelf.name;
+        document.getElementById('active-shelf-desc').textContent = shelf.description;
+        document.getElementById('active-shelf-count-badge').textContent = shelfBooks.length + ' Koleksi Buku 3D';
+        document.getElementById('bc-shelf-btn').textContent = shelf.name;
+        document.getElementById('tab-shelf-label').textContent = shelf.code;
+
+        renderShelfQuickSwitcher();
+        renderShelfBooksGrid('');
+      }
+
+      function renderShelfQuickSwitcher() {
+        const bar = document.getElementById('shelf-quick-switcher');
+        bar.innerHTML = '';
+        shelves.forEach((s) => {
+          const isCurrent = s.id === activeShelfId;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = isCurrent
+            ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold btn-emerald-gold text-[#F3E5AB] whitespace-nowrap shrink-0 shadow-sm'
+            : 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#FBF9F5] text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-[#D4AF37]/50 whitespace-nowrap shrink-0 transition-colors';
+          btn.textContent = s.code + ' · ' + s.name;
+          btn.onclick = () => openShelfView(s.id);
+          bar.appendChild(btn);
+        });
+      }
+
+      function renderShelfBooksGrid(searchQuery) {
+        const grid = document.getElementById('shelf-books-grid');
+        grid.innerHTML = '';
+        const q = (searchQuery || '').toLowerCase().trim();
+
+        const shelfBooks = books.filter((b) => {
+          if (b.shelfId !== activeShelfId) return false;
+          if (!q) return true;
+          return b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || b.description.toLowerCase().includes(q);
+        });
+
+        if (shelfBooks.length === 0) {
+          grid.innerHTML =
+            '<div class="col-span-full py-16 text-center text-[#0B3B2C] text-xs bg-[#FBF9F5] rounded-2xl border-2 border-[#D4AF37]/40">' +
+              '<i data-lucide="book-dashed" class="w-8 h-8 mx-auto text-[#9E7B1C] mb-2"></i>' +
+              '<p class="font-bold font-serif-editorial text-[#072A20] text-lg">Belum ada buku dalam kotak rak ini atau pencarian tidak ditemukan.</p>' +
+              '<p class="mt-1 text-[#0B3B2C]/75">Gunakan tombol "+ Unggah PDF Baru ke Rak Ini" di kanan atas untuk menambahkan buku.</p>' +
+            '</div>';
+          if (window.lucide) window.lucide.createIcons();
+          return;
+        }
+
+        shelfBooks.forEach((book) => {
+          const card = document.createElement('article');
+          card.className = 'group rounded-2xl bg-[#FBF9F5] border-2 border-[#D4AF37]/45 hover:border-[#0B3B2C] p-5 flex flex-col justify-between transition-all duration-300 shadow-[0_14px_30px_-10px_rgba(11,59,44,0.14)] hover:shadow-[0_24px_48px_-12px_rgba(11,59,44,0.28)] cursor-pointer select-none';
+          card.onclick = () => openBookInReader(book);
+
+          card.innerHTML =
+            '<div>' +
+              '<!-- Panggung Buku Hardcover 3D di Atas Rak Kayu -->' +
+              '<div class="relative mx-auto w-44 sm:w-48 aspect-[3/4] mb-3 pt-2">' +
+                '<div class="book-3d-showcase-card relative w-full h-full rounded-r-sm bg-[#072A20] shadow-[0_20px_32px_-8px_rgba(7,42,32,0.55)] border border-[#D4AF37]/60">' +
+                  '<img src="' + book.coverUrl + '" alt="' + book.title + '" class="w-full h-full object-cover rounded-r-sm" />' +
+                  '<div class="book-3d-spine-highlight"></div>' +
+                  '<div class="book-3d-pages-edge"></div>' +
+                  (book.passwordProtected
+                    ? '<span class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded bg-[#072A20]/95 text-[#F3E5AB] text-[10px] font-mono-tabular flex items-center gap-1 border border-[#D4AF37]"><i data-lucide="lock" class="w-2.5 h-2.5 text-[#D4AF37]"></i> Terkunci</span>'
+                    : '') +
+                '</div>' +
+              '</div>' +
+              '<div class="wood-shelf-ledge h-3 w-full rounded-sm mb-4"></div>' +
+
+              '<!-- Metadata & Detail Buku dengan Tipografi Elegan Tanpa Tabrakan -->' +
+              '<div class="flex items-center justify-between gap-2 text-[10px] font-display-classical font-bold tracking-wider text-[#9E7B1C] mb-1.5">' +
+                '<span>' + book.pageCount + ' HALAMAN</span>' +
+                '<span class="px-2 py-0.5 rounded bg-[#0B3B2C]/10 text-[#0B3B2C] border border-[#D4AF37]/40">EDISI 3D</span>' +
+              '</div>' +
+              '<h3 class="text-lg font-bold font-serif-editorial text-[#072A20] group-hover:text-[#0B3B2C] transition-colors line-clamp-2 leading-snug min-h-[2.75rem]">' +
+                book.title +
+              '</h3>' +
+              '<p class="text-xs font-semibold text-[#9E7B1C] mt-1 truncate">' +
+                book.author +
+              '</p>' +
+              '<p class="text-xs text-[#0B3B2C]/80 mt-2 line-clamp-2 leading-relaxed">' +
+                book.description +
+              '</p>' +
+            '</div>' +
+
+            '<div class="mt-4 pt-3 border-t border-[#D4AF37]/40 flex items-center justify-between">' +
+              '<span class="text-xs font-bold text-[#0B3B2C] group-hover:text-[#9E7B1C] transition-colors flex items-center gap-1.5">' +
+                '<i data-lucide="book-open" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>' +
+                '<span>Buka Ruang Baca 3D</span>' +
+              '</span>' +
+              '<span class="w-7 h-7 rounded-full bg-[#0B3B2C] text-[#F3E5AB] border border-[#D4AF37] flex items-center justify-center group-hover:translate-x-1 transition-transform">' +
+                '<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>' +
+              '</span>' +
+            '</div>';
+
+          grid.appendChild(card);
+        });
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // =========================================================
+      // RENDER TAHAP 3: BUKA BUKU DI RUANG BACA 3D FLIPBOOK
+      // =========================================================
+      function openBookInReader(book) {
+        activeBookId = book.id;
+        config.title = book.title;
+        config.author = book.author;
+        config.description = book.description;
+        config.shelfId = book.shelfId;
+        config.passwordProtected = Boolean(book.passwordProtected);
+        config.password = book.password || '';
+
+        inpTitle.value = config.title;
+        inpAuthor.value = config.author;
+        inpDesc.value = config.description;
+        chkPassword.checked = config.passwordProtected;
+        inpPassword.value = config.password;
+        document.getElementById('password-config-row').classList.toggle('hidden', !config.passwordProtected);
+        document.getElementById('select-shelf-target').value = config.shelfId;
+
+        if (config.passwordProtected && config.password) {
+          isLocked = true;
+        } else {
+          isLocked = false;
+        }
+
+        if (book.id === 'book-arch') {
+          renderDefaultMonographPages();
+        } else {
+          generateBookPagesForReader(book);
+        }
+
+        switchViewTo('reader');
+      }
+
+      function generateBookPagesForReader(book) {
+        const total = book.pageCount || 6;
+        pagesDataUrls = [];
+        for (let i = 0; i < total; i++) {
+          const isCover = i === 0;
+          const kicker = isCover ? 'SAMPUL DEPAN' : 'BAGIAN ' + String(i).padStart(2, '0');
+          const title = isCover ? book.title : 'Bab ' + i + ': Pembahasan & Analisis';
+          const subtitle = isCover ? book.description.slice(0, 54) : 'Eksplorasi literatur dan materi komprehensif';
+          const body = book.description + ' Dokumen ini disajikan dalam format perpustakaan digital interaktif dengan efek pembalikan lembaran fisik 3D.';
+          const dataUrl = generateCanvasPageDataUrl(title, subtitle, kicker, book.author, body, isCover, total, i, book.accent || '#0B3B2C');
+          pagesDataUrls.push({
+            pageNumber: i + 1,
+            title: isCover ? book.title : 'Halaman ' + (i + 1),
+            dataUrl
+          });
+        }
+        currentPage = 1;
+        renderStage('forward');
+        renderThumbnailsGrid();
+      }
+
+      function renderDefaultMonographPages() {
+        pagesDataUrls = SAMPLE_CHAPTERS_ARCH.map((ch, idx) => {
+          const isCover = idx === 0;
+          const dataUrl = generateCanvasPageDataUrl(
+            isCover ? config.title : ch.title,
+            ch.subtitle,
+            ch.kicker,
+            config.author,
+            isCover ? config.description : ch.body,
+            isCover,
+            SAMPLE_CHAPTERS_ARCH.length,
+            idx,
+            '#0B3B2C'
+          );
+          return {
+            pageNumber: idx + 1,
+            title: isCover ? config.title : ch.title,
+            dataUrl
+          };
+        });
+        currentPage = 1;
+        renderStage('forward');
+        renderThumbnailsGrid();
+      }
+
+      // =========================================================
+      // MESIN RENDER PDF.JS (RETINA DPI / DEVICEPIXELRATIO)
+      // =========================================================
+      async function loadPdfDocument(sourceObj, labelName) {
+        const overlay = document.getElementById('loading-overlay');
+        const bar = document.getElementById('loading-bar');
+        const progText = document.getElementById('loading-progress-text');
+        const errBox = document.getElementById('error-box');
+        errBox.classList.add('hidden');
+        overlay.classList.remove('hidden');
+
+        try {
+          const loadingTask = window.pdfjsLib.getDocument(sourceObj);
+          const pdf = await loadingTask.promise;
+          const total = pdf.numPages;
+          const dpr = Math.min(window.devicePixelRatio || 2, 2.5);
+          const rendered = [];
+
+          for (let i = 1; i <= total; i++) {
+            bar.style.width = Math.round((i / total) * 100) + '%';
+            progText.textContent = 'Merender Halaman ' + i + ' dari ' + total;
+            const page = await pdf.getPage(i);
+            const vp1 = page.getViewport({ scale: 1 });
+            const scale = (600 / vp1.width) * dpr;
+            const viewport = page.getViewport({ scale });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            rendered.push({
+              pageNumber: i,
+              title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
+              dataUrl: canvas.toDataURL('image/jpeg', 0.92)
+            });
+          }
+
+          pagesDataUrls = rendered;
+          currentPage = 1;
+          document.getElementById('source-badge').textContent = labelName;
+          renderStage('forward');
+          renderThumbnailsGrid();
+          showToast('Berhasil merender ' + total + ' halaman PDF resolusi tinggi.');
+        } catch (err) {
+          errBox.textContent = 'Gagal memuat berkas PDF: Pastikan berkas PDF valid dan URL publik mengizinkan CORS.';
+          errBox.classList.remove('hidden');
+        } finally {
+          overlay.classList.add('hidden');
+        }
+      }
+
+      // =========================================================
+      // PENGENDALI NAVIGASI SPREAD (2 HALAMAN / 1 HALAMAN / FULL)
+      // =========================================================
+      let readerPageMode = 'auto'; // 'auto' | '1p' | '2p'
+      let isFullPageFit = false;
+
+      function updateReaderModeButtons() {
+        const btn1p = document.getElementById('btn-reader-mode-1p');
+        const btn2p = document.getElementById('btn-reader-mode-2p');
+        const btnFull = document.getElementById('btn-reader-mode-full');
+        if (!btn1p || !btn2p || !btnFull) return;
+
+        const activeClass = 'px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-bold btn-emerald-gold text-[#F3E5AB] shadow-xs';
+        const inactiveClass = 'px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB]/75 hover:text-white transition-all';
+
+        btn1p.className = readerPageMode === '1p' ? activeClass : inactiveClass;
+        btn2p.className = readerPageMode === '2p' ? activeClass : inactiveClass;
+        btnFull.className = isFullPageFit
+          ? activeClass + ' flex items-center gap-1'
+          : inactiveClass + ' flex items-center gap-1';
+      }
+
+      function getVisiblePages() {
+        const total = pagesDataUrls.length || 1;
+        if (readerPageMode === '1p') {
+          return [currentPage];
+        }
+        if (readerPageMode === '2p') {
+          if (currentPage === 1) return [1];
+          const left = currentPage % 2 === 0 ? currentPage : currentPage - 1;
+          const right = left + 1 <= total ? left + 1 : null;
+          return right ? [left, right] : [left];
+        }
+        // Mode Auto: HP = 1 halaman, Desktop = 2 halaman
+        const isMobile = window.innerWidth < 900;
+        if (isMobile || currentPage === 1) return [currentPage];
+        const left = currentPage % 2 === 0 ? currentPage : currentPage - 1;
+        const right = left + 1 <= total ? left + 1 : null;
+        return right ? [left, right] : [left];
+      }
+
+      function renderStage(direction) {
+        const total = pagesDataUrls.length || 1;
+        const visible = getVisiblePages();
+        const stage = document.getElementById('reader-stage');
+        if (stage) {
+          stage.classList.toggle('full-page-fit', Boolean(isFullPageFit));
+        }
+
+        const mount = document.getElementById('pages-spread-Mount');
+        mount.innerHTML = '';
+        mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] ' +
+          (direction === 'backward' ? 'page-turn-backward' : 'page-turn-forward');
+
+        visible.forEach((pNo, idx) => {
+          const item = pagesDataUrls[pNo - 1];
+          if (!item) return;
+          const img = document.createElement('img');
+          img.src = item.dataUrl;
+          img.alt = 'Halaman ' + pNo;
+          img.className = 'block h-[42vh] sm:h-[50vh] lg:h-[56vh] max-h-[520px] w-auto object-contain select-none transition-all';
+          img.onclick = () => {
+            if (visible.length === 2 && idx === 0) goPrev();
+            else goNext();
+          };
+          mount.appendChild(img);
+        });
+
+        document.getElementById('center-spine-shadow').style.display = visible.length === 2 ? 'block' : 'none';
+        document.getElementById('left-paper-stack').style.display = visible.length === 2 ? 'block' : 'none';
+        document.getElementById('book-3d-object').style.transform = 'scale(' + zoomLevel + ')';
+
+        const labelText = visible.length === 2
+          ? 'Halaman ' + visible[0] + '–' + visible[1] + ' dari ' + total
+          : 'Halaman ' + visible[0] + ' dari ' + total;
+        document.getElementById('slider-page-label').textContent = labelText;
+        document.getElementById('page-num-input').value = visible[0];
+        document.getElementById('total-pages-label').textContent = 'dari ' + total;
+
+        const highest = visible[visible.length - 1];
+        const pct = total <= 1 ? 100 : Math.round(((highest - 1) / (total - 1)) * 100);
+        document.getElementById('slider-percent-label').textContent = pct + '%';
+
+        const slider = document.getElementById('page-range-slider');
+        slider.max = total;
+        slider.value = visible[0];
+
+        document.getElementById('reader-title-label').textContent = config.title;
+        document.getElementById('reader-author-label').textContent = config.author;
+        document.getElementById('reader-spread-mode-label').textContent =
+          (visible.length === 2 ? '2 Halaman (Spread)' : '1 Halaman (Tunggal)') + (isFullPageFit ? ' · Full Layar' : '');
+
+        document.getElementById('toolbar-download-btn').style.display = config.allowDownload ? 'inline-flex' : 'none';
+        document.getElementById('toolbar-print-btn').style.display = config.allowPrint ? 'inline-flex' : 'none';
+        document.getElementById('slider-bar-container').style.display = config.showThumbnails ? 'flex' : 'none';
+        document.getElementById('toolbar-thumbs-btn').style.display = config.showThumbnails ? 'inline-flex' : 'none';
+        document.getElementById('toolbar-sound-btn').textContent = config.enableSound ? 'Suara Aktif' : 'Bisu';
+
+        document.getElementById('password-gate-modal').classList.toggle('hidden', !isLocked);
+
+        updateReaderModeButtons();
+        persistState();
+      }
+
+      function renderThumbnailsGrid() {
+        const grid = document.getElementById('thumbnail-grid');
+        grid.innerHTML = '';
+        pagesDataUrls.forEach((p) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'flex flex-col items-start p-2.5 rounded-lg border border-[#D4AF37]/40 bg-[#0B3B2C]/80 hover:border-[#D4AF37] text-left transition-all';
+          btn.innerHTML =
+            '<img src="' + p.dataUrl + '" alt="Thumbnail ' + p.pageNumber + '" class="w-full aspect-[3/4] object-contain bg-[#072A20] rounded mb-2 border border-[#D4AF37]/25" />' +
+            '<span class="text-[11px] font-mono-tabular text-[#D4AF37]">Halaman ' + p.pageNumber + '</span>' +
+            '<span class="text-xs font-serif-editorial font-bold text-[#F3E5AB] truncate w-full">' + p.title + '</span>';
+          btn.onclick = () => {
+            currentPage = p.pageNumber;
+            playPaperSound('next');
+            renderStage('forward');
+            document.getElementById('thumbnail-drawer').classList.add('hidden');
+          };
+          grid.appendChild(btn);
+        });
+      }
+
+      function goNext() {
+        if (isLocked) return;
+        const total = pagesDataUrls.length;
+        if (currentPage >= total) return;
+        const isSingle = readerPageMode === '1p' || (readerPageMode === 'auto' && window.innerWidth < 900);
+        currentPage = isSingle || currentPage === 1 ? Math.min(total, currentPage + 1) : Math.min(total, currentPage + 2);
+        playPaperSound('next');
+        renderStage('forward');
+      }
+
+      function goPrev() {
+        if (isLocked) return;
+        if (currentPage <= 1) return;
+        const isSingle = readerPageMode === '1p' || (readerPageMode === 'auto' && window.innerWidth < 900);
+        currentPage = isSingle || currentPage <= 2 ? Math.max(1, currentPage - 1) : Math.max(1, currentPage - 2);
+        playPaperSound('prev');
+        renderStage('backward');
+      }
+
+      // =========================================================
+      // SISTEM PERPINDAHAN TAMPILAN (VIEW SWITCHER)
+      // =========================================================
+      function switchViewTo(view) {
+        currentView = view;
+        const viewLobby = document.getElementById('view-lobby');
+        const viewShelf = document.getElementById('view-shelf');
+        const viewReader = document.getElementById('view-reader');
+
+        viewLobby.classList.toggle('hidden', view !== 'lobby');
+        viewShelf.classList.toggle('hidden', view !== 'shelf');
+        viewReader.classList.toggle('hidden', view !== 'reader');
+
+        const tabLobby = document.getElementById('tab-lobby-btn');
+        const tabShelf = document.getElementById('tab-shelf-btn');
+        const tabReader = document.getElementById('tab-reader-btn');
+
+        tabLobby.className = view === 'lobby'
+          ? 'px-3 py-1.5 rounded-lg btn-emerald-gold text-[#F3E5AB] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap'
+          : 'px-3 py-1.5 rounded-lg text-[#0B3B2C]/75 hover:text-[#072A20] hover:bg-[#0B3B2C]/10 transition-colors flex items-center gap-1.5 whitespace-nowrap';
+
+        tabShelf.className = view === 'shelf'
+          ? 'px-3 py-1.5 rounded-lg btn-emerald-gold text-[#F3E5AB] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap'
+          : 'px-3 py-1.5 rounded-lg text-[#0B3B2C]/75 hover:text-[#072A20] hover:bg-[#0B3B2C]/10 transition-colors flex items-center gap-1.5 whitespace-nowrap';
+
+        tabReader.className = view === 'reader'
+          ? 'px-3 py-1.5 rounded-lg btn-emerald-gold text-[#F3E5AB] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap'
+          : 'px-3 py-1.5 rounded-lg text-[#0B3B2C]/75 hover:text-[#072A20] hover:bg-[#0B3B2C]/10 transition-colors flex items-center gap-1.5 whitespace-nowrap';
+
+        document.getElementById('bc-sep-reader').classList.toggle('hidden', view !== 'reader');
+        const bcReader = document.getElementById('bc-reader-btn');
+        bcReader.classList.toggle('hidden', view !== 'reader');
+        if (view === 'reader') {
+          bcReader.textContent = config.title;
+        }
+
+        if (view === 'lobby') {
+          renderLobbyView(document.getElementById('lobby-search-input').value);
+        } else if (view === 'shelf') {
+          renderShelfQuickSwitcher();
+          renderShelfBooksGrid(document.getElementById('shelf-search-input').value);
+        } else if (view === 'reader') {
+          renderStage('forward');
+        }
+
+        window.location.hash = '#view=' + view + (view === 'shelf' ? '&shelf=' + activeShelfId : '');
+      }
+
+      function encodeConfigHash() {
+        const json = JSON.stringify(config);
+        const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        return '#view=reader&cfg=' + b64;
+      }
+
+      function persistState() {
+        const base = window.location.origin + window.location.pathname;
+        document.getElementById('share-url-output').value = base + encodeConfigHash();
+      }
+
+      // =========================================================
+      // EVENT LISTENERS & ELEMEN INTERAKTIF
+      // =========================================================
+      initShelvesAndBooks();
+
+      document.getElementById('brand-home').onclick = (e) => { e.preventDefault(); switchViewTo('lobby'); };
+      document.getElementById('tab-lobby-btn').onclick = () => switchViewTo('lobby');
+      document.getElementById('bc-lobby-btn').onclick = () => switchViewTo('lobby');
+      document.getElementById('tab-shelf-btn').onclick = () => openShelfView(activeShelfId);
+      document.getElementById('bc-shelf-btn').onclick = () => openShelfView(activeShelfId);
+      document.getElementById('tab-reader-btn').onclick = () => switchViewTo('reader');
+      document.getElementById('btn-back-to-lobby').onclick = () => switchViewTo('lobby');
+      document.getElementById('btn-back-to-shelf-from-reader').onclick = () => openShelfView(config.shelfId || activeShelfId);
+
+      document.getElementById('lobby-search-input').oninput = (e) => renderLobbyView(e.target.value);
+      document.getElementById('shelf-search-input').oninput = (e) => renderShelfBooksGrid(e.target.value);
+
+      document.getElementById('btn-upload-to-shelf').onclick = () => {
+        config.shelfId = activeShelfId;
+        document.getElementById('select-shelf-target').value = activeShelfId;
+        switchViewTo('reader');
+        document.getElementById('admin-sidebar').classList.remove('hidden');
+        document.getElementById('pdf-file-input').click();
+      };
+
+      document.getElementById('btn-save-to-shelf').onclick = () => {
+        const targetShelfId = document.getElementById('select-shelf-target').value;
+        config.shelfId = targetShelfId;
+        config.title = inpTitle.value.trim() || 'Publikasi Tanpa Judul';
+        config.author = inpAuthor.value.trim() || 'Penerbit Mandiri';
+        config.description = inpDesc.value.trim() || '';
+
+        const coverDataUrl = pagesDataUrls.length > 0
+          ? pagesDataUrls[0].dataUrl
+          : generateCanvasPageDataUrl(config.title, config.description, 'BUKU PERPUSTAKAAN', config.author, config.description, true, 4, 0, '#0B3B2C');
+
+        const newBook = {
+          id: 'book-' + Date.now(),
+          shelfId: targetShelfId,
+          title: config.title,
+          author: config.author,
+          description: config.description,
+          pageCount: pagesDataUrls.length || 1,
+          passwordProtected: config.passwordProtected,
+          password: config.password,
+          coverUrl: coverDataUrl,
+          accent: '#0B3B2C',
+          spineColor: '#0B3B2C'
+        };
+
+        books.unshift(newBook);
+        saveBooksToStorage();
+
+        const targetShelf = shelves.find((s) => s.id === targetShelfId);
+        showToast('Buku "' + config.title + '" berhasil disimpan ke ' + (targetShelf ? targetShelf.name : 'rak'));
+      };
+
+      // Modal Tambah Kotak Rak Baru
+      const shelfModal = document.getElementById('modal-add-shelf');
+      document.getElementById('btn-add-shelf-modal').onclick = () => {
+        shelfModal.classList.remove('hidden');
+        document.getElementById('new-shelf-code').value = 'KLASIKAL ' + ((shelves.length + 1) * 100);
+      };
+      document.getElementById('btn-close-shelf-modal').onclick = () => shelfModal.classList.add('hidden');
+      document.getElementById('btn-cancel-shelf-modal').onclick = () => shelfModal.classList.add('hidden');
+
+      document.getElementById('form-new-shelf').onsubmit = (e) => {
+        e.preventDefault();
+        const code = document.getElementById('new-shelf-code').value.trim();
+        const name = document.getElementById('new-shelf-name').value.trim();
+        const desc = document.getElementById('new-shelf-desc').value.trim() || 'Koleksi publikasi dan literatur terpilih.';
+
+        const newShelf = {
+          id: 'rak-' + Date.now(),
+          code: code || ('KLASIKAL ' + ((shelves.length + 1) * 100)),
+          name: name,
+          description: desc,
+          accent: '#0B3B2C',
+          colSpan: 'lg:col-span-4',
+          bookStyle: 'standing-row'
+        };
+
+        shelves.push(newShelf);
+        saveShelvesToStorage();
+        populateShelfDropdown();
+        shelfModal.classList.add('hidden');
+        renderLobbyView('');
+        showToast('Kotak Rak Klasikal "' + name + '" berhasil ditambahkan.');
+      };
+
+      // Form Identitas Buku di Panel Admin
+      const inpTitle = document.getElementById('inp-title');
+      const inpAuthor = document.getElementById('inp-author');
+      const inpDesc = document.getElementById('inp-desc');
+      const chkDownload = document.getElementById('chk-download');
+      const chkPrint = document.getElementById('chk-print');
+      const chkSound = document.getElementById('chk-sound');
+      const chkThumbs = document.getElementById('chk-thumbs');
+      const chkPassword = document.getElementById('chk-password');
+      const inpPassword = document.getElementById('inp-password');
+
+      inpTitle.value = config.title;
+      inpAuthor.value = config.author;
+      inpDesc.value = config.description;
+      chkDownload.checked = config.allowDownload;
+      chkPrint.checked = config.allowPrint;
+      chkSound.checked = config.enableSound;
+      chkThumbs.checked = config.showThumbnails;
+      chkPassword.checked = config.passwordProtected;
+      inpPassword.value = config.password;
+
+      inpTitle.oninput = (e) => { config.title = e.target.value; renderStage('forward'); };
+      inpAuthor.oninput = (e) => { config.author = e.target.value; renderStage('forward'); };
+      inpDesc.oninput = (e) => { config.description = e.target.value; };
+      chkDownload.onchange = (e) => { config.allowDownload = e.target.checked; renderStage('forward'); };
+      chkPrint.onchange = (e) => { config.allowPrint = e.target.checked; renderStage('forward'); };
+      chkSound.onchange = (e) => { config.enableSound = e.target.checked; renderStage('forward'); };
+      chkThumbs.onchange = (e) => { config.showThumbnails = e.target.checked; renderStage('forward'); };
+      chkPassword.onchange = (e) => {
+        config.passwordProtected = e.target.checked;
+        if (config.passwordProtected && !config.password) {
+          config.password = 'rahasia2026';
+          inpPassword.value = config.password;
+        }
+        document.getElementById('password-config-row').classList.toggle('hidden', !config.passwordProtected);
+        persistState();
+      };
+      inpPassword.oninput = (e) => { config.password = e.target.value; persistState(); };
+
+      document.getElementById('btn-test-lock').onclick = () => {
+        isLocked = true;
+        renderStage('forward');
+      };
+
+      document.getElementById('unlock-form').onsubmit = (e) => {
+        e.preventDefault();
+        const val = document.getElementById('unlock-password-input').value.trim();
+        if (val === config.password.trim()) {
+          isLocked = false;
+          document.getElementById('unlock-error-msg').classList.add('hidden');
+          renderStage('forward');
+          showToast('Kata sandi benar. Selamat membaca!');
+        } else {
+          const msg = document.getElementById('unlock-error-msg');
+          msg.textContent = 'Kata sandi tidak sesuai. Silakan coba lagi.';
+          msg.classList.remove('hidden');
+        }
+      };
+
+      // Unggah File PDF Lokal
+      document.getElementById('pdf-file-input').onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('file-name-label').textContent = 'Aktif: ' + file.name;
+        config.title = file.name.replace(/\.pdf$/i, '');
+        inpTitle.value = config.title;
+        if (rawPdfBlobUrl) URL.revokeObjectURL(rawPdfBlobUrl);
+        rawPdfBlobUrl = URL.createObjectURL(file);
+        const buf = await file.arrayBuffer();
+        loadPdfDocument({ data: new Uint8Array(buf) }, 'PDF Lokal');
+      };
+
+      // Muat Direct URL PDF
+      document.getElementById('pdf-url-form').onsubmit = (e) => {
+        e.preventDefault();
+        const url = document.getElementById('pdf-url-input').value.trim();
+        if (!url) return;
+        config.pdfUrl = url;
+        loadPdfDocument({ url }, 'URL Eksternal');
+      };
+
+      // Kontrol Flipbook (Panah, Toolbar, Keyboard, Drag)
+      document.getElementById('stage-prev-arrow').onclick = goPrev;
+      document.getElementById('stage-next-arrow').onclick = goNext;
+      document.getElementById('toolbar-prev-btn').onclick = goPrev;
+      document.getElementById('toolbar-next-btn').onclick = goNext;
+
+      document.getElementById('page-range-slider').oninput = (e) => {
+        currentPage = parseInt(e.target.value, 10) || 1;
+        playPaperSound('next');
+        renderStage('forward');
+      };
+
+      document.getElementById('page-jump-form').onsubmit = (e) => {
+        e.preventDefault();
+        const p = parseInt(document.getElementById('page-num-input').value, 10);
+        if (!isNaN(p)) {
+          currentPage = Math.max(1, Math.min(pagesDataUrls.length, p));
+          playPaperSound('next');
+          renderStage('forward');
+        }
+      };
+
+      window.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+        if (e.key === 'ArrowRight') goNext();
+        if (e.key === 'ArrowLeft') goPrev();
+      });
+
+      let dragStartX = null;
+      const bookObj = document.getElementById('book-3d-object');
+      bookObj.addEventListener('pointerdown', (e) => { dragStartX = e.clientX; });
+      bookObj.addEventListener('pointerup', (e) => {
+        if (dragStartX === null) return;
+        const delta = e.clientX - dragStartX;
+        dragStartX = null;
+        if (delta < -40) goNext();
+        else if (delta > 40) goPrev();
+      });
+
+      // Proteksi Klik Kanan Kanvas
+      document.getElementById('reader-stage').addEventListener('contextmenu', (e) => {
+        if (!config.allowDownload) {
+          e.preventDefault();
+          showToast('Proteksi Hak Cipta: Klik kanan dan unduhan dinonaktifkan.');
+        }
+      });
+
+      // Toolbar Zoom & Aksi
+      document.getElementById('zoom-in-btn').onclick = () => {
+        zoomLevel = Math.min(1.5, +(zoomLevel + 0.15).toFixed(2));
+        document.getElementById('zoom-value-label').textContent = Math.round(zoomLevel * 100) + '%';
+        renderStage('forward');
+      };
+      document.getElementById('zoom-out-btn').onclick = () => {
+        zoomLevel = Math.max(0.75, +(zoomLevel - 0.15).toFixed(2));
+        document.getElementById('zoom-value-label').textContent = Math.round(zoomLevel * 100) + '%';
+        renderStage('forward');
+      };
+      document.getElementById('zoom-reset-btn').onclick = () => {
+        zoomLevel = 1;
+        document.getElementById('zoom-value-label').textContent = '100%';
+        renderStage('forward');
+      };
+
+      document.getElementById('toolbar-sound-btn').onclick = () => {
+        config.enableSound = !config.enableSound;
+        chkSound.checked = config.enableSound;
+        renderStage('forward');
+      };
+
+      document.getElementById('toolbar-print-btn').onclick = () => {
+        if (config.allowPrint) window.print();
+      };
+
+      document.getElementById('toolbar-download-btn').onclick = () => {
+        if (!config.allowDownload) return;
+        const link = document.createElement('a');
+        link.href = rawPdfBlobUrl || config.pdfUrl || pagesDataUrls[0].dataUrl;
+        link.download = (config.title || 'publikasi') + (rawPdfBlobUrl || config.pdfUrl ? '.pdf' : '-cover.jpg');
+        link.click();
+        showToast('Mengunduh berkas publikasi...');
+      };
+
+      function copyShareLink() {
+        const url = document.getElementById('share-url-output').value;
+        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+        showToast('Tautan baca dengan konfigurasi berhasil disalin ke papan klip!');
+      }
+
+      document.getElementById('btn-copy-share').onclick = copyShareLink;
+      document.getElementById('header-share-btn').onclick = copyShareLink;
+      document.getElementById('toolbar-share-btn').onclick = copyShareLink;
+
+      document.getElementById('toolbar-thumbs-btn').onclick = () => {
+        document.getElementById('thumbnail-drawer').classList.toggle('hidden');
+      };
+      document.getElementById('close-thumbs-btn').onclick = () => {
+        document.getElementById('thumbnail-drawer').classList.add('hidden');
+      };
+
+      document.getElementById('toolbar-fullscreen-btn').onclick = () => {
+        const stage = document.getElementById('reader-stage');
+        if (!document.fullscreenElement) stage.requestFullscreen().catch(() => {});
+        else document.exitFullscreen().catch(() => {});
+      };
+
+      document.getElementById('btn-toggle-admin-drawer').onclick = () => {
+        const sidebar = document.getElementById('admin-sidebar');
+        sidebar.classList.toggle('hidden');
+      };
+      document.getElementById('btn-open-reader-mode').onclick = () => {
+        document.getElementById('admin-sidebar').classList.add('hidden');
+      };
+
+      // Kontrol Mode Tampilan Pembaca: 1 Halaman, 2 Halaman, Full Halaman
+      document.getElementById('btn-reader-mode-1p').onclick = () => {
+        readerPageMode = '1p';
+        renderStage('forward');
+        showToast('Mode 1 Halaman Buku Aktif');
+      };
+      document.getElementById('btn-reader-mode-2p').onclick = () => {
+        readerPageMode = '2p';
+        renderStage('forward');
+        showToast('Mode 2 Halaman (Spread) Aktif');
+      };
+      document.getElementById('btn-reader-mode-full').onclick = () => {
+        isFullPageFit = !isFullPageFit;
+        renderStage('forward');
+        showToast(isFullPageFit ? 'Tampilan Full Halaman Aktif' : 'Tampilan Halaman Normal');
+      };
+
+      function toggleTheme() {
+        config.readerTheme = config.readerTheme === 'dark' ? 'archival' : 'dark';
+        const stage = document.getElementById('reader-stage');
+        stage.className = 'relative flex-1 flex flex-col justify-between overflow-hidden select-none transition-colors duration-200 ' +
+          (config.readerTheme === 'dark' ? 'bg-[#072A20] text-[#F9F6EE]' : 'bg-[#EBE6DF] text-[#072A20]');
+        persistState();
+      }
+      document.getElementById('btn-stage-theme').onclick = toggleTheme;
+
+      window.addEventListener('resize', () => renderStage('forward'));
+
+      // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
+      renderLobbyView('');
+      renderDefaultMonographPages();
+      switchViewTo('lobby');
+
+      if (window.lucide) window.lucide.createIcons();
+    })();
+  </script>
+</body>
+</html>

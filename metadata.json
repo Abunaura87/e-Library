@@ -1,0 +1,6 @@
+{
+  "name": "e-Library — Perpustakaan Elektronik Interaktif 3D",
+  "description": "Perpustakaan Elektronik Interaktif 3D dengan Lobi Rak Klasifikasi, Etalase Koleksi Buku 3D, dan Ruang Baca Flipbook Resolusi Tinggi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
