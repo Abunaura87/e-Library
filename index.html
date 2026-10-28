@@ -310,32 +310,162 @@
     }
 
     /* =========================================================
-       ENGINE 3D FLIPBOOK READER (TAHAP 3 - PERTAHANKAN 100%)
+       ENGINE 3D FLIPBOOK READER DENGAN REALISTIC PHYSICAL PAGE FLIP
+       (Efek Lembaran Kertas Asli, Slow Motion Physics & Interaktif)
        ========================================================= */
     .flipbook-stage {
-      perspective: 2400px;
+      perspective: 2600px;
+      perspective-origin: 50% 50%;
     }
     .book-3d-shell {
       transform-style: preserve-3d;
-      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .page-turn-forward {
-      animation: flipForward3D 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+    .book-spread-mount {
+      position: relative;
+      transform-style: preserve-3d;
+      perspective: 2600px;
+    }
+
+    /* Lembaran 3D Kertas yang Membalik (Turning Page Leaf) */
+    .turning-page-leaf {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+      height: 100%;
+      transform-style: preserve-3d;
+      z-index: 50;
+      pointer-events: none;
+    }
+    .turning-page-leaf.single-leaf {
+      width: 100%;
+    }
+    .turning-page-leaf.turn-from-right {
+      right: 0;
       transform-origin: left center;
+      animation: flipRightToLeftRealistic 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
-    .page-turn-backward {
-      animation: flipBackward3D 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+    .turning-page-leaf.turn-from-left {
+      left: 0;
       transform-origin: right center;
+      animation: flipLeftToRightRealistic 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
-    @keyframes flipForward3D {
-      0% { transform: rotateY(-34deg) scale(0.985); filter: brightness(0.88); }
-      55% { transform: rotateY(-8deg) scale(0.996); filter: brightness(0.96); }
-      100% { transform: rotateY(0deg) scale(1); filter: brightness(1); }
+
+    /* Muka Depan & Muka Belakang Lembaran Kertas 3D */
+    .page-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow: hidden;
+      background-color: #FBF9F5;
+      box-shadow: inset 0 0 25px rgba(7, 42, 32, 0.08);
     }
-    @keyframes flipBackward3D {
-      0% { transform: rotateY(34deg) scale(0.985); filter: brightness(0.88); }
-      55% { transform: rotateY(8deg) scale(0.996); filter: brightness(0.96); }
-      100% { transform: rotateY(0deg) scale(1); filter: brightness(1); }
+    .page-face-front {
+      transform: rotateY(0deg);
+    }
+    .page-face-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Gradasi Bayangan Tekukan Kertas Berjalan (Traveling Fold Highlight & Shadow) */
+    .paper-curl-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .curl-shadow-forward {
+      background: linear-gradient(to right, rgba(7,42,32,0.40) 0%, rgba(7,42,32,0.12) 14%, rgba(255,255,255,0.45) 42%, rgba(7,42,32,0.18) 78%, rgba(7,42,32,0.45) 100%);
+      animation: shadowShiftForward 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .curl-shadow-backward {
+      background: linear-gradient(to left, rgba(7,42,32,0.40) 0%, rgba(7,42,32,0.12) 14%, rgba(255,255,255,0.45) 42%, rgba(7,42,32,0.18) 78%, rgba(7,42,32,0.45) 100%);
+      animation: shadowShiftBackward 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes flipRightToLeftRealistic {
+      0% {
+        transform: rotateY(0deg) translateZ(0px);
+        filter: drop-shadow(0 4px 8px rgba(7, 42, 32, 0.15));
+      }
+      35% {
+        transform: rotateY(-65deg) translateZ(44px) skewY(-2.5deg);
+        filter: drop-shadow(-18px 26px 36px rgba(7, 42, 32, 0.36));
+      }
+      68% {
+        transform: rotateY(-125deg) translateZ(36px) skewY(1.8deg);
+        filter: drop-shadow(18px 24px 34px rgba(7, 42, 32, 0.32));
+      }
+      100% {
+        transform: rotateY(-180deg) translateZ(0px) skewY(0deg);
+        filter: drop-shadow(0 4px 8px rgba(7, 42, 32, 0.12));
+      }
+    }
+
+    @keyframes flipLeftToRightRealistic {
+      0% {
+        transform: rotateY(0deg) translateZ(0px);
+        filter: drop-shadow(0 4px 8px rgba(7, 42, 32, 0.15));
+      }
+      35% {
+        transform: rotateY(65deg) translateZ(44px) skewY(2.5deg);
+        filter: drop-shadow(18px 26px 36px rgba(7, 42, 32, 0.36));
+      }
+      68% {
+        transform: rotateY(125deg) translateZ(36px) skewY(-1.8deg);
+        filter: drop-shadow(-18px 24px 34px rgba(7, 42, 32, 0.32));
+      }
+      100% {
+        transform: rotateY(180deg) translateZ(0px) skewY(0deg);
+        filter: drop-shadow(0 4px 8px rgba(7, 42, 32, 0.12));
+      }
+    }
+
+    @keyframes shadowShiftForward {
+      0% { opacity: 0.1; }
+      40% { opacity: 0.7; }
+      75% { opacity: 0.45; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes shadowShiftBackward {
+      0% { opacity: 0.1; }
+      40% { opacity: 0.7; }
+      75% { opacity: 0.45; }
+      100% { opacity: 0; }
+    }
+
+    /* Sudut Lembaran Kertas Reaktif (Interactive Corner Curl Hover) */
+    .page-corner-hint {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      z-index: 28;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .page-corner-hint-bottom-right {
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, transparent 48%, rgba(212, 175, 55, 0.4) 50%, rgba(243, 229, 171, 0.85) 100%);
+      border-bottom-right-radius: 2px;
+    }
+    .page-corner-hint-bottom-right:hover {
+      transform: scale(1.18) translate(-4px, -4px);
+      box-shadow: -6px -6px 14px rgba(7, 42, 32, 0.35);
+    }
+    .page-corner-hint-bottom-left {
+      left: 0;
+      bottom: 0;
+      background: linear-gradient(225deg, transparent 48%, rgba(212, 175, 55, 0.4) 50%, rgba(243, 229, 171, 0.85) 100%);
+      border-bottom-left-radius: 2px;
+    }
+    .page-corner-hint-bottom-left:hover {
+      transform: scale(1.18) translate(4px, -4px);
+      box-shadow: 6px -6px 14px rgba(7, 42, 32, 0.35);
     }
     /* Bilah Rak Hijau Zamrud & Gold */
     .wood-shelf-ledge {
@@ -367,42 +497,42 @@
   <!-- ========================================================= -->
   <!-- 1. HEADER REBRANDING & NAVIGASI BREADCRUMB / TAB          -->
   <!-- ========================================================= -->
-  <header class="no-print shrink-0 flex items-center justify-between gap-2 sm:gap-6 px-3 sm:px-6 py-2 sm:py-3 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5]/95 backdrop-blur-xs z-40 shadow-xs">
+  <header class="no-print shrink-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5] z-50 shadow-xs relative">
     <div class="flex items-center gap-2 sm:gap-4 min-w-0">
       <a href="#view=lobby" id="brand-home" class="flex items-center gap-2 sm:gap-3 text-[#072A20] group whitespace-nowrap shrink-0">
         <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg btn-emerald-gold flex items-center justify-center shadow-sm">
           <i data-lucide="book-open" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#D4AF37]"></i>
         </div>
-        <div class="hidden sm:block">
-          <span class="text-lg sm:text-xl font-bold tracking-tight font-serif-editorial text-[#072A20] leading-none block">
+        <div>
+          <span class="text-base sm:text-xl font-bold tracking-tight font-serif-editorial text-[#072A20] leading-none block">
             e-Library
           </span>
-          <span class="text-[9px] sm:text-[10px] text-[#12543F] font-classical-label tracking-widest uppercase hidden md:block mt-0.5">
+          <span class="text-[9px] sm:text-[10px] text-[#12543F] font-classical-label tracking-widest uppercase hidden sm:block mt-0.5">
             Perpustakaan Elektronik 3D
           </span>
         </div>
       </a>
 
-      <!-- Breadcrumb Lintas Tahap -->
-      <nav aria-label="Breadcrumb Perpustakaan" class="hidden md:flex items-center gap-2 text-xs font-medium text-[#12543F] border-l border-[#D4AF37]/50 pl-4 py-0.5">
+      <!-- Breadcrumb Lintas Tahap (Hanya tampil di layar Desktop Lebar XL agar tidak menabrak di layar Tablet) -->
+      <nav aria-label="Breadcrumb Perpustakaan" class="hidden xl:flex items-center gap-2 text-xs font-medium text-[#12543F] border-l border-[#D4AF37]/50 pl-4 py-0.5">
         <button type="button" id="bc-lobby-btn" class="hover:text-[#072A20] transition-colors flex items-center gap-1.5">
           <i data-lucide="library" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
-          <span class="font-serif-editorial text-sm font-semibold">Lobi Rak Klasikal</span>
+          <span class="font-serif-editorial text-sm font-semibold">Lobi Rak</span>
         </button>
         <span class="text-[#D4AF37]">/</span>
-        <button type="button" id="bc-shelf-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[220px] font-serif-editorial text-sm font-semibold">
-          Etalase Koleksi
+        <button type="button" id="bc-shelf-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[180px] font-serif-editorial text-sm font-semibold">
+          Etalase
         </button>
         <span id="bc-sep-reader" class="text-[#D4AF37] hidden">/</span>
-        <button type="button" id="bc-reader-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[220px] text-[#072A20] font-serif-editorial text-sm font-bold hidden">
+        <button type="button" id="bc-reader-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[180px] text-[#072A20] font-serif-editorial text-sm font-bold hidden">
           Ruang Baca 3D
         </button>
       </nav>
     </div>
 
-    <!-- Tab Navigasi 3 Tahap -->
-    <nav aria-label="Navigasi Utama" class="flex items-center gap-1 sm:gap-2 text-xs font-medium">
-      <button type="button" id="tab-lobby-btn" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg btn-emerald-gold font-semibold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+    <!-- Tab Navigasi 3 Tahap (Kompak & Rapi di Tablet dan Mobile) -->
+    <nav aria-label="Navigasi Utama" class="flex items-center gap-1 sm:gap-2 text-xs font-medium shrink-0">
+      <button type="button" id="tab-lobby-btn" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg btn-emerald-gold font-semibold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shadow-xs">
         <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="text-[11px] sm:text-xs">Rak 3D</span>
       </button>
@@ -417,12 +547,12 @@
     </nav>
 
     <!-- Tombol Aksi Header -->
-    <div class="flex items-center gap-2 shrink-0">
-      <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all">
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
         <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Suasana Hening</span>
       </button>
-      <button type="button" id="header-share-btn" title="Salin Tautan Baca" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
+      <button type="button" id="header-share-btn" title="Salin Tautan Baca" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
         <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Salin Tautan</span>
       </button>
@@ -506,12 +636,17 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-2.5">
-          <div class="relative flex-1 sm:w-64">
+        <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap">
+          <div class="relative flex-1 min-w-[160px] sm:w-64">
             <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
             <input id="lobby-search-input" type="text" placeholder="Cari rak atau buku..." class="w-full pl-8 pr-3 py-1.5 sm:py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C] shadow-xs" />
           </div>
-          <button type="button" id="btn-add-shelf-modal" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0">
+          <button type="button" id="btn-admin-shelves-crud" title="Kelola dan Ubah Nama Rak Buku (Admin)" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0 shadow-xs">
+            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+            <span class="hidden sm:inline">Kelola Rak (Admin)</span>
+            <span class="sm:hidden">Admin Rak</span>
+          </button>
+          <button type="button" id="btn-add-shelf-modal" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0 shadow-xs">
             <i data-lucide="plus" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
             <span class="hidden xs:inline">Tambah Kotak Rak</span>
             <span class="xs:hidden">+ Rak</span>
@@ -528,10 +663,10 @@
         </div>
       </div>
 
-      <!-- Lantai Kayu Perspektif Sesuai Gambar Referensi -->
-      <div class="w-full h-14 sm:h-18 wood-plank-floor mt-2 shrink-0 flex items-center justify-center">
-        <p class="text-[11px] font-classical-label text-[#F3E5AB] tracking-widest uppercase btn-emerald-gold px-4 py-1 rounded-full">
-          Pilih salah satu kotak rak klasikal di atas untuk mengeksplorasi pustaka 3D
+      <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan -->
+      <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center border-t border-[#D4AF37]/50 shadow-inner">
+        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-4 select-none">
+          Copyright © e-Library - @abunaura. All rights reserved 2026
         </p>
       </div>
     </section>
@@ -542,10 +677,10 @@
     <section id="view-shelf" aria-label="Etalase Koleksi Buku 3D" class="hidden flex-1 overflow-y-auto wall-plank-backdrop text-[#072A20] flex flex-col justify-between">
       <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-10 space-y-6">
         <!-- Header Etalase Rak Klasikal (Nuansa Cerah & Hijau Gold) -->
-        <div class="white-bookcase-frame p-6 sm:p-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div class="white-bookcase-frame p-4 sm:p-7 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div class="space-y-2.5">
-            <div class="flex flex-wrap items-center gap-2.5">
-              <button type="button" id="btn-back-to-lobby" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg btn-emerald-gold text-xs font-semibold transition-all">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              <button type="button" id="btn-back-to-lobby" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg btn-emerald-gold text-xs font-semibold transition-all shadow-xs">
                 <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
                 <span>Kembali ke Lemari Rak 3D</span>
               </button>
@@ -556,22 +691,22 @@
                 0 Buku Tersedia
               </span>
             </div>
-            <h1 id="active-shelf-title" class="text-2xl md:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight">
+            <h1 id="active-shelf-title" class="text-2xl md:text-3xl lg:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight">
               Nama Klasifikasi Rak Buku
             </h1>
-            <p id="active-shelf-desc" class="text-sm sm:text-base font-serif-editorial italic text-[#12543F] max-w-2xl leading-relaxed">
+            <p id="active-shelf-desc" class="text-xs sm:text-sm md:text-base font-serif-editorial italic text-[#12543F] max-w-2xl leading-relaxed">
               Deskripsi kuratorial mengenai koleksi buku yang tersimpan dalam kotak rak klasifikasi ini.
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="relative w-full sm:w-64">
+          <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
+            <div class="relative w-full sm:w-60">
               <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
               <input id="shelf-search-input" type="text" placeholder="Cari judul atau penulis..." class="w-full pl-8 pr-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C]" />
             </div>
-            <button type="button" id="btn-upload-to-shelf" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
+            <button type="button" id="btn-upload-to-shelf" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
               <i data-lucide="plus-circle" class="w-4 h-4 text-[#D4AF37]"></i>
-              <span>+ Unggah PDF Baru ke Rak Ini</span>
+              <span>+ Unggah PDF Baru</span>
             </button>
           </div>
         </div>
@@ -582,23 +717,23 @@
         </div>
 
         <!-- Panggung Etalase Koleksi Buku 3D Interaktif dalam Bingkai Rak Putih Cerah -->
-        <div class="white-bookcase-frame p-6 sm:p-8 space-y-8 showcase-3d-perspective">
-          <div id="shelf-books-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 pt-2">
+        <div class="white-bookcase-frame p-5 sm:p-8 space-y-6 sm:space-y-8 showcase-3d-perspective">
+          <div id="shelf-books-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 pt-2">
             <!-- Kartu Buku Hardcover 3D dirender oleh JS -->
           </div>
 
           <!-- Bilah Panggung Rak Hijau Zamrud & Gold 3D -->
-          <div class="w-full h-6 wood-shelf-ledge rounded-sm flex items-center justify-between px-6">
-            <span class="text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">ETALASE KOLEKSI KLASIKAL 3D INTERAKTIF</span>
-            <span class="text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">KLIK SAMPUL BUKU UNTUK MEMBUKA FLIPBOOK 3D</span>
+          <div class="w-full h-6 wood-shelf-ledge rounded-sm flex items-center justify-between px-4 sm:px-6">
+            <span class="text-[9px] sm:text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">ETALASE KOLEKSI KLASIKAL 3D INTERAKTIF</span>
+            <span class="text-[9px] sm:text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">KLIK SAMPUL BUKU UNTUK MEMBUKA FLIPBOOK 3D</span>
           </div>
         </div>
       </div>
 
-      <!-- Lantai Kayu Perspektif di Bawah Etalase -->
-      <div class="w-full h-14 sm:h-16 wood-plank-floor shrink-0 flex items-center justify-center">
-        <p class="text-[11px] font-classical-label text-[#F3E5AB] tracking-widest uppercase btn-emerald-gold px-4 py-1 rounded-full">
-          Koleksi Pustaka Digital Resolusi Tinggi · e-Library 3D
+      <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan -->
+      <div class="w-full py-3.5 sm:py-4 wood-plank-floor shrink-0 flex items-center justify-center border-t border-[#D4AF37]/50 shadow-inner">
+        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-4 select-none">
+          Copyright © e-Library - @abunaura. All rights reserved 2026
         </p>
       </div>
     </section>
@@ -884,6 +1019,13 @@
           </div>
         </div>
 
+        <!-- Footer Hak Cipta di Bagian Bawah Ruang Baca -->
+        <div class="no-print w-full py-1.5 sm:py-2 bg-[#072A20] border-t border-[#D4AF37]/40 flex items-center justify-center shrink-0 z-20">
+          <p class="text-[10px] sm:text-[11px] font-classical-label text-[#F3E5AB]/90 tracking-wider text-center px-4 select-none">
+            Copyright © e-Library - @abunaura. All rights reserved 2026
+          </p>
+        </div>
+
         <!-- Laci Geser (Drawer Modal) Daftar Isi & Grid Thumbnail Halaman -->
         <div id="thumbnail-drawer" class="no-print hidden absolute inset-y-0 right-0 z-30 w-full max-w-md bg-[#072A20] border-l-2 border-[#D4AF37] text-[#FBF9F5] shadow-2xl flex flex-col">
           <div class="flex items-center justify-between px-5 py-4 border-b border-[#D4AF37]/40">
@@ -900,10 +1042,13 @@
   </div>
 
   <!-- Modal Tambah Kotak Rak Klasifikasi Baru (Hijau Zamrud & Gold) -->
-  <div id="modal-add-shelf" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#072A20]/75 backdrop-blur-xs">
+  <div id="modal-add-shelf" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#072A20]/80 backdrop-blur-xs">
     <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
-        <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Tambah Kotak Rak Klasikal Baru</h3>
+        <div class="flex items-center gap-2">
+          <i data-lucide="folder-plus" class="w-5 h-5 text-[#D4AF37]"></i>
+          <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Tambah Kotak Rak Klasikal Baru</h3>
+        </div>
         <button type="button" id="btn-close-shelf-modal" class="text-[#F3E5AB] hover:text-white p-1">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
@@ -925,6 +1070,82 @@
           <button type="button" id="btn-cancel-shelf-modal" class="px-3.5 py-2 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">Batal</button>
           <button type="submit" class="px-4 py-2 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg">
             Simpan Kotak Rak
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Admin: Kelola & Ubah Nama Rak Buku (CRUD) -->
+  <div id="modal-admin-shelves-crud" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#072A20]/80 backdrop-blur-xs">
+    <div class="w-full max-w-2xl bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-xl p-5 sm:p-6 text-[#FBF9F5] shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-[#072A20] border border-[#D4AF37] flex items-center justify-center">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold font-serif-editorial text-[#F3E5AB]">Kelola Rak Buku Klasikal (Admin)</h3>
+            <p class="text-[11px] text-[#F3E5AB]/75">Ubah nama rak, kode klasifikasi, deskripsi, atau tambahkan kotak rak baru.</p>
+          </div>
+        </div>
+        <button type="button" id="btn-close-admin-shelves-modal" class="text-[#F3E5AB] hover:text-white p-1 rounded-lg hover:bg-[#072A20]">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="py-3 flex items-center justify-between gap-3 shrink-0">
+        <span id="admin-shelves-count-label" class="text-xs font-mono-tabular text-[#D4AF37]">8 Kotak Rak Terpasang</span>
+        <button type="button" id="btn-admin-add-new-shelf" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] transition-colors shadow-xs">
+          <i data-lucide="plus" class="w-3.5 h-3.5 text-[#072A20]"></i>
+          <span>+ Tambah Rak Baru</span>
+        </button>
+      </div>
+
+      <!-- Daftar List Rak Buku untuk CRUD -->
+      <div id="admin-shelves-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1 py-1">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="pt-3 border-t border-[#D4AF37]/40 flex items-center justify-between text-xs text-[#F3E5AB]/70 shrink-0">
+        <span>Perubahan tersimpan otomatis di penyimpanan lokal browser.</span>
+        <button type="button" id="btn-done-admin-shelves" class="px-4 py-1.5 font-bold rounded-lg bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]">
+          Selesai
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Sunting / Ubah Nama Rak (Update Shelf) -->
+  <div id="modal-edit-shelf" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#072A20]/85 backdrop-blur-xs">
+    <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-4 h-4 text-[#D4AF37]"></i>
+          <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Sunting Nama & Detail Rak</h3>
+        </div>
+        <button type="button" id="btn-close-edit-shelf-modal" class="text-[#F3E5AB] hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <form id="form-edit-shelf" class="space-y-3.5">
+        <input id="edit-shelf-id" type="hidden" />
+        <div>
+          <label for="edit-shelf-code" class="block text-xs font-medium text-[#F3E5AB] mb-1">Kode Klasikal</label>
+          <input id="edit-shelf-code" type="text" required class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white" />
+        </div>
+        <div>
+          <label for="edit-shelf-name" class="block text-xs font-medium text-[#F3E5AB] mb-1">Nama Klasifikasi / Label Rak</label>
+          <input id="edit-shelf-name" type="text" required class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white" />
+        </div>
+        <div>
+          <label for="edit-shelf-desc" class="block text-xs font-medium text-[#F3E5AB] mb-1">Deskripsi Detail Rak</label>
+          <textarea id="edit-shelf-desc" rows="3" class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white leading-relaxed"></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="btn-cancel-edit-shelf" class="px-3.5 py-2 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">Batal</button>
+          <button type="submit" class="px-4 py-2 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg">
+            Simpan Perubahan
           </button>
         </div>
       </form>
@@ -1069,69 +1290,114 @@
         box._timer = setTimeout(() => box.classList.add('hidden'), 2800);
       }
 
-      // Sintesis Suara Kertas via Web Audio API
+      // =========================================================
+      // AUDIO CONTEXT & UNLOCK SISTEM (KOMPATIBEL DENGAN HP & TABLET)
+      // =========================================================
+      function getOrCreateAudioContext() {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return null;
+          if (!audioCtx) audioCtx = new AudioContextClass();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => {});
+          }
+          return audioCtx;
+        } catch(e) {
+          return null;
+        }
+      }
+
+      function unlockAudioContextOnGesture() {
+        const ctx = getOrCreateAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      }
+      ['touchstart', 'touchend', 'click', 'keydown'].forEach(evt => {
+        window.addEventListener(evt, unlockAudioContextOnGesture, { passive: true });
+        document.addEventListener(evt, unlockAudioContextOnGesture, { passive: true });
+      });
+
+      // Suara Konfirmasi Akustik Saat Suasana Diaktifkan (Langsung Terdengar di HP/Tablet)
+      function playAmbienceWelcomeChime(ctx) {
+        if (!ctx) return;
+        try {
+          const now = ctx.currentTime;
+          const notes = [
+            { freq: 659.25, time: 0, dur: 0.65 },
+            { freq: 880.00, time: 0.12, dur: 0.85 }
+          ];
+          notes.forEach(n => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(n.freq, now + n.time);
+            gain.gain.setValueAtTime(0.0001, now + n.time);
+            gain.gain.linearRampToValueAtTime(0.18, now + n.time + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + n.time + n.dur);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + n.time);
+            osc.stop(now + n.time + n.dur + 0.05);
+          });
+        } catch(e) {}
+      }
+
+      // Sintesis Suara Kertas Halus & Renyah (Web Audio API)
       function playPaperSound(dir) {
         if (!config.enableSound) return;
         try {
-          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-          if (!AudioContextClass) return;
-          if (!audioCtx) audioCtx = new AudioContextClass();
-          if (audioCtx.state === 'suspended') audioCtx.resume();
+          const ctx = getOrCreateAudioContext();
+          if (!ctx) return;
 
-          const duration = 0.22;
-          const sampleRate = audioCtx.sampleRate;
+          const duration = 0.32;
+          const sampleRate = ctx.sampleRate;
           const frameCount = Math.floor(sampleRate * duration);
-          const buffer = audioCtx.createBuffer(1, frameCount, sampleRate);
+          const buffer = ctx.createBuffer(1, frameCount, sampleRate);
           const data = buffer.getChannelData(0);
 
           let b0 = 0, b1 = 0, b2 = 0;
           for (let i = 0; i < frameCount; i++) {
             const t = i / frameCount;
             const white = Math.random() * 2 - 1;
-            b0 = 0.997 * b0 + white * 0.029;
-            b1 = 0.985 * b1 + white * 0.032;
-            b2 = 0.950 * b2 + white * 0.048;
-            const env = Math.sin(Math.min(1, t * 1.4) * Math.PI) * Math.pow(1 - t, 1.35);
-            data[i] = (b0 + b1 + b2 + white * 0.18) * env;
+            b0 = 0.995 * b0 + white * 0.038;
+            b1 = 0.980 * b1 + white * 0.045;
+            b2 = 0.940 * b2 + white * 0.065;
+            // Amplop suara: gesekan membuka, desiran kertas lentur, lalu mendarat halus
+            const env = Math.sin(Math.min(1, t * 1.5) * Math.PI) * Math.pow(1 - t, 1.25);
+            data[i] = (b0 * 0.4 + b1 * 0.3 + b2 * 0.3 + white * 0.22) * env;
           }
 
-          const src = audioCtx.createBufferSource();
+          const src = ctx.createBufferSource();
           src.buffer = buffer;
-          const filter = audioCtx.createBiquadFilter();
-          filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(dir === 'prev' ? 820 : 950, audioCtx.currentTime);
-          filter.frequency.exponentialRampToValueAtTime(2300, audioCtx.currentTime + duration * 0.55);
 
-          const gain = audioCtx.createGain();
-          gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(dir === 'prev' ? 1100 : 1350, ctx.currentTime);
+          filter.frequency.exponentialRampToValueAtTime(3200, ctx.currentTime + duration * 0.6);
+          filter.Q.setValueAtTime(1.4, ctx.currentTime);
+
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0.01, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.38, ctx.currentTime + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
           src.connect(filter);
           filter.connect(gain);
-          gain.connect(audioCtx.destination);
+          gain.connect(ctx.destination);
           src.start();
         } catch (e) {}
       }
 
       // =========================================================
-      // SISTEM AMBIENT SOUND PERPUSTAKAAN (WEB AUDIO API MURNI)
-      // Sintesis suasana perpustakaan tenang (desau udara, resonansi kayu & detak jam halus)
+      // SISTEM AMBIENT SUASANA PERPUSTAKAAN (AUDIBLE DI SEMUA DEVICE)
+      // Desau udara ruangan hangat, pendulum jam kayu, & kristal bell
       // =========================================================
       let isAmbientPlaying = false;
       let ambientMasterGain = null;
       let ambientNodes = [];
       let ambientClockTimer = null;
-
-      function getOrCreateAudioContext() {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return null;
-        if (!audioCtx) audioCtx = new AudioContextClass();
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        return audioCtx;
-      }
+      let ambientBellTimer = null;
 
       function startLibraryAmbience() {
         const ctx = getOrCreateAudioContext();
@@ -1139,37 +1405,28 @@
 
         stopLibraryAmbienceNodes();
 
-        // 1. Master Ambient Gain Node dengan Fade-in mulus menghindari letupan suara
+        // 1. Master Gain Node dengan fade-in
         ambientMasterGain = ctx.createGain();
         ambientMasterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        ambientMasterGain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 1.2);
+        ambientMasterGain.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime + 0.8);
         ambientMasterGain.connect(ctx.destination);
 
-        // 2. Continuous Room Tone (Pink & Brown Noise terfilter frekuensi rendah ~220Hz)
-        // Mensimulasikan desau akustik hangat aula baca berkubah tinggi dan rak buku kayu
-        const bufferSec = 6;
+        // Bunyikan nada pembuka agar user langsung mendengar suara aktif seketika
+        playAmbienceWelcomeChime(ctx);
+
+        // 2. Desau Suasana Ruang Baca Perpustakaan (Bandpass 750Hz - 1800Hz agar terdengar jelas di speaker HP)
+        const bufferSec = 5;
         const sampleRate = ctx.sampleRate;
         const frameCount = sampleRate * bufferSec;
         const noiseBuffer = ctx.createBuffer(2, frameCount, sampleRate);
         const leftChannel = noiseBuffer.getChannelData(0);
         const rightChannel = noiseBuffer.getChannelData(1);
 
-        let b0L = 0, b1L = 0, b2L = 0, b3L = 0;
-        let b0R = 0, b1R = 0, b2R = 0, b3R = 0;
         for (let i = 0; i < frameCount; i++) {
           const wL = Math.random() * 2 - 1;
           const wR = Math.random() * 2 - 1;
-          b0L = 0.998 * b0L + wL * 0.024;
-          b1L = 0.990 * b1L + wL * 0.032;
-          b2L = 0.970 * b2L + wL * 0.048;
-          b3L = 0.900 * b3L + wL * 0.075;
-          leftChannel[i] = (b0L + b1L + b2L + b3L) * 0.22;
-
-          b0R = 0.998 * b0R + wR * 0.024;
-          b1R = 0.990 * b1R + wR * 0.032;
-          b2R = 0.970 * b2R + wR * 0.048;
-          b3R = 0.900 * b3R + wR * 0.075;
-          rightChannel[i] = (b0R + b1R + b2R + b3R) * 0.22;
+          leftChannel[i] = wL * 0.18;
+          rightChannel[i] = wR * 0.18;
         }
 
         const roomToneSource = ctx.createBufferSource();
@@ -1177,77 +1434,91 @@
         roomToneSource.loop = true;
 
         const roomFilter = ctx.createBiquadFilter();
-        roomFilter.type = 'lowpass';
-        roomFilter.frequency.setValueAtTime(240, ctx.currentTime);
+        roomFilter.type = 'bandpass';
+        roomFilter.frequency.setValueAtTime(950, ctx.currentTime);
         roomFilter.Q.setValueAtTime(1.1, ctx.currentTime);
 
         const roomGain = ctx.createGain();
-        roomGain.gain.setValueAtTime(0.75, ctx.currentTime);
+        roomGain.gain.setValueAtTime(0.35, ctx.currentTime);
+
+        // LFO pernapasan desau ruangan perpustakaan
+        const breathLfo = ctx.createOscillator();
+        breathLfo.type = 'sine';
+        breathLfo.frequency.setValueAtTime(0.12, ctx.currentTime);
+        const breathGain = ctx.createGain();
+        breathGain.gain.setValueAtTime(0.08, ctx.currentTime);
+        breathLfo.connect(breathGain);
+        breathGain.connect(roomGain.gain);
 
         roomToneSource.connect(roomFilter);
         roomFilter.connect(roomGain);
         roomGain.connect(ambientMasterGain);
         roomToneSource.start(0);
-        ambientNodes.push(roomToneSource);
+        breathLfo.start(0);
+        ambientNodes.push(roomToneSource, breathLfo);
 
-        // 3. Subtle Warm Wood Acoustic Drone (Harmoni Resonansi Ruangan 110Hz & 165Hz)
-        const osc1 = ctx.createOscillator();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(110, ctx.currentTime);
-
-        const osc2 = ctx.createOscillator();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(164.8, ctx.currentTime);
-
-        // LFO pernapasan halus modulasi amplitude (0.06Hz)
-        const lfo = ctx.createOscillator();
-        lfo.type = 'sine';
-        lfo.frequency.setValueAtTime(0.06, ctx.currentTime);
-        const lfoGain = ctx.createGain();
-        lfoGain.gain.setValueAtTime(0.02, ctx.currentTime);
-
-        const droneGain = ctx.createGain();
-        droneGain.gain.setValueAtTime(0.04, ctx.currentTime);
-        lfo.connect(lfoGain);
-        lfoGain.connect(droneGain.gain);
-
-        osc1.connect(droneGain);
-        osc2.connect(droneGain);
-        droneGain.connect(ambientMasterGain);
-
-        osc1.start(0);
-        osc2.start(0);
-        lfo.start(0);
-        ambientNodes.push(osc1, osc2, lfo);
-
-        // 4. Subtle Antique Wall Clock Soft Acoustic Tick (Setiap ~1.8 Detik)
+        // 3. Detak Jam Kayu Antik (Pendulum Tick-Tock Alternating)
+        let clockTickToggle = false;
         function playSubtleClockTick() {
           if (!isAmbientPlaying || !ambientMasterGain) return;
           try {
             const now = ctx.currentTime;
+            clockTickToggle = !clockTickToggle;
+            const freq = clockTickToggle ? 920 : 760;
+
             const tickOsc = ctx.createOscillator();
-            tickOsc.type = 'triangle';
-            tickOsc.frequency.setValueAtTime(1350, now);
-            tickOsc.frequency.exponentialRampToValueAtTime(300, now + 0.035);
+            tickOsc.type = 'sine';
+            tickOsc.frequency.setValueAtTime(freq, now);
+            tickOsc.frequency.exponentialRampToValueAtTime(260, now + 0.045);
 
             const tickGain = ctx.createGain();
-            tickGain.gain.setValueAtTime(0.015, now);
-            tickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+            tickGain.gain.setValueAtTime(0.14, now);
+            tickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
 
             tickOsc.connect(tickGain);
             tickGain.connect(ambientMasterGain);
             tickOsc.start(now);
-            tickOsc.stop(now + 0.04);
+            tickOsc.stop(now + 0.05);
           } catch(e) {}
         }
+        ambientClockTimer = setInterval(playSubtleClockTick, 1500);
 
-        ambientClockTimer = setInterval(playSubtleClockTick, 1800);
+        // 4. Lonceng Meditasi / Crystal Bell Tenang Setiap 9 Detik
+        let bellIndex = 0;
+        const bellPitches = [659.25, 880.0, 783.99, 987.77];
+        function playSereneChime() {
+          if (!isAmbientPlaying || !ambientMasterGain) return;
+          try {
+            const now = ctx.currentTime;
+            const p = bellPitches[bellIndex % bellPitches.length];
+            bellIndex++;
+
+            const chimeOsc = ctx.createOscillator();
+            chimeOsc.type = 'sine';
+            chimeOsc.frequency.setValueAtTime(p, now);
+
+            const chimeGain = ctx.createGain();
+            chimeGain.gain.setValueAtTime(0.0001, now);
+            chimeGain.gain.linearRampToValueAtTime(0.12, now + 0.03);
+            chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.8);
+
+            chimeOsc.connect(chimeGain);
+            chimeGain.connect(ambientMasterGain);
+            chimeOsc.start(now);
+            chimeOsc.stop(now + 4.0);
+          } catch(e) {}
+        }
+        ambientBellTimer = setInterval(playSereneChime, 9000);
       }
 
       function stopLibraryAmbienceNodes() {
         if (ambientClockTimer) {
           clearInterval(ambientClockTimer);
           ambientClockTimer = null;
+        }
+        if (ambientBellTimer) {
+          clearInterval(ambientBellTimer);
+          ambientBellTimer = null;
         }
         if (ambientNodes.length > 0) {
           ambientNodes.forEach(node => {
@@ -1267,14 +1538,14 @@
           const now = audioCtx.currentTime;
           ambientMasterGain.gain.cancelScheduledValues(now);
           ambientMasterGain.gain.setValueAtTime(ambientMasterGain.gain.value, now);
-          ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+          ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
           setTimeout(() => {
             stopLibraryAmbienceNodes();
             if (ambientMasterGain) {
               ambientMasterGain.disconnect();
               ambientMasterGain = null;
             }
-          }, 850);
+          }, 550);
         } catch(e) {
           stopLibraryAmbienceNodes();
         }
@@ -1299,11 +1570,11 @@
 
         if (headerBtn) {
           if (isAmbientPlaying) {
-            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg bg-[#D4AF37] text-[#072A20] shadow-md ring-2 ring-[#D4AF37]/80 transition-all whitespace-nowrap animate-pulse';
+            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] shadow-md ring-2 ring-[#D4AF37]/80 transition-all whitespace-nowrap animate-pulse';
             headerBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span class="hidden md:inline">Suasana: Aktif</span>';
             headerBtn.title = 'Suasana Perpustakaan Sedang Aktif (Klik untuk Matikan)';
           } else {
-            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold transition-all whitespace-nowrap';
+            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold transition-all whitespace-nowrap shadow-xs';
             headerBtn.innerHTML = '<i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i><span class="hidden md:inline">Suasana Hening</span>';
             headerBtn.title = 'Aktifkan Suara Suasana Perpustakaan Tenang';
           }
@@ -1757,13 +2028,27 @@
                   previewTitles +
                 '</ul>' +
               '</div>' +
-              '<div class="pt-1 border-t border-[#D4AF37]/30 flex items-center justify-between text-[9px] sm:text-[11px] font-bold text-[#F3E5AB]">' +
-                '<span>Buka Koleksi 3D</span>' +
-                '<i data-lucide="arrow-up-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37]"></i>' +
+              '<div class="pt-1.5 border-t border-[#D4AF37]/30 flex items-center justify-between gap-1 text-[9px] sm:text-[11px] font-bold text-[#F3E5AB]">' +
+                '<span class="flex items-center gap-1 hover:underline truncate">' +
+                  '<span>Buka Koleksi 3D</span>' +
+                  '<i data-lucide="arrow-up-right" class="w-3 h-3 text-[#D4AF37] shrink-0"></i>' +
+                '</span>' +
+                '<button type="button" class="btn-quick-edit-shelf px-2 py-0.5 rounded bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 text-[9px] flex items-center gap-1 transition-colors shrink-0 shadow-2xs" data-shelf-id="' + shelf.id + '" title="Ubah Nama Kotak Rak Ini">' +
+                  '<i data-lucide="edit-3" class="w-2.5 h-2.5 text-[#D4AF37]"></i>' +
+                  '<span>Ubah Nama</span>' +
+                '</button>' +
               '</div>' +
             '</div>';
 
           container.appendChild(cubby);
+        });
+
+        container.querySelectorAll('.btn-quick-edit-shelf').forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const sid = btn.getAttribute('data-shelf-id');
+            openEditShelfModal(sid);
+          };
         });
 
         if (window.lucide) window.lucide.createIcons();
@@ -2058,37 +2343,18 @@
         return right ? [left, right] : [left];
       }
 
-      function renderStage(direction) {
-        const total = pagesDataUrls.length || 1;
-        const visible = getVisiblePages();
-        const stage = document.getElementById('reader-stage');
-        if (stage) {
-          stage.classList.toggle('full-page-fit', Boolean(isFullPageFit));
-        }
+      let isPageTurning = false;
 
-        const mount = document.getElementById('pages-spread-Mount');
-        mount.innerHTML = '';
-        mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] ' +
-          (direction === 'backward' ? 'page-turn-backward' : 'page-turn-forward');
+      function createPageImageElement(pNo, altText) {
+        const item = pagesDataUrls[pNo - 1];
+        const img = document.createElement('img');
+        if (item) img.src = item.dataUrl;
+        img.alt = altText || ('Halaman ' + pNo);
+        img.className = 'block h-[42vh] sm:h-[50vh] lg:h-[56vh] max-h-[520px] w-auto object-contain select-none';
+        return img;
+      }
 
-        visible.forEach((pNo, idx) => {
-          const item = pagesDataUrls[pNo - 1];
-          if (!item) return;
-          const img = document.createElement('img');
-          img.src = item.dataUrl;
-          img.alt = 'Halaman ' + pNo;
-          img.className = 'block h-[42vh] sm:h-[50vh] lg:h-[56vh] max-h-[520px] w-auto object-contain select-none transition-all';
-          img.onclick = () => {
-            if (visible.length === 2 && idx === 0) goPrev();
-            else goNext();
-          };
-          mount.appendChild(img);
-        });
-
-        document.getElementById('center-spine-shadow').style.display = visible.length === 2 ? 'block' : 'none';
-        document.getElementById('left-paper-stack').style.display = visible.length === 2 ? 'block' : 'none';
-        document.getElementById('book-3d-object').style.transform = 'scale(' + zoomLevel + ')';
-
+      function updateReaderControlsState(visible, total) {
         const labelText = visible.length === 2
           ? 'Halaman ' + visible[0] + '–' + visible[1] + ' dari ' + total
           : 'Halaman ' + visible[0] + ' dari ' + total;
@@ -2117,9 +2383,209 @@
 
         updateAmbientButtonsUI();
         document.getElementById('password-gate-modal').classList.toggle('hidden', !isLocked);
-
         updateReaderModeButtons();
         persistState();
+      }
+
+      function renderStage(direction) {
+        const total = pagesDataUrls.length || 1;
+        const visible = getVisiblePages();
+        const stage = document.getElementById('reader-stage');
+        if (stage) {
+          stage.classList.toggle('full-page-fit', Boolean(isFullPageFit));
+        }
+
+        const mount = document.getElementById('pages-spread-Mount');
+        mount.innerHTML = '';
+        mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+
+        visible.forEach((pNo, idx) => {
+          const img = createPageImageElement(pNo, 'Halaman ' + pNo);
+          img.onclick = () => {
+            if (visible.length === 2 && idx === 0) goPrev();
+            else goNext();
+          };
+          mount.appendChild(img);
+        });
+
+        // Sudut Lipatan Lembaran Kertas Reaktif & Interaktif (Corner Curl Hover & Flip)
+        if (visible.length === 2) {
+          if (visible[1] < total) {
+            const cornerRight = document.createElement('div');
+            cornerRight.className = 'page-corner-hint page-corner-hint-bottom-right';
+            cornerRight.title = 'Buka lembaran berikutnya (Klik atau Usap)';
+            cornerRight.onclick = (e) => { e.stopPropagation(); goNext(); };
+            mount.appendChild(cornerRight);
+          }
+          if (visible[0] > 1) {
+            const cornerLeft = document.createElement('div');
+            cornerLeft.className = 'page-corner-hint page-corner-hint-bottom-left';
+            cornerLeft.title = 'Kembali ke lembaran sebelumnya (Klik atau Usap)';
+            cornerLeft.onclick = (e) => { e.stopPropagation(); goPrev(); };
+            mount.appendChild(cornerLeft);
+          }
+        } else if (visible.length === 1) {
+          if (visible[0] < total) {
+            const cornerRight = document.createElement('div');
+            cornerRight.className = 'page-corner-hint page-corner-hint-bottom-right';
+            cornerRight.title = 'Buka halaman berikutnya';
+            cornerRight.onclick = (e) => { e.stopPropagation(); goNext(); };
+            mount.appendChild(cornerRight);
+          }
+          if (visible[0] > 1) {
+            const cornerLeft = document.createElement('div');
+            cornerLeft.className = 'page-corner-hint page-corner-hint-bottom-left';
+            cornerLeft.title = 'Kembali ke halaman sebelumnya';
+            cornerLeft.onclick = (e) => { e.stopPropagation(); goPrev(); };
+            mount.appendChild(cornerLeft);
+          }
+        }
+
+        document.getElementById('center-spine-shadow').style.display = visible.length === 2 ? 'block' : 'none';
+        document.getElementById('left-paper-stack').style.display = visible.length === 2 ? 'block' : 'none';
+        document.getElementById('book-3d-object').style.transform = 'scale(' + zoomLevel + ')';
+
+        updateReaderControlsState(visible, total);
+      }
+
+      // Animasi Membuka Lembaran Kertas 3D Halus dengan Slow Motion Physics
+      function triggerRealisticPageTurn(targetPage, direction) {
+        if (isPageTurning) return;
+        const total = pagesDataUrls.length || 1;
+        const oldVisible = getVisiblePages();
+
+        currentPage = targetPage;
+        const newVisible = getVisiblePages();
+
+        if (oldVisible.join(',') === newVisible.join(',')) {
+          renderStage(direction);
+          return;
+        }
+
+        isPageTurning = true;
+        playPaperSound(direction);
+
+        const mount = document.getElementById('pages-spread-Mount');
+        const isSpread = newVisible.length === 2 || oldVisible.length === 2;
+
+        if (isSpread && direction === 'forward') {
+          // Membalik Maju (Forward Spread Flip)
+          const leftUnderneath = oldVisible[0];
+          const rightUnderneath = newVisible[1] || newVisible[0];
+          const frontPageNum = oldVisible[1] || oldVisible[0];
+          const backPageNum = newVisible[0];
+
+          mount.innerHTML = '';
+          mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+
+          const leftImg = createPageImageElement(leftUnderneath, 'Halaman ' + leftUnderneath);
+          mount.appendChild(leftImg);
+
+          const rightImg = createPageImageElement(rightUnderneath, 'Halaman ' + rightUnderneath);
+          mount.appendChild(rightImg);
+
+          const leaf = document.createElement('div');
+          leaf.className = 'turning-page-leaf turn-from-right';
+
+          const faceFront = document.createElement('div');
+          faceFront.className = 'page-face page-face-front flex items-center justify-center';
+          faceFront.appendChild(createPageImageElement(frontPageNum, 'Halaman ' + frontPageNum));
+          const curlOverlay = document.createElement('div');
+          curlOverlay.className = 'paper-curl-overlay curl-shadow-forward';
+          faceFront.appendChild(curlOverlay);
+
+          const faceBack = document.createElement('div');
+          faceBack.className = 'page-face page-face-back flex items-center justify-center';
+          faceBack.appendChild(createPageImageElement(backPageNum, 'Halaman ' + backPageNum));
+
+          leaf.appendChild(faceFront);
+          leaf.appendChild(faceBack);
+          mount.appendChild(leaf);
+
+          updateReaderControlsState(newVisible, total);
+
+          setTimeout(() => {
+            isPageTurning = false;
+            renderStage('forward');
+          }, 1150);
+
+        } else if (isSpread && direction === 'backward') {
+          // Membalik Mundur (Backward Spread Flip)
+          const leftUnderneath = newVisible[0];
+          const rightUnderneath = oldVisible[1] || oldVisible[0];
+          const frontPageNum = oldVisible[0];
+          const backPageNum = newVisible[1] || newVisible[0];
+
+          mount.innerHTML = '';
+          mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+
+          const leftImg = createPageImageElement(leftUnderneath, 'Halaman ' + leftUnderneath);
+          mount.appendChild(leftImg);
+
+          const rightImg = createPageImageElement(rightUnderneath, 'Halaman ' + rightUnderneath);
+          mount.appendChild(rightImg);
+
+          const leaf = document.createElement('div');
+          leaf.className = 'turning-page-leaf turn-from-left';
+
+          const faceFront = document.createElement('div');
+          faceFront.className = 'page-face page-face-front flex items-center justify-center';
+          faceFront.appendChild(createPageImageElement(frontPageNum, 'Halaman ' + frontPageNum));
+          const curlOverlay = document.createElement('div');
+          curlOverlay.className = 'paper-curl-overlay curl-shadow-backward';
+          faceFront.appendChild(curlOverlay);
+
+          const faceBack = document.createElement('div');
+          faceBack.className = 'page-face page-face-back flex items-center justify-center';
+          faceBack.appendChild(createPageImageElement(backPageNum, 'Halaman ' + backPageNum));
+
+          leaf.appendChild(faceFront);
+          leaf.appendChild(faceBack);
+          mount.appendChild(leaf);
+
+          updateReaderControlsState(newVisible, total);
+
+          setTimeout(() => {
+            isPageTurning = false;
+            renderStage('backward');
+          }, 1150);
+
+        } else {
+          // Mode 1 Halaman (Tunggal / Layar Ponsel)
+          const oldP = oldVisible[0];
+          const newP = newVisible[0];
+
+          mount.innerHTML = '';
+          mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+
+          const baseImg = createPageImageElement(newP, 'Halaman ' + newP);
+          mount.appendChild(baseImg);
+
+          const leaf = document.createElement('div');
+          leaf.className = 'turning-page-leaf single-leaf ' + (direction === 'forward' ? 'turn-from-right' : 'turn-from-left');
+
+          const faceFront = document.createElement('div');
+          faceFront.className = 'page-face page-face-front flex items-center justify-center';
+          faceFront.appendChild(createPageImageElement(oldP, 'Halaman ' + oldP));
+          const curlOverlay = document.createElement('div');
+          curlOverlay.className = 'paper-curl-overlay ' + (direction === 'forward' ? 'curl-shadow-forward' : 'curl-shadow-backward');
+          faceFront.appendChild(curlOverlay);
+
+          const faceBack = document.createElement('div');
+          faceBack.className = 'page-face page-face-back flex items-center justify-center';
+          faceBack.appendChild(createPageImageElement(newP, 'Halaman ' + newP));
+
+          leaf.appendChild(faceFront);
+          leaf.appendChild(faceBack);
+          mount.appendChild(leaf);
+
+          updateReaderControlsState(newVisible, total);
+
+          setTimeout(() => {
+            isPageTurning = false;
+            renderStage(direction);
+          }, 1150);
+        }
       }
 
       function renderThumbnailsGrid() {
@@ -2134,9 +2600,9 @@
             '<span class="text-[11px] font-mono-tabular text-[#D4AF37]">Halaman ' + p.pageNumber + '</span>' +
             '<span class="text-xs font-serif-editorial font-bold text-[#F3E5AB] truncate w-full">' + p.title + '</span>';
           btn.onclick = () => {
-            currentPage = p.pageNumber;
-            playPaperSound('next');
-            renderStage('forward');
+            const targetP = p.pageNumber;
+            const dir = targetP >= currentPage ? 'forward' : 'backward';
+            triggerRealisticPageTurn(targetP, dir);
             document.getElementById('thumbnail-drawer').classList.add('hidden');
           };
           grid.appendChild(btn);
@@ -2144,22 +2610,20 @@
       }
 
       function goNext() {
-        if (isLocked) return;
+        if (isLocked || isPageTurning) return;
         const total = pagesDataUrls.length;
         if (currentPage >= total) return;
         const isSingle = readerPageMode === '1p' || (readerPageMode === 'auto' && window.innerWidth < 900);
-        currentPage = isSingle || currentPage === 1 ? Math.min(total, currentPage + 1) : Math.min(total, currentPage + 2);
-        playPaperSound('next');
-        renderStage('forward');
+        const nextTarget = isSingle || currentPage === 1 ? Math.min(total, currentPage + 1) : Math.min(total, currentPage + 2);
+        triggerRealisticPageTurn(nextTarget, 'forward');
       }
 
       function goPrev() {
-        if (isLocked) return;
+        if (isLocked || isPageTurning) return;
         if (currentPage <= 1) return;
         const isSingle = readerPageMode === '1p' || (readerPageMode === 'auto' && window.innerWidth < 900);
-        currentPage = isSingle || currentPage <= 2 ? Math.max(1, currentPage - 1) : Math.max(1, currentPage - 2);
-        playPaperSound('prev');
-        renderStage('backward');
+        const prevTarget = isSingle || currentPage <= 2 ? Math.max(1, currentPage - 1) : Math.max(1, currentPage - 2);
+        triggerRealisticPageTurn(prevTarget, 'backward');
       }
 
       // =========================================================
@@ -2277,6 +2741,172 @@
         const targetShelf = shelves.find((s) => s.id === targetShelfId);
         showToast('Buku "' + config.title + '" berhasil disimpan ke ' + (targetShelf ? targetShelf.name : 'rak'));
       };
+
+      // =========================================================
+      // SISTEM CRUD ADMIN RAK BUKU (CREATE, READ, UPDATE, DELETE)
+      // =========================================================
+      function openAdminShelvesModal() {
+        renderAdminShelvesList();
+        document.getElementById('modal-admin-shelves-crud').classList.remove('hidden');
+      }
+
+      function closeAdminShelvesModal() {
+        document.getElementById('modal-admin-shelves-crud').classList.add('hidden');
+      }
+
+      function renderAdminShelvesList() {
+        const list = document.getElementById('admin-shelves-list');
+        list.innerHTML = '';
+        document.getElementById('admin-shelves-count-label').textContent = shelves.length + ' Kotak Rak Terpasang';
+
+        shelves.forEach((s, idx) => {
+          const sBooks = books.filter((b) => b.shelfId === s.id);
+          const row = document.createElement('div');
+          row.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-[#072A20] border border-[#D4AF37]/50 hover:border-[#D4AF37] transition-all';
+          row.innerHTML =
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex items-center gap-2 mb-1">' +
+                '<span class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/60 text-[#F3E5AB]">' +
+                  s.code +
+                '</span>' +
+                '<span class="text-[10px] font-mono-tabular text-[#D4AF37]">' +
+                  sBooks.length + ' Koleksi Buku' +
+                '</span>' +
+              '</div>' +
+              '<h4 class="text-sm font-bold font-serif-editorial text-white truncate">' +
+                s.name +
+              '</h4>' +
+              '<p class="text-xs text-[#E6E1D6]/80 line-clamp-1 mt-0.5">' +
+                s.description +
+              '</p>' +
+            '</div>' +
+            '<div class="flex items-center gap-2 shrink-0">' +
+              '<button type="button" class="btn-edit-shelf-action px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 flex items-center gap-1.5 transition-colors shadow-2xs" data-shelf-id="' + s.id + '">' +
+                '<i data-lucide="edit-3" class="w-3.5 h-3.5 text-[#D4AF37]"></i>' +
+                '<span>Ubah Nama</span>' +
+              '</button>' +
+              '<button type="button" class="btn-delete-shelf-action p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-200 border border-red-800/60 flex items-center gap-1 transition-colors ' + (shelves.length <= 1 ? 'opacity-30 cursor-not-allowed' : '') + '" data-shelf-id="' + s.id + '" title="Hapus Kotak Rak Ini">' +
+                '<i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-400"></i>' +
+                '<span class="hidden sm:inline">Hapus</span>' +
+              '</button>' +
+            '</div>';
+          list.appendChild(row);
+        });
+
+        list.querySelectorAll('.btn-edit-shelf-action').forEach((btn) => {
+          btn.onclick = () => {
+            const sid = btn.getAttribute('data-shelf-id');
+            openEditShelfModal(sid);
+          };
+        });
+
+        list.querySelectorAll('.btn-delete-shelf-action').forEach((btn) => {
+          btn.onclick = () => {
+            const sid = btn.getAttribute('data-shelf-id');
+            handleDeleteShelf(sid);
+          };
+        });
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function openEditShelfModal(shelfId) {
+        const shelf = shelves.find((s) => s.id === shelfId);
+        if (!shelf) return;
+        document.getElementById('edit-shelf-id').value = shelf.id;
+        document.getElementById('edit-shelf-code').value = shelf.code;
+        document.getElementById('edit-shelf-name').value = shelf.name;
+        document.getElementById('edit-shelf-desc').value = shelf.description;
+        document.getElementById('modal-edit-shelf').classList.remove('hidden');
+      }
+
+      function closeEditShelfModal() {
+        document.getElementById('modal-edit-shelf').classList.add('hidden');
+      }
+
+      function handleSaveEditShelf(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-shelf-id').value;
+        const code = document.getElementById('edit-shelf-code').value.trim();
+        const name = document.getElementById('edit-shelf-name').value.trim();
+        const desc = document.getElementById('edit-shelf-desc').value.trim();
+
+        const shelf = shelves.find((s) => s.id === id);
+        if (shelf) {
+          shelf.code = code || shelf.code;
+          shelf.name = name || shelf.name;
+          shelf.description = desc || shelf.description;
+          saveShelvesToStorage();
+          populateShelfDropdown();
+          renderLobbyView(document.getElementById('lobby-search-input').value);
+          renderShelfQuickSwitcher();
+          renderAdminShelvesList();
+
+          if (currentView === 'shelf' && activeShelfId === id) {
+            document.getElementById('active-shelf-badge').textContent = shelf.code;
+            document.getElementById('active-shelf-title').textContent = shelf.name;
+            document.getElementById('active-shelf-desc').textContent = shelf.description;
+            document.getElementById('bc-shelf-btn').textContent = shelf.name;
+            document.getElementById('tab-shelf-label').textContent = shelf.code;
+          }
+
+          closeEditShelfModal();
+          showToast('Nama rak berhasil diubah menjadi "' + shelf.name + '"');
+        }
+      }
+
+      function handleDeleteShelf(shelfId) {
+        if (shelves.length <= 1) {
+          showToast('Tidak dapat menghapus: Minimal harus ada 1 kotak rak di perpustakaan.');
+          return;
+        }
+        const shelf = shelves.find((s) => s.id === shelfId);
+        if (!shelf) return;
+
+        const shelfBooks = books.filter((b) => b.shelfId === shelfId);
+        const confirmMsg = shelfBooks.length > 0
+          ? 'Hapus rak "' + shelf.name + '"? Sebanyak ' + shelfBooks.length + ' buku di rak ini akan dipindahkan ke rak utama.'
+          : 'Hapus rak "' + shelf.name + '"?';
+
+        if (window.confirm(confirmMsg)) {
+          const fallbackShelf = shelves.find((s) => s.id !== shelfId) || shelves[0];
+          books.forEach((b) => {
+            if (b.shelfId === shelfId) {
+              b.shelfId = fallbackShelf.id;
+            }
+          });
+          saveBooksToStorage();
+
+          shelves = shelves.filter((s) => s.id !== shelfId);
+          saveShelvesToStorage();
+          populateShelfDropdown();
+
+          if (activeShelfId === shelfId) {
+            activeShelfId = fallbackShelf.id;
+          }
+
+          renderAdminShelvesList();
+          renderLobbyView(document.getElementById('lobby-search-input').value);
+          renderShelfQuickSwitcher();
+          if (currentView === 'shelf') {
+            openShelfView(activeShelfId);
+          }
+          showToast('Kotak rak "' + shelf.name + '" berhasil dihapus.');
+        }
+      }
+
+      // Event Listeners CRUD Admin Rak
+      document.getElementById('btn-admin-shelves-crud').onclick = openAdminShelvesModal;
+      document.getElementById('btn-close-admin-shelves-modal').onclick = closeAdminShelvesModal;
+      document.getElementById('btn-done-admin-shelves').onclick = closeAdminShelvesModal;
+      document.getElementById('btn-admin-add-new-shelf').onclick = () => {
+        closeAdminShelvesModal();
+        shelfModal.classList.remove('hidden');
+        document.getElementById('new-shelf-code').value = 'KLASIKAL ' + ((shelves.length + 1) * 100);
+      };
+      document.getElementById('btn-close-edit-shelf-modal').onclick = closeEditShelfModal;
+      document.getElementById('btn-cancel-edit-shelf').onclick = closeEditShelfModal;
+      document.getElementById('form-edit-shelf').onsubmit = handleSaveEditShelf;
 
       // Modal Tambah Kotak Rak Baru
       const shelfModal = document.getElementById('modal-add-shelf');

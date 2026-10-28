@@ -743,6 +743,11 @@ export const FlipbookViewer3D: React.FC<FlipbookViewer3DProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Footer Hak Cipta */}
+        <p className="no-print text-[11px] font-classical-label text-[#D4AF37]/90 tracking-wider text-center select-none pt-1">
+          Copyright © e-Library - @abunaura. All rights reserved 2026
+        </p>
       </div>
 
       {/* Sliding Drawer Modal: Daftar Isi & Grid Thumbnail Halaman */}
