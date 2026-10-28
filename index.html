@@ -418,6 +418,10 @@
 
     <!-- Tombol Aksi Header -->
     <div class="flex items-center gap-2 shrink-0">
+      <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all">
+        <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+        <span class="hidden md:inline">Suasana Hening</span>
+      </button>
       <button type="button" id="header-share-btn" title="Salin Tautan Baca" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
         <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Salin Tautan</span>
@@ -867,7 +871,11 @@
 
             <div class="flex items-center gap-1.5 flex-wrap">
               <button type="button" id="toolbar-thumbs-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Daftar Isi</button>
-              <button type="button" id="toolbar-sound-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Suara Aktif</button>
+              <button type="button" id="toolbar-sound-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Suara Kertas</button>
+              <button type="button" id="toolbar-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] flex items-center gap-1.5 transition-all">
+                <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span id="toolbar-ambient-text">Suasana Senyap</span>
+              </button>
               <button type="button" id="toolbar-print-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Cetak</button>
               <button type="button" id="toolbar-download-btn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB]">Unduh PDF</button>
               <button type="button" id="toolbar-share-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Bagikan</button>
@@ -1104,6 +1112,216 @@
           gain.connect(audioCtx.destination);
           src.start();
         } catch (e) {}
+      }
+
+      // =========================================================
+      // SISTEM AMBIENT SOUND PERPUSTAKAAN (WEB AUDIO API MURNI)
+      // Sintesis suasana perpustakaan tenang (desau udara, resonansi kayu & detak jam halus)
+      // =========================================================
+      let isAmbientPlaying = false;
+      let ambientMasterGain = null;
+      let ambientNodes = [];
+      let ambientClockTimer = null;
+
+      function getOrCreateAudioContext() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        if (!audioCtx) audioCtx = new AudioContextClass();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      function startLibraryAmbience() {
+        const ctx = getOrCreateAudioContext();
+        if (!ctx) return;
+
+        stopLibraryAmbienceNodes();
+
+        // 1. Master Ambient Gain Node dengan Fade-in mulus menghindari letupan suara
+        ambientMasterGain = ctx.createGain();
+        ambientMasterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        ambientMasterGain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 1.2);
+        ambientMasterGain.connect(ctx.destination);
+
+        // 2. Continuous Room Tone (Pink & Brown Noise terfilter frekuensi rendah ~220Hz)
+        // Mensimulasikan desau akustik hangat aula baca berkubah tinggi dan rak buku kayu
+        const bufferSec = 6;
+        const sampleRate = ctx.sampleRate;
+        const frameCount = sampleRate * bufferSec;
+        const noiseBuffer = ctx.createBuffer(2, frameCount, sampleRate);
+        const leftChannel = noiseBuffer.getChannelData(0);
+        const rightChannel = noiseBuffer.getChannelData(1);
+
+        let b0L = 0, b1L = 0, b2L = 0, b3L = 0;
+        let b0R = 0, b1R = 0, b2R = 0, b3R = 0;
+        for (let i = 0; i < frameCount; i++) {
+          const wL = Math.random() * 2 - 1;
+          const wR = Math.random() * 2 - 1;
+          b0L = 0.998 * b0L + wL * 0.024;
+          b1L = 0.990 * b1L + wL * 0.032;
+          b2L = 0.970 * b2L + wL * 0.048;
+          b3L = 0.900 * b3L + wL * 0.075;
+          leftChannel[i] = (b0L + b1L + b2L + b3L) * 0.22;
+
+          b0R = 0.998 * b0R + wR * 0.024;
+          b1R = 0.990 * b1R + wR * 0.032;
+          b2R = 0.970 * b2R + wR * 0.048;
+          b3R = 0.900 * b3R + wR * 0.075;
+          rightChannel[i] = (b0R + b1R + b2R + b3R) * 0.22;
+        }
+
+        const roomToneSource = ctx.createBufferSource();
+        roomToneSource.buffer = noiseBuffer;
+        roomToneSource.loop = true;
+
+        const roomFilter = ctx.createBiquadFilter();
+        roomFilter.type = 'lowpass';
+        roomFilter.frequency.setValueAtTime(240, ctx.currentTime);
+        roomFilter.Q.setValueAtTime(1.1, ctx.currentTime);
+
+        const roomGain = ctx.createGain();
+        roomGain.gain.setValueAtTime(0.75, ctx.currentTime);
+
+        roomToneSource.connect(roomFilter);
+        roomFilter.connect(roomGain);
+        roomGain.connect(ambientMasterGain);
+        roomToneSource.start(0);
+        ambientNodes.push(roomToneSource);
+
+        // 3. Subtle Warm Wood Acoustic Drone (Harmoni Resonansi Ruangan 110Hz & 165Hz)
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(110, ctx.currentTime);
+
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(164.8, ctx.currentTime);
+
+        // LFO pernapasan halus modulasi amplitude (0.06Hz)
+        const lfo = ctx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(0.06, ctx.currentTime);
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.setValueAtTime(0.02, ctx.currentTime);
+
+        const droneGain = ctx.createGain();
+        droneGain.gain.setValueAtTime(0.04, ctx.currentTime);
+        lfo.connect(lfoGain);
+        lfoGain.connect(droneGain.gain);
+
+        osc1.connect(droneGain);
+        osc2.connect(droneGain);
+        droneGain.connect(ambientMasterGain);
+
+        osc1.start(0);
+        osc2.start(0);
+        lfo.start(0);
+        ambientNodes.push(osc1, osc2, lfo);
+
+        // 4. Subtle Antique Wall Clock Soft Acoustic Tick (Setiap ~1.8 Detik)
+        function playSubtleClockTick() {
+          if (!isAmbientPlaying || !ambientMasterGain) return;
+          try {
+            const now = ctx.currentTime;
+            const tickOsc = ctx.createOscillator();
+            tickOsc.type = 'triangle';
+            tickOsc.frequency.setValueAtTime(1350, now);
+            tickOsc.frequency.exponentialRampToValueAtTime(300, now + 0.035);
+
+            const tickGain = ctx.createGain();
+            tickGain.gain.setValueAtTime(0.015, now);
+            tickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+
+            tickOsc.connect(tickGain);
+            tickGain.connect(ambientMasterGain);
+            tickOsc.start(now);
+            tickOsc.stop(now + 0.04);
+          } catch(e) {}
+        }
+
+        ambientClockTimer = setInterval(playSubtleClockTick, 1800);
+      }
+
+      function stopLibraryAmbienceNodes() {
+        if (ambientClockTimer) {
+          clearInterval(ambientClockTimer);
+          ambientClockTimer = null;
+        }
+        if (ambientNodes.length > 0) {
+          ambientNodes.forEach(node => {
+            try { node.stop(); } catch(e) {}
+            try { node.disconnect(); } catch(e) {}
+          });
+          ambientNodes = [];
+        }
+      }
+
+      function stopLibraryAmbience() {
+        if (!ambientMasterGain || !audioCtx) {
+          stopLibraryAmbienceNodes();
+          return;
+        }
+        try {
+          const now = audioCtx.currentTime;
+          ambientMasterGain.gain.cancelScheduledValues(now);
+          ambientMasterGain.gain.setValueAtTime(ambientMasterGain.gain.value, now);
+          ambientMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+          setTimeout(() => {
+            stopLibraryAmbienceNodes();
+            if (ambientMasterGain) {
+              ambientMasterGain.disconnect();
+              ambientMasterGain = null;
+            }
+          }, 850);
+        } catch(e) {
+          stopLibraryAmbienceNodes();
+        }
+      }
+
+      function toggleLibraryAmbience() {
+        isAmbientPlaying = !isAmbientPlaying;
+        if (isAmbientPlaying) {
+          startLibraryAmbience();
+          showToast('Suasana hening perpustakaan diaktifkan (suara latar tenang)');
+        } else {
+          stopLibraryAmbience();
+          showToast('Suasana perpustakaan dinonaktifkan');
+        }
+        updateAmbientButtonsUI();
+      }
+
+      function updateAmbientButtonsUI() {
+        const headerBtn = document.getElementById('header-ambient-btn');
+        const toolbarBtn = document.getElementById('toolbar-ambient-btn');
+        const toolbarText = document.getElementById('toolbar-ambient-text');
+
+        if (headerBtn) {
+          if (isAmbientPlaying) {
+            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg bg-[#D4AF37] text-[#072A20] shadow-md ring-2 ring-[#D4AF37]/80 transition-all whitespace-nowrap animate-pulse';
+            headerBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span class="hidden md:inline">Suasana: Aktif</span>';
+            headerBtn.title = 'Suasana Perpustakaan Sedang Aktif (Klik untuk Matikan)';
+          } else {
+            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold transition-all whitespace-nowrap';
+            headerBtn.innerHTML = '<i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i><span class="hidden md:inline">Suasana Hening</span>';
+            headerBtn.title = 'Aktifkan Suara Suasana Perpustakaan Tenang';
+          }
+        }
+
+        if (toolbarBtn) {
+          if (isAmbientPlaying) {
+            toolbarBtn.className = 'px-2.5 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] shadow-md ring-2 ring-[#D4AF37]/80 flex items-center gap-1.5 whitespace-nowrap transition-all';
+            toolbarBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span id="toolbar-ambient-text">Suasana Tenang</span>';
+            toolbarBtn.title = 'Suasana Perpustakaan Sedang Aktif (Klik untuk Matikan)';
+          } else {
+            toolbarBtn.className = 'px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] flex items-center gap-1.5 transition-all';
+            toolbarBtn.innerHTML = '<i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i><span id="toolbar-ambient-text">Suasana Senyap</span>';
+            toolbarBtn.title = 'Aktifkan Suara Suasana Perpustakaan Tenang';
+          }
+        }
+
+        if (window.lucide) window.lucide.createIcons();
       }
 
       // Helper Pembungkus Baris Kanvas Anti-Tabrakan
@@ -1895,8 +2113,9 @@
         document.getElementById('toolbar-print-btn').style.display = config.allowPrint ? 'inline-flex' : 'none';
         document.getElementById('slider-bar-container').style.display = config.showThumbnails ? 'flex' : 'none';
         document.getElementById('toolbar-thumbs-btn').style.display = config.showThumbnails ? 'inline-flex' : 'none';
-        document.getElementById('toolbar-sound-btn').textContent = config.enableSound ? 'Suara Aktif' : 'Bisu';
+        document.getElementById('toolbar-sound-btn').textContent = config.enableSound ? 'Kertas: Aktif' : 'Kertas: Bisu';
 
+        updateAmbientButtonsUI();
         document.getElementById('password-gate-modal').classList.toggle('hidden', !isLocked);
 
         updateReaderModeButtons();
@@ -2265,6 +2484,12 @@
       document.getElementById('btn-copy-share').onclick = copyShareLink;
       document.getElementById('header-share-btn').onclick = copyShareLink;
       document.getElementById('toolbar-share-btn').onclick = copyShareLink;
+
+      // Toggle Ambient Suasana Perpustakaan
+      const headerAmbientBtn = document.getElementById('header-ambient-btn');
+      if (headerAmbientBtn) headerAmbientBtn.onclick = toggleLibraryAmbience;
+      const toolbarAmbientBtn = document.getElementById('toolbar-ambient-btn');
+      if (toolbarAmbientBtn) toolbarAmbientBtn.onclick = toggleLibraryAmbience;
 
       document.getElementById('toolbar-thumbs-btn').onclick = () => {
         document.getElementById('thumbnail-drawer').classList.toggle('hidden');
