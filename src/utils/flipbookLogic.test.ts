@@ -10,7 +10,10 @@ import {
   validatePdfUrlInput,
   generateMinimalValidPdfBytes,
   evaluateAdminAccess,
-  shouldFallbackToDirectEmailVerify,
+  DEFAULT_ADMIN_INITIAL_PASSWORD,
+  computeAdminPasswordHash,
+  verifyAdminEmailAndPassword,
+  validateAdminPasswordChange,
 } from './flipbookLogic';
 
 test('calculateSpreadState handles desktop 2-page spread transitions accurately', () => {
@@ -120,13 +123,75 @@ test('evaluateAdminAccess enforces single email whitelist for marhaniza05@gmail.
   assert.equal(deniedEmpty.authorized, false);
 });
 
-test('shouldFallbackToDirectEmailVerify detects auth/unauthorized-domain and popup restrictions', () => {
-  assert.equal(shouldFallbackToDirectEmailVerify('auth/unauthorized-domain'), true);
-  assert.equal(shouldFallbackToDirectEmailVerify('auth/popup-blocked'), true);
+test('verifyAdminEmailAndPassword strictly blocks email-only bypass and enforces password hash', () => {
+  // Knowing marhaniza05@gmail.com WITHOUT password MUST be strictly rejected
+  const noPasswordAttempt = verifyAdminEmailAndPassword('marhaniza05@gmail.com', '');
+  assert.equal(noPasswordAttempt.authorized, false);
+
+  // Knowing marhaniza05@gmail.com with WRONG password MUST be strictly rejected
+  const wrongPasswordAttempt = verifyAdminEmailAndPassword('marhaniza05@gmail.com', 'tebakSandi123');
+  assert.equal(wrongPasswordAttempt.authorized, false);
+
+  // Non-whitelisted email even with right password MUST be strictly rejected
+  const wrongEmailRightPass = verifyAdminEmailAndPassword(
+    'intruder@gmail.com',
+    DEFAULT_ADMIN_INITIAL_PASSWORD
+  );
+  assert.equal(wrongEmailRightPass.authorized, false);
   assert.equal(
-    shouldFallbackToDirectEmailVerify('auth/operation-not-supported-in-this-environment'),
+    wrongEmailRightPass.message,
+    'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator'
+  );
+
+  // Correct whitelisted email + correct password succeeds
+  const validInitial = verifyAdminEmailAndPassword(
+    'marhaniza05@gmail.com',
+    DEFAULT_ADMIN_INITIAL_PASSWORD
+  );
+  assert.equal(validInitial.authorized, true);
+});
+
+test('validateAdminPasswordChange updates password hash and rejects old password afterwards', () => {
+  const changeFailWrongCurrent = validateAdminPasswordChange(
+    'SandiSalah',
+    'SandiBaruAman#99',
+    'SandiBaruAman#99'
+  );
+  assert.equal(changeFailWrongCurrent.valid, false);
+
+  const changeFailShort = validateAdminPasswordChange(
+    DEFAULT_ADMIN_INITIAL_PASSWORD,
+    '123',
+    '123'
+  );
+  assert.equal(changeFailShort.valid, false);
+
+  const changeSuccess = validateAdminPasswordChange(
+    DEFAULT_ADMIN_INITIAL_PASSWORD,
+    'SandiBaruAman#99',
+    'SandiBaruAman#99'
+  );
+  assert.equal(changeSuccess.valid, true);
+  assert.ok(changeSuccess.newHash);
+
+  // After changing password, old password fails and new password succeeds
+  assert.equal(
+    verifyAdminEmailAndPassword(
+      'marhaniza05@gmail.com',
+      DEFAULT_ADMIN_INITIAL_PASSWORD,
+      changeSuccess.newHash
+    ).authorized,
+    false
+  );
+  assert.equal(
+    verifyAdminEmailAndPassword(
+      'marhaniza05@gmail.com',
+      'SandiBaruAman#99',
+      changeSuccess.newHash
+    ).authorized,
     true
   );
-  assert.equal(shouldFallbackToDirectEmailVerify('auth/popup-closed-by-user'), false);
+  assert.equal(computeAdminPasswordHash('SandiBaruAman#99'), changeSuccess.newHash);
 });
+
 

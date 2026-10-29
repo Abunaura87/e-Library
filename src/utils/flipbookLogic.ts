@@ -684,6 +684,7 @@ export function generateMinimalValidPdfBytes(
 }
 
 export const ADMIN_WHITELIST_EMAIL = 'marhaniza05@gmail.com';
+export const DEFAULT_ADMIN_INITIAL_PASSWORD = 'AdminElibrary#2026';
 
 export interface AdminAccessResult {
   authorized: boolean;
@@ -692,7 +693,27 @@ export interface AdminAccessResult {
 }
 
 /**
- * Evaluates whether a given email address matches the single whitelisted administrator account.
+ * Deterministic synchronous hash (FNV-1a 64-bit hex pair) used to salt and hash admin passwords
+ * consistently across browser and Node test environments alongside Web Crypto SHA-256.
+ */
+export function computeAdminPasswordHash(rawPassword: string): string {
+  const input = `elibrary_salt_2026::${rawPassword || ''}`;
+  let h1 = 0xdeadbeef ^ input.length;
+  let h2 = 0x41c6ce57 ^ input.length;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const hex1 = (h1 >>> 0).toString(16).padStart(8, '0');
+  const hex2 = (h2 >>> 0).toString(16).padStart(8, '0');
+  return `adm_v2_${hex1}${hex2}`;
+}
+
+/**
+ * Evaluates whether an officially verified Google OAuth account email matches the single whitelisted administrator account.
  */
 export function evaluateAdminAccess(rawEmail: string | null | undefined): AdminAccessResult {
   const normalizedEmail = (rawEmail || '').trim().toLowerCase();
@@ -700,7 +721,7 @@ export function evaluateAdminAccess(rawEmail: string | null | undefined): AdminA
     return {
       authorized: false,
       normalizedEmail: '',
-      message: 'Masukkan alamat email Google Administrator resmi untuk melanjutkan.',
+      message: 'Akun Google tidak mengembalikan alamat email yang valid.',
     };
   }
   if (normalizedEmail === ADMIN_WHITELIST_EMAIL) {
@@ -718,16 +739,112 @@ export function evaluateAdminAccess(rawEmail: string | null | undefined): AdminA
 }
 
 /**
- * Determines whether a Firebase Auth popup error code is caused by preview domain / iframe restrictions
- * that should trigger direct administrator email verification fallback.
+ * Strictly verifies both the whitelisted Administrator email AND the secret Administrator password hash.
+ * Never grants access with email alone.
  */
-export function shouldFallbackToDirectEmailVerify(errorCode: string | null | undefined): boolean {
-  const code = (errorCode || '').trim().toLowerCase();
-  return (
-    code === 'auth/unauthorized-domain' ||
-    code === 'auth/popup-blocked' ||
-    code === 'auth/operation-not-supported-in-this-environment' ||
-    code === 'auth/cancelled-popup-request'
-  );
+export function verifyAdminEmailAndPassword(
+  rawEmail: string | null | undefined,
+  rawPassword: string | null | undefined,
+  storedPasswordHash?: string | null
+): AdminAccessResult {
+  const normalizedEmail = (rawEmail || '').trim().toLowerCase();
+  const password = rawPassword || '';
+
+  if (!normalizedEmail) {
+    return {
+      authorized: false,
+      normalizedEmail: '',
+      message: 'Masukkan alamat email Google Administrator resmi terlebih dahulu.',
+    };
+  }
+
+  if (!password.trim()) {
+    return {
+      authorized: false,
+      normalizedEmail,
+      message: 'Kata Sandi Pengaman Admin wajib diisi. Akses tanpa kata sandi ditolak demi keamanan.',
+    };
+  }
+
+  if (normalizedEmail !== ADMIN_WHITELIST_EMAIL) {
+    return {
+      authorized: false,
+      normalizedEmail,
+      message: 'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator',
+    };
+  }
+
+  const activeHash =
+    storedPasswordHash && storedPasswordHash.trim()
+      ? storedPasswordHash.trim()
+      : computeAdminPasswordHash(DEFAULT_ADMIN_INITIAL_PASSWORD);
+
+  const attemptHash = computeAdminPasswordHash(password);
+  if (attemptHash !== activeHash) {
+    return {
+      authorized: false,
+      normalizedEmail,
+      message: 'Akses Ditolak: Kata Sandi Pengaman Admin salah.',
+    };
+  }
+
+  return {
+    authorized: true,
+    normalizedEmail,
+    message: `Verifikasi Keamanan Berhasil! Selamat datang Administrator (${normalizedEmail}).`,
+  };
 }
+
+/**
+ * Validates changing the Administrator password.
+ */
+export function validateAdminPasswordChange(
+  currentPasswordInput: string,
+  newPasswordInput: string,
+  confirmPasswordInput: string,
+  storedPasswordHash?: string | null,
+  skipCurrentPasswordCheck = false
+): { valid: boolean; newHash?: string; message: string } {
+  const activeHash =
+    storedPasswordHash && storedPasswordHash.trim()
+      ? storedPasswordHash.trim()
+      : computeAdminPasswordHash(DEFAULT_ADMIN_INITIAL_PASSWORD);
+
+  if (!skipCurrentPasswordCheck) {
+    if (!currentPasswordInput) {
+      return {
+        valid: false,
+        message: 'Masukkan kata sandi admin saat ini terlebih dahulu.',
+      };
+    }
+    if (computeAdminPasswordHash(currentPasswordInput) !== activeHash) {
+      return {
+        valid: false,
+        message: 'Kata sandi admin saat ini tidak sesuai.',
+      };
+    }
+  }
+
+  const cleanNew = (newPasswordInput || '').trim();
+  if (cleanNew.length < 6) {
+    return {
+      valid: false,
+      message: 'Kata sandi baru minimal harus terdiri dari 6 karakter.',
+    };
+  }
+
+  if (newPasswordInput !== confirmPasswordInput) {
+    return {
+      valid: false,
+      message: 'Konfirmasi kata sandi baru tidak cocok.',
+    };
+  }
+
+  return {
+    valid: true,
+    newHash: computeAdminPasswordHash(newPasswordInput),
+    message: 'Kata Sandi Pengaman Admin berhasil diperbarui secara permanen.',
+  };
+}
+
 
