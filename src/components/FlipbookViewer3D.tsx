@@ -746,7 +746,7 @@ export const FlipbookViewer3D: React.FC<FlipbookViewer3DProps> = ({
 
         {/* Footer Hak Cipta */}
         <p className="no-print text-[11px] font-classical-label text-[#D4AF37]/90 tracking-wider text-center select-none pt-1">
-          Copyright © e-Library - @abunaura. All rights reserved 2026
+          © 2026 e-Library by @abunaura. All rights reserved.
         </p>
       </div>
 

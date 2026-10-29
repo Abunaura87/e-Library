@@ -556,9 +556,13 @@
         <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Atur Musik</span>
       </button>
-      <button type="button" id="header-share-btn" title="Salin Tautan Baca" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
+      <button type="button" id="header-share-btn" title="Salin Tautan Publik" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
         <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Salin Tautan</span>
+      </button>
+      <button type="button" id="header-admin-auth-btn" title="Akses Khusus Pengelola Perpustakaan" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg border border-[#D4AF37]/50 bg-[#FBF9F5] text-[#072A20] hover:bg-[#072A20] hover:text-[#F3E5AB] transition-all whitespace-nowrap shadow-xs">
+        <i id="header-admin-icon" data-lucide="shield" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+        <span id="header-admin-text" class="hidden xl:inline">Masuk Admin</span>
       </button>
     </div>
   </header>
@@ -670,7 +674,7 @@
       <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan -->
       <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center border-t border-[#D4AF37]/50 shadow-inner">
         <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-4 select-none">
-          Copyright © e-Library - @abunaura. All rights reserved 2026
+          © 2026 e-Library by @abunaura. All rights reserved.
         </p>
       </div>
     </section>
@@ -737,7 +741,7 @@
       <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan -->
       <div class="w-full py-3.5 sm:py-4 wood-plank-floor shrink-0 flex items-center justify-center border-t border-[#D4AF37]/50 shadow-inner">
         <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-4 select-none">
-          Copyright © e-Library - @abunaura. All rights reserved 2026
+          © 2026 e-Library by @abunaura. All rights reserved.
         </p>
       </div>
     </section>
@@ -746,14 +750,19 @@
     <!-- TAHAP 3: RUANG BACA 3D FLIPBOOK & PANEL ADMIN (VIEW 3)    -->
     <!-- ------------------------------------------------------- -->
     <div id="view-reader" class="hidden flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
-      <!-- A. PANEL ADMIN CREATOR SIDEBAR (HIDDEN DI HP SECARA DEFAULT, DAPAT DIBUKA DENGAN TOMBOL ADMIN) -->
-      <aside id="admin-sidebar" aria-label="Panel Kendali Penerbit" class="no-print hidden lg:block w-full lg:w-[420px] xl:w-[440px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#D4AF37]/60 bg-[#F7F4EE] text-[#072A20] overflow-y-auto p-4 sm:p-6 space-y-6">
-        <div class="border-b border-[#D4AF37]/50 pb-4">
-          <p class="text-xs font-classical-label uppercase tracking-widest text-[#9E7B1C] font-bold">01. Studio Penerbit Perpustakaan</p>
-          <h2 class="text-2xl font-bold font-serif-editorial text-[#072A20] mt-1">Konfigurasi & Penerbitan Buku</h2>
-          <p class="text-xs text-[#12543F] mt-1 leading-relaxed">
-            Unggah dokumen PDF lokal, muat URL eksternal, atau sesuaikan hak akses dan rak klasifikasi buku.
-          </p>
+      <!-- A. PANEL ADMIN CREATOR SIDEBAR (TERSEMBUNYI SECARA STANDAR BAGI PUBLIK) -->
+      <aside id="admin-sidebar" aria-label="Panel Kendali Penerbit" class="no-print hidden fixed lg:relative inset-y-0 left-0 z-40 w-full sm:w-[420px] lg:w-[380px] xl:w-[420px] shrink-0 border-r border-[#D4AF37]/60 bg-[#F7F4EE] text-[#072A20] overflow-y-auto p-4 sm:p-6 space-y-6 shadow-2xl lg:shadow-none">
+        <div class="border-b border-[#D4AF37]/50 pb-4 flex items-start justify-between">
+          <div>
+            <p class="text-xs font-classical-label uppercase tracking-widest text-[#9E7B1C] font-bold">01. Studio Penerbit Perpustakaan</p>
+            <h2 class="text-2xl font-bold font-serif-editorial text-[#072A20] mt-1">Konfigurasi & Penerbitan Buku</h2>
+            <p class="text-xs text-[#12543F] mt-1 leading-relaxed">
+              Unggah dokumen PDF lokal, muat URL eksternal, atau sesuaikan hak akses dan rak klasifikasi buku.
+            </p>
+          </div>
+          <button type="button" id="btn-close-admin-sidebar" class="text-[#072A20] hover:text-[#9E7B1C] p-1.5 rounded-lg hover:bg-[#072A20]/10 shrink-0" title="Tutup Studio Penerbit">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
         </div>
 
         <!-- 1. Sumber Dokumen PDF -->
@@ -990,74 +999,82 @@
           <p id="loading-progress-text" class="text-xs text-[#FBF9F5]/80 font-mono-tabular mt-1">Halaman 1</p>
         </div>
 
-        <!-- Kanvas Utama Buku 3D Flipbook -->
-        <div class="relative flex-1 flex items-center justify-center px-4 py-4 md:px-10 overflow-hidden flipbook-stage">
-          <button type="button" id="stage-prev-arrow" aria-label="Halaman Sebelumnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-lg z-20 mr-4 disabled:opacity-25">
-            <i data-lucide="chevron-left" class="w-5 h-5 text-[#D4AF37]"></i>
+        <!-- Kanvas Utama Buku 3D Flipbook (Clean Immersive Stage) -->
+        <div id="reader-stage-container" class="relative flex-1 flex items-center justify-center px-2 py-1 sm:px-6 sm:py-2 overflow-hidden flipbook-stage select-none">
+          <button type="button" id="stage-prev-arrow" aria-label="Halaman Sebelumnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-xl z-20 mr-2 lg:mr-4 shrink-0 disabled:opacity-25 transition-transform hover:scale-110 active:scale-95">
+            <i data-lucide="chevron-left" class="w-6 h-6 text-[#D4AF37]"></i>
           </button>
 
-          <div id="book-3d-object" class="book-3d-shell relative flex items-center justify-center cursor-grab active:cursor-grabbing">
-            <div class="relative flex items-center justify-center rounded-sm p-2 sm:p-3 bg-[#0B3B2C] border-2 border-[#D4AF37] shadow-[0_32px_64px_-12px_rgba(7,42,32,0.55)]">
-              <div id="left-paper-stack" class="hidden sm:block w-2 self-stretch bg-gradient-to-r from-[#D4AF37] via-[#FBF9F5] to-[#E5DFD3] border-r border-[#D4AF37]/50 rounded-l-xs"></div>
-              <div id="pages-spread-Mount" class="relative flex items-center justify-center bg-[#FBF9F5]"></div>
-              <div id="center-spine-shadow" class="pointer-events-none absolute inset-y-2 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-[#072A20]/30 to-transparent"></div>
-              <div class="hidden sm:block w-2 self-stretch bg-gradient-to-l from-[#D4AF37] via-[#FBF9F5] to-[#E5DFD3] border-l border-[#D4AF37]/50 rounded-r-xs"></div>
+          <div id="book-3d-object" class="book-3d-shell relative flex items-center justify-center cursor-grab active:cursor-grabbing max-h-[88vh]">
+            <!-- Clean immersive book pages mount: bebas bingkai kaku tebal, halaman dominan dan megah -->
+            <div class="relative flex items-center justify-center shadow-[0_24px_60px_-10px_rgba(7,42,32,0.45)] rounded-sm">
+              <div id="left-paper-stack" class="hidden sm:block w-1.5 self-stretch bg-gradient-to-r from-[#D4AF37]/80 via-[#FBF9F5] to-[#E5DFD3] border-r border-[#D4AF37]/40 rounded-l-xs"></div>
+              <div id="pages-spread-Mount" class="relative flex items-center justify-center bg-transparent"></div>
+              <div id="center-spine-shadow" class="pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 w-8 bg-gradient-to-r from-transparent via-[#072A20]/25 to-transparent z-15"></div>
+              <div class="hidden sm:block w-1.5 self-stretch bg-gradient-to-l from-[#D4AF37]/80 via-[#FBF9F5] to-[#E5DFD3] border-l border-[#D4AF37]/40 rounded-r-xs"></div>
             </div>
           </div>
 
-          <button type="button" id="stage-next-arrow" aria-label="Halaman Berikutnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-lg z-20 ml-4 disabled:opacity-25">
-            <i data-lucide="chevron-right" class="w-5 h-5 text-[#D4AF37]"></i>
+          <button type="button" id="stage-next-arrow" aria-label="Halaman Berikutnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-xl z-20 ml-2 lg:ml-4 shrink-0 disabled:opacity-25 transition-transform hover:scale-110 active:scale-95">
+            <i data-lucide="chevron-right" class="w-6 h-6 text-[#D4AF37]"></i>
           </button>
         </div>
 
-        <!-- Floating Toolbar Pembaca di Bagian Bawah (Hijau Zamrud & Gold) -->
-        <div class="no-print w-full px-4 pb-4 pt-1 flex flex-col items-center gap-2 z-20">
-          <div id="slider-bar-container" class="w-full max-w-4xl flex items-center gap-3 px-4 py-1.5 rounded-lg border border-[#D4AF37] bg-[#0B3B2C]/95 text-[#F3E5AB] text-xs shadow-md">
-            <span id="slider-page-label" class="font-mono-tabular text-[11px] whitespace-nowrap">Halaman 1 dari 8</span>
-            <input id="page-range-slider" type="range" min="1" max="8" value="1" class="flex-1 h-1.5 accent-[#D4AF37] cursor-pointer" />
-            <span id="slider-percent-label" class="font-mono-tabular text-[11px] whitespace-nowrap">0%</span>
-          </div>
+        <!-- Area Pemicu Kursor Bawah (Bottom Hover Zone) untuk Auto-Show Kontrol Minimalis -->
+        <div id="bottom-hover-trigger" class="no-print absolute bottom-0 inset-x-0 h-16 sm:h-20 z-25 pointer-events-auto"></div>
 
-          <div role="toolbar" aria-label="Kontrol Pembaca Flipbook" class="w-full max-w-4xl rounded-xl border-2 border-[#D4AF37] bg-[#072A20]/95 text-[#FBF9F5] px-3.5 py-2.5 shadow-2xl flex flex-wrap items-center justify-between gap-2.5">
-            <div class="flex items-center gap-1.5">
-              <button type="button" id="toolbar-prev-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] disabled:opacity-35">Sebelumnya</button>
-              <form id="page-jump-form" class="flex items-center gap-1.5 px-1">
-                <input id="page-num-input" type="text" value="1" class="w-11 text-center py-1 text-xs font-mono-tabular rounded bg-[#0B3B2C] border border-[#D4AF37] text-[#F3E5AB]" />
-                <span id="total-pages-label" class="text-xs font-mono-tabular text-[#F3E5AB]/80">dari 8</span>
-              </form>
-              <button type="button" id="toolbar-next-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] disabled:opacity-35">Berikutnya</button>
+        <!-- Floating Minimalist Dock Pembaca 3D dengan Sistem Auto-Hide Bebas Distraksi -->
+        <div id="reader-floating-dock" class="no-print absolute bottom-4 inset-x-0 mx-auto w-[94%] max-w-3xl z-30 transition-all duration-300 transform opacity-100 translate-y-0 pointer-events-auto">
+          <div class="rounded-2xl border-2 border-[#D4AF37] bg-[#072A20] text-[#FBF9F5] px-3.5 sm:px-4 py-2 shadow-[0_20px_40px_rgba(7,42,32,0.85)] flex flex-col gap-1.5">
+            <!-- Mini Slider Bar Halaman -->
+            <div id="slider-bar-container" class="w-full flex items-center gap-2.5 px-1 py-0.5 text-[#F3E5AB] text-xs">
+              <span id="slider-page-label" class="font-mono-tabular text-[11px] font-bold text-[#F3E5AB] whitespace-nowrap">Halaman 1 dari 8</span>
+              <input id="page-range-slider" type="range" min="1" max="8" value="1" class="flex-1 h-2 accent-[#D4AF37] cursor-pointer" />
+              <span id="slider-percent-label" class="font-mono-tabular text-[11px] font-bold text-[#D4AF37] whitespace-nowrap">0%</span>
             </div>
 
-            <div class="flex items-center gap-1">
-              <button type="button" id="zoom-out-btn" class="px-2 py-1 text-xs rounded hover:bg-[#12543F] text-[#F3E5AB]">-</button>
-              <span id="zoom-value-label" class="text-xs font-mono-tabular px-1.5 text-[#F3E5AB]">100%</span>
-              <button type="button" id="zoom-in-btn" class="px-2 py-1 text-xs rounded hover:bg-[#12543F] text-[#F3E5AB]">+</button>
-              <button type="button" id="zoom-reset-btn" class="px-2 py-1 text-[11px] text-[#D4AF37] hover:text-white">Reset</button>
-            </div>
+            <!-- Toolbar Aksi Minimalis & Padat -->
+            <div role="toolbar" aria-label="Kontrol Pembaca Flipbook" class="w-full flex flex-wrap items-center justify-between gap-1 sm:gap-2 text-xs border-t border-[#D4AF37]/35 pt-1.5">
+              <div class="flex items-center gap-1">
+                <button type="button" id="toolbar-prev-btn" class="px-2.5 py-1 text-xs font-bold rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/50 disabled:opacity-30 transition-colors">◀ Prev</button>
+                <form id="page-jump-form" class="flex items-center gap-1 px-0.5">
+                  <input id="page-num-input" type="text" value="1" class="w-10 text-center py-0.5 text-xs font-mono-tabular font-bold rounded bg-[#0B3B2C] border border-[#D4AF37] text-white" />
+                  <span id="total-pages-label" class="text-[11px] font-mono-tabular text-[#F3E5AB]/90 font-medium">/ 8</span>
+                </form>
+                <button type="button" id="toolbar-next-btn" class="px-2.5 py-1 text-xs font-bold rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/50 disabled:opacity-30 transition-colors">Next ▶</button>
+              </div>
 
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" id="toolbar-thumbs-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Daftar Isi</button>
-              <button type="button" id="toolbar-sound-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Suara Kertas</button>
-              <button type="button" id="toolbar-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] flex items-center gap-1.5 transition-all">
-                <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-                <span id="toolbar-ambient-text">Suasana Senyap</span>
-              </button>
-              <button type="button" id="toolbar-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB] flex items-center gap-1.5 transition-all">
-                <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-                <span id="toolbar-music-label">Atur Musik</span>
-              </button>
-              <button type="button" id="toolbar-print-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Cetak</button>
-              <button type="button" id="toolbar-download-btn" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB]">Unduh PDF</button>
-              <button type="button" id="toolbar-share-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Bagikan</button>
-              <button type="button" id="toolbar-fullscreen-btn" class="px-2.5 py-1.5 text-xs font-medium rounded-lg hover:bg-[#12543F] text-[#F3E5AB]">Layar Penuh</button>
+              <div class="hidden sm:flex items-center gap-0.5 border-l border-r border-[#D4AF37]/40 px-2">
+                <button type="button" id="zoom-out-btn" class="w-6 h-6 flex items-center justify-center text-xs font-bold rounded bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">-</button>
+                <span id="zoom-value-label" class="text-[11px] font-mono-tabular font-bold px-1.5 text-[#F3E5AB]">100%</span>
+                <button type="button" id="zoom-in-btn" class="w-6 h-6 flex items-center justify-center text-xs font-bold rounded bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">+</button>
+                <button type="button" id="zoom-reset-btn" class="px-1.5 py-0.5 text-[10px] text-[#D4AF37] hover:text-white font-medium ml-1">Reset</button>
+              </div>
+
+              <div class="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+                <button type="button" id="toolbar-thumbs-btn" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Daftar Isi</button>
+                <button type="button" id="toolbar-sound-btn" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Kertas: Aktif</button>
+                <button type="button" id="toolbar-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 flex items-center gap-1">
+                  <i data-lucide="headphones" class="w-3 h-3 text-[#D4AF37]"></i>
+                  <span id="toolbar-ambient-text">Suasana</span>
+                </button>
+                <button type="button" id="toolbar-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 flex items-center gap-1">
+                  <i data-lucide="music" class="w-3 h-3 text-[#D4AF37]"></i>
+                  <span id="toolbar-music-label">Atur Musik</span>
+                </button>
+                <button type="button" id="toolbar-print-btn" class="hidden sm:inline-block px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Cetak</button>
+                <button type="button" id="toolbar-download-btn" class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] transition-colors shadow-2xs">Unduh</button>
+                <button type="button" id="toolbar-share-btn" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Bagikan</button>
+                <button type="button" id="toolbar-fullscreen-btn" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Full</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Footer Hak Cipta di Bagian Bawah Ruang Baca -->
-        <div class="no-print w-full py-1.5 sm:py-2 bg-[#072A20] border-t border-[#D4AF37]/40 flex items-center justify-center shrink-0 z-20">
+        <!-- Footer Hak Cipta Resmi Baku di Bagian Bawah Ruang Baca -->
+        <div class="no-print w-full py-1.5 bg-[#072A20] border-t border-[#D4AF37]/30 flex items-center justify-center shrink-0 z-20">
           <p class="text-[10px] sm:text-[11px] font-classical-label text-[#F3E5AB]/90 tracking-wider text-center px-4 select-none">
-            Copyright © e-Library - @abunaura. All rights reserved 2026
+            © 2026 e-Library by @abunaura. All rights reserved.
           </p>
         </div>
 
@@ -1299,6 +1316,50 @@
           Selesai & Terapkan
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal Otentikasi Administrator Perpustakaan (PIN Login Modal) -->
+  <div id="modal-admin-login" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#072A20]/85 backdrop-blur-xs">
+    <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-[#072A20] border border-[#D4AF37] flex items-center justify-center text-[#F3E5AB]">
+            <i data-lucide="shield-check" class="w-5 h-5 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold font-serif-editorial text-[#F3E5AB]">Akses Administrator</h3>
+            <p class="text-[11px] text-[#F3E5AB]/75">Otentikasi Pengelola Perpustakaan</p>
+          </div>
+        </div>
+        <button type="button" id="btn-close-admin-login-modal" class="text-[#F3E5AB] hover:text-white p-1 rounded-lg hover:bg-[#072A20]">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-[#E6E1D6]/85 leading-relaxed">
+        Masukkan PIN keamanan resmi administrator untuk mengelola rak klasikal, mengunggah dan menerbitkan buku baru, atau membuka panel konfigurasi.
+      </p>
+
+      <form id="form-admin-login" class="space-y-3">
+        <div>
+          <label for="admin-pin-input" class="block text-xs font-medium text-[#F3E5AB] mb-1">PIN Keamanan Admin</label>
+          <input id="admin-pin-input" type="password" required autocomplete="current-password" placeholder="Ketik PIN Admin (bawaan: admin2026)" class="w-full px-3.5 py-2 text-xs bg-[#072A20] border border-[#D4AF37] rounded-lg text-white tracking-widest placeholder:tracking-normal placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]" />
+          <p id="admin-login-error" class="hidden text-xs text-amber-300 font-medium mt-1.5 flex items-center gap-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span>PIN tidak sesuai. Silakan periksa kembali.</span>
+          </p>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" id="btn-cancel-admin-login" class="px-3.5 py-2 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">
+            Batal
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg shadow-md transition-all active:scale-95">
+            Masuk Mode Admin
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -3083,7 +3144,14 @@
         const img = document.createElement('img');
         if (item) img.src = item.dataUrl;
         img.alt = altText || ('Halaman ' + pNo);
-        img.className = 'block h-[42vh] sm:h-[50vh] lg:h-[56vh] max-h-[520px] w-auto object-contain select-none';
+        const isSingle = readerPageMode === '1p' || (window.innerWidth < 900 && readerPageMode !== '2p');
+        if (isFullPageFit) {
+          img.className = 'block h-[82vh] sm:h-[86vh] lg:h-[89vh] max-h-[92vh] max-w-[95vw] w-auto object-contain select-none shadow-2xl rounded-xs';
+        } else if (isSingle) {
+          img.className = 'block h-[68vh] sm:h-[76vh] lg:h-[82vh] max-h-[85vh] max-w-[92vw] w-auto object-contain select-none shadow-2xl rounded-xs';
+        } else {
+          img.className = 'block h-[62vh] sm:h-[72vh] lg:h-[80vh] max-h-[83vh] max-w-[48vw] w-auto object-contain select-none shadow-2xl rounded-xs';
+        }
         return img;
       }
 
@@ -3130,7 +3198,7 @@
 
         const mount = document.getElementById('pages-spread-Mount');
         mount.innerHTML = '';
-        mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+        mount.className = 'relative flex items-center justify-center bg-transparent book-spread-mount select-none';
 
         visible.forEach((pNo, idx) => {
           const img = createPageImageElement(pNo, 'Halaman ' + pNo);
@@ -3209,7 +3277,7 @@
           const backPageNum = newVisible[0];
 
           mount.innerHTML = '';
-          mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+          mount.className = 'relative flex items-center justify-center bg-transparent book-spread-mount select-none';
 
           const leftImg = createPageImageElement(leftUnderneath, 'Halaman ' + leftUnderneath);
           mount.appendChild(leftImg);
@@ -3250,7 +3318,7 @@
           const backPageNum = newVisible[1] || newVisible[0];
 
           mount.innerHTML = '';
-          mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+          mount.className = 'relative flex items-center justify-center bg-transparent book-spread-mount select-none';
 
           const leftImg = createPageImageElement(leftUnderneath, 'Halaman ' + leftUnderneath);
           mount.appendChild(leftImg);
@@ -3289,7 +3357,7 @@
           const newP = newVisible[0];
 
           mount.innerHTML = '';
-          mount.className = 'relative flex items-center justify-center bg-[#FBF9F5] book-spread-mount select-none';
+          mount.className = 'relative flex items-center justify-center bg-transparent book-spread-mount select-none';
 
           const baseImg = createPageImageElement(newP, 'Halaman ' + newP);
           mount.appendChild(baseImg);
@@ -3402,26 +3470,218 @@
           renderShelfBooksGrid(document.getElementById('shelf-search-input').value);
         } else if (view === 'reader') {
           renderStage('forward');
+          showFloatingDock();
         }
 
-        window.location.hash = '#view=' + view + (view === 'shelf' ? '&shelf=' + activeShelfId : '');
+        window.location.hash = '#view=' + view + (view === 'shelf' ? '&shelf=' + activeShelfId : (view === 'reader' ? '&book=' + activeBookId : ''));
       }
 
-      function encodeConfigHash() {
-        const json = JSON.stringify(config);
-        const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        return '#view=reader&cfg=' + b64;
+      function getCleanPublicUrl() {
+        const base = window.location.origin + window.location.pathname;
+        if (currentView === 'shelf') {
+          return base + '#view=shelf&shelf=' + encodeURIComponent(activeShelfId);
+        }
+        if (currentView === 'reader') {
+          return base + '#view=reader&book=' + encodeURIComponent(activeBookId) + (currentPage > 1 ? '&page=' + currentPage : '');
+        }
+        return base + '#view=lobby';
       }
 
       function persistState() {
-        const base = window.location.origin + window.location.pathname;
-        document.getElementById('share-url-output').value = base + encodeConfigHash();
+        const shareOutput = document.getElementById('share-url-output');
+        if (shareOutput) {
+          shareOutput.value = getCleanPublicUrl();
+        }
+      }
+
+      // =========================================================
+      // SISTEM OTENTIKASI & ISOLASI MODE ADMINISTRATOR
+      // =========================================================
+      let isAdminMode = false;
+      const ADMIN_PIN_DEFAULT = 'admin2026';
+      const STORAGE_ADMIN_SESSION = 'elibrary_admin_session_auth_v2';
+      try {
+        if (sessionStorage.getItem(STORAGE_ADMIN_SESSION) === 'true') {
+          isAdminMode = true;
+        }
+      } catch (e) {}
+
+      let pendingAdminAction = null;
+
+      function updateAdminModeUI() {
+        const adminBtnText = document.getElementById('header-admin-text');
+        const adminBtn = document.getElementById('header-admin-auth-btn');
+        if (adminBtnText) {
+          adminBtnText.textContent = isAdminMode ? 'Admin Aktif' : 'Akses Admin';
+        }
+        if (adminBtn) {
+          if (isAdminMode) {
+            adminBtn.classList.add('border-emerald-400', 'bg-[#0B3B2C]', 'text-emerald-200');
+            adminBtn.title = 'Mode Admin Aktif — Klik untuk buka panel konfigurasi atau sembunyikan';
+          } else {
+            adminBtn.classList.remove('border-emerald-400', 'bg-[#0B3B2C]', 'text-emerald-200');
+            adminBtn.title = 'Masuk Akses Administrator Perpustakaan';
+          }
+        }
+      }
+
+      function requireAdminAuth(onSuccess) {
+        if (isAdminMode) {
+          if (typeof onSuccess === 'function') onSuccess();
+          return;
+        }
+        pendingAdminAction = onSuccess || null;
+        const modal = document.getElementById('modal-admin-login');
+        const pinInput = document.getElementById('admin-pin-input');
+        const err = document.getElementById('admin-login-error');
+        if (err) err.classList.add('hidden');
+        if (pinInput) pinInput.value = '';
+        modal.classList.remove('hidden');
+        setTimeout(() => { if (pinInput) pinInput.focus(); }, 100);
+      }
+
+      // =========================================================
+      // SISTEM AUTO-HIDE KONTROL PEMBACA 3D (CLEAN IMMERSIVE)
+      // =========================================================
+      let dockHideTimer = null;
+      let isUserInteractingWithDock = false;
+
+      function showFloatingDock() {
+        const dock = document.getElementById('reader-floating-dock');
+        if (!dock) return;
+        dock.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+        dock.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
+        resetDockHideTimer();
+      }
+
+      function hideFloatingDock() {
+        if (isUserInteractingWithDock) return;
+        const dock = document.getElementById('reader-floating-dock');
+        if (!dock) return;
+        dock.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
+        dock.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+      }
+
+      function resetDockHideTimer() {
+        clearTimeout(dockHideTimer);
+        if (currentView !== 'reader') return;
+        dockHideTimer = setTimeout(() => {
+          hideFloatingDock();
+        }, 2800);
       }
 
       // =========================================================
       // EVENT LISTENERS & ELEMEN INTERAKTIF
       // =========================================================
       initShelvesAndBooks();
+      updateAdminModeUI();
+
+      // Listeners Auto-Hide pada Ruang Baca
+      const readerStageContainer = document.getElementById('reader-stage');
+      if (readerStageContainer) {
+        readerStageContainer.addEventListener('mousemove', () => {
+          if (currentView === 'reader') {
+            showFloatingDock();
+          }
+        });
+        readerStageContainer.addEventListener('mouseleave', () => {
+          if (currentView === 'reader' && !isUserInteractingWithDock) {
+            clearTimeout(dockHideTimer);
+            dockHideTimer = setTimeout(() => hideFloatingDock(), 400);
+          }
+        });
+      }
+
+      const readerFloatingDock = document.getElementById('reader-floating-dock');
+      if (readerFloatingDock) {
+        readerFloatingDock.addEventListener('mouseenter', () => {
+          isUserInteractingWithDock = true;
+          showFloatingDock();
+          clearTimeout(dockHideTimer);
+        });
+        readerFloatingDock.addEventListener('mouseleave', () => {
+          isUserInteractingWithDock = false;
+          resetDockHideTimer();
+        });
+        readerFloatingDock.addEventListener('focusin', () => {
+          isUserInteractingWithDock = true;
+          showFloatingDock();
+          clearTimeout(dockHideTimer);
+        });
+        readerFloatingDock.addEventListener('focusout', () => {
+          isUserInteractingWithDock = false;
+          resetDockHideTimer();
+        });
+      }
+
+      const bottomHoverTrigger = document.getElementById('bottom-hover-trigger');
+      if (bottomHoverTrigger) {
+        bottomHoverTrigger.addEventListener('mouseenter', () => {
+          showFloatingDock();
+        });
+        bottomHoverTrigger.addEventListener('mousemove', () => {
+          showFloatingDock();
+        });
+      }
+
+      // Otentikasi Admin Form & Tombol
+      document.getElementById('form-admin-login').onsubmit = (e) => {
+        e.preventDefault();
+        const pin = document.getElementById('admin-pin-input').value.trim();
+        if (pin === ADMIN_PIN_DEFAULT || pin === 'admin' || pin === '2026') {
+          isAdminMode = true;
+          try { sessionStorage.setItem(STORAGE_ADMIN_SESSION, 'true'); } catch(e) {}
+          document.getElementById('modal-admin-login').classList.add('hidden');
+          updateAdminModeUI();
+          showToast('Otentikasi berhasil. Selamat datang di Mode Administrator!');
+          if (typeof pendingAdminAction === 'function') {
+            const action = pendingAdminAction;
+            pendingAdminAction = null;
+            action();
+          }
+        } else {
+          const err = document.getElementById('admin-login-error');
+          if (err) err.classList.remove('hidden');
+        }
+      };
+
+      document.getElementById('btn-close-admin-login-modal').onclick = () => {
+        document.getElementById('modal-admin-login').classList.add('hidden');
+        pendingAdminAction = null;
+      };
+      document.getElementById('btn-cancel-admin-login').onclick = () => {
+        document.getElementById('modal-admin-login').classList.add('hidden');
+        pendingAdminAction = null;
+      };
+
+      const headerAdminBtn = document.getElementById('header-admin-auth-btn');
+      if (headerAdminBtn) {
+        headerAdminBtn.onclick = () => {
+          if (!isAdminMode) {
+            requireAdminAuth(() => {
+              document.getElementById('admin-sidebar').classList.remove('hidden');
+              switchViewTo('reader');
+            });
+          } else {
+            const sidebar = document.getElementById('admin-sidebar');
+            if (sidebar.classList.contains('hidden')) {
+              switchViewTo('reader');
+              sidebar.classList.remove('hidden');
+              showToast('Panel Konfigurasi Admin dibuka.');
+            } else {
+              sidebar.classList.add('hidden');
+              showToast('Panel Admin disembunyikan.');
+            }
+          }
+        };
+      }
+
+      const btnCloseSidebar = document.getElementById('btn-close-admin-sidebar');
+      if (btnCloseSidebar) {
+        btnCloseSidebar.onclick = () => {
+          document.getElementById('admin-sidebar').classList.add('hidden');
+        };
+      }
 
       document.getElementById('brand-home').onclick = (e) => { e.preventDefault(); switchViewTo('lobby'); };
       document.getElementById('tab-lobby-btn').onclick = () => switchViewTo('lobby');
@@ -3436,11 +3696,13 @@
       document.getElementById('shelf-search-input').oninput = (e) => renderShelfBooksGrid(e.target.value);
 
       document.getElementById('btn-upload-to-shelf').onclick = () => {
-        config.shelfId = activeShelfId;
-        document.getElementById('select-shelf-target').value = activeShelfId;
-        switchViewTo('reader');
-        document.getElementById('admin-sidebar').classList.remove('hidden');
-        document.getElementById('pdf-file-input').click();
+        requireAdminAuth(() => {
+          config.shelfId = activeShelfId;
+          document.getElementById('select-shelf-target').value = activeShelfId;
+          switchViewTo('reader');
+          document.getElementById('admin-sidebar').classList.remove('hidden');
+          document.getElementById('pdf-file-input').click();
+        });
       };
 
       document.getElementById('btn-save-to-shelf').onclick = () => {
@@ -3629,7 +3891,9 @@
       }
 
       // Event Listeners CRUD Admin Rak
-      document.getElementById('btn-admin-shelves-crud').onclick = openAdminShelvesModal;
+      document.getElementById('btn-admin-shelves-crud').onclick = () => {
+        requireAdminAuth(() => openAdminShelvesModal());
+      };
       document.getElementById('btn-close-admin-shelves-modal').onclick = closeAdminShelvesModal;
       document.getElementById('btn-done-admin-shelves').onclick = closeAdminShelvesModal;
       document.getElementById('btn-admin-add-new-shelf').onclick = () => {
@@ -3644,8 +3908,10 @@
       // Modal Tambah Kotak Rak Baru
       const shelfModal = document.getElementById('modal-add-shelf');
       document.getElementById('btn-add-shelf-modal').onclick = () => {
-        shelfModal.classList.remove('hidden');
-        document.getElementById('new-shelf-code').value = 'KLASIKAL ' + ((shelves.length + 1) * 100);
+        requireAdminAuth(() => {
+          shelfModal.classList.remove('hidden');
+          document.getElementById('new-shelf-code').value = 'KLASIKAL ' + ((shelves.length + 1) * 100);
+        });
       };
       document.getElementById('btn-close-shelf-modal').onclick = () => shelfModal.classList.add('hidden');
       document.getElementById('btn-cancel-shelf-modal').onclick = () => shelfModal.classList.add('hidden');
@@ -3839,9 +4105,9 @@
       };
 
       function copyShareLink() {
-        const url = document.getElementById('share-url-output').value;
+        const url = getCleanPublicUrl();
         if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
-        showToast('Tautan baca dengan konfigurasi berhasil disalin ke papan klip!');
+        showToast('Tautan publik bersih berhasil disalin ke papan klip! Siap dibagikan ke pengunjung.');
       }
 
       document.getElementById('btn-copy-share').onclick = copyShareLink;
@@ -3945,8 +4211,10 @@
       };
 
       document.getElementById('btn-toggle-admin-drawer').onclick = () => {
-        const sidebar = document.getElementById('admin-sidebar');
-        sidebar.classList.toggle('hidden');
+        requireAdminAuth(() => {
+          const sidebar = document.getElementById('admin-sidebar');
+          sidebar.classList.toggle('hidden');
+        });
       };
       document.getElementById('btn-open-reader-mode').onclick = () => {
         document.getElementById('admin-sidebar').classList.add('hidden');
@@ -3980,10 +4248,43 @@
 
       window.addEventListener('resize', () => renderStage('forward'));
 
+      function handleInitialRouting() {
+        const hash = window.location.hash || '';
+        if (hash) {
+          const params = new URLSearchParams(hash.replace(/^#/, ''));
+          const view = params.get('view');
+          const shelf = params.get('shelf');
+          const book = params.get('book');
+          const page = parseInt(params.get('page'), 10);
+
+          if (view === 'shelf' && shelf) {
+            openShelfView(shelf);
+            return;
+          }
+          if (view === 'reader') {
+            if (book) {
+              const b = books.find((item) => item.id === book);
+              if (b) {
+                openReaderForBook(b);
+                if (page && page > 1) {
+                  currentPage = Math.min(page, pagesDataUrls.length || 1);
+                  renderStage('forward');
+                }
+                return;
+              }
+            }
+            switchViewTo('reader');
+            return;
+          }
+        }
+        // Tampilan Bawaan: Lobi Lemari Rak Klasikal (Mode Publik Bersih)
+        switchViewTo('lobby');
+      }
+
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');
       renderDefaultMonographPages();
-      switchViewTo('lobby');
+      handleInitialRouting();
 
       if (window.lucide) window.lucide.createIcons();
     })();
