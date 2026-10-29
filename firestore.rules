@@ -38,46 +38,54 @@ service cloud.firestore {
 
     // 3. Entity Validation Blueprints
     function isValidLibraryCatalog(data) {
-      return data.keys().hasAll(['shelvesJson', 'booksMetaJson', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
-        data.keys().hasOnly(['shelvesJson', 'booksMetaJson', 'driveFolderId', 'driveCatalogFileId', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
-        data.shelvesJson is string && data.shelvesJson.size() <= 200000 &&
-        data.booksMetaJson is string && data.booksMetaJson.size() <= 500000 &&
+      return data.keys().hasAll(['id', 'shelvesJson', 'bookOrderJson', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'shelvesJson', 'booksMetaJson', 'bookOrderJson', 'driveFolderId', 'driveCatalogFileId', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 64 &&
+        data.shelvesJson is string && data.shelvesJson.size() <= 250000 &&
+        data.bookOrderJson is string && data.bookOrderJson.size() <= 60000 &&
         data.updatedBy is string && data.updatedBy.size() <= 128 && data.updatedBy == 'marhaniza05@gmail.com' &&
         data.adminAuthHash is string && data.adminAuthHash.size() <= 128 &&
-        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        data.updatedAt is int && data.updatedAt >= 0 &&
+        (!('booksMetaJson' in data) || (data.booksMetaJson is string && data.booksMetaJson.size() <= 650000)) &&
         (!('driveFolderId' in data) || (data.driveFolderId is string && data.driveFolderId.size() <= 256)) &&
         (!('driveCatalogFileId' in data) || (data.driveCatalogFileId is string && data.driveCatalogFileId.size() <= 256));
     }
 
     function isValidLibraryBook(data) {
       return data.keys().hasAll(['id', 'shelfId', 'title', 'pageCount', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
-        data.keys().hasOnly(['id', 'shelfId', 'title', 'author', 'description', 'pageCount', 'coverUrl', 'driveFileId', 'driveAssetJsonId', 'driveWebViewLink', 'bookMetaJson', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'shelfId', 'title', 'author', 'description', 'kicker', 'accent', 'spineColor', 'pageCount', 'passwordProtected', 'password', 'coverUrl', 'hasCustomCoverImage', 'isCustomPdf', 'editablePagesJson', 'driveFileId', 'drivePdfFileId', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
         data.id is string && data.id.size() >= 1 && data.id.size() <= 128 &&
         data.shelfId is string && data.shelfId.size() >= 1 && data.shelfId.size() <= 128 &&
         data.title is string && data.title.size() >= 1 && data.title.size() <= 500 &&
         data.pageCount is int && data.pageCount >= 1 && data.pageCount <= 2000 &&
         data.updatedBy is string && data.updatedBy.size() <= 128 && data.updatedBy == 'marhaniza05@gmail.com' &&
         data.adminAuthHash is string && data.adminAuthHash.size() <= 128 &&
-        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        data.updatedAt is int && data.updatedAt >= 0 &&
         (!('author' in data) || (data.author is string && data.author.size() <= 300)) &&
-        (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
-        (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 850000)) &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 5000)) &&
+        (!('kicker' in data) || (data.kicker is string && data.kicker.size() <= 300)) &&
+        (!('accent' in data) || (data.accent is string && data.accent.size() <= 64)) &&
+        (!('spineColor' in data) || (data.spineColor is string && data.spineColor.size() <= 64)) &&
+        (!('passwordProtected' in data) || (data.passwordProtected is bool)) &&
+        (!('password' in data) || (data.password is string && data.password.size() <= 200)) &&
+        (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 900000)) &&
+        (!('hasCustomCoverImage' in data) || (data.hasCustomCoverImage is bool)) &&
+        (!('isCustomPdf' in data) || (data.isCustomPdf is bool)) &&
+        (!('editablePagesJson' in data) || (data.editablePagesJson is string && data.editablePagesJson.size() <= 250000)) &&
         (!('driveFileId' in data) || (data.driveFileId is string && data.driveFileId.size() <= 256)) &&
-        (!('driveAssetJsonId' in data) || (data.driveAssetJsonId is string && data.driveAssetJsonId.size() <= 256)) &&
-        (!('driveWebViewLink' in data) || (data.driveWebViewLink is string && data.driveWebViewLink.size() <= 1000)) &&
-        (!('bookMetaJson' in data) || (data.bookMetaJson is string && data.bookMetaJson.size() <= 200000));
+        (!('drivePdfFileId' in data) || (data.drivePdfFileId is string && data.drivePdfFileId.size() <= 256));
     }
 
     function isValidLibraryBookPage(data) {
       return data.keys().hasAll(['bookId', 'pageNumber', 'dataUrl', 'adminAuthHash', 'updatedAt']) &&
-        data.keys().hasOnly(['bookId', 'pageNumber', 'title', 'dataUrl', 'pageMetaJson', 'adminAuthHash', 'updatedAt']) &&
+        data.keys().hasOnly(['bookId', 'pageNumber', 'title', 'dataUrl', 'isOriginalPdfPage', 'adminAuthHash', 'updatedAt']) &&
         data.bookId is string && data.bookId.size() >= 1 && data.bookId.size() <= 128 &&
         data.pageNumber is int && data.pageNumber >= 1 && data.pageNumber <= 2000 &&
         data.dataUrl is string && data.dataUrl.size() <= 900000 &&
         data.adminAuthHash is string && data.adminAuthHash.size() <= 128 &&
-        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        data.updatedAt is int && data.updatedAt >= 0 &&
         (!('title' in data) || (data.title is string && data.title.size() <= 500)) &&
-        (!('pageMetaJson' in data) || (data.pageMetaJson is string && data.pageMetaJson.size() <= 50000));
+        (!('isOriginalPdfPage' in data) || (data.isOriginalPdfPage is bool));
     }
 
     // 4. Collection Rules

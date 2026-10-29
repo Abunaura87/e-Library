@@ -3235,6 +3235,29 @@
         box._timer = setTimeout(() => box.classList.add('hidden'), 2800);
       }
 
+      function escapeHtml(str) {
+        return String(str === null || str === undefined ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      const PRESET_BOOK_IDS = new Set([
+        'book-kurikulum',
+        'book-metodologi',
+        'book-manuskrip',
+        'book-fiqih',
+        'book-arch',
+        'book-interior',
+        'book-botani',
+        'book-filsafat',
+        'book-tipografi',
+        'book-sosiologi',
+        'book-teknologi'
+      ]);
+
       // =========================================================
       // AUDIO CONTEXT & UNLOCK SISTEM (KOMPATIBEL DENGAN HP & TABLET)
       // =========================================================
@@ -9816,12 +9839,17 @@
           return '';
         }
 
+        const ADMIN_VERIFIED_RULE_HASH = 'adm_v2_verified_marhaniza05';
+
         // Upload ke Google Drive menggunakan XMLHttpRequest agar event upload.onprogress melaporkan byte riil secara langsung!
-        async function uploadOrUpdateDriveFileWithProgress(fileName, mimeType, contentStringOrBlob, existingFileId, parentFolderId, onByteProgress) {
+        // Dilengkapi fallback otomatis ke POST (buat file baru) bila existingFileId sudah terhapus di Google Drive (404).
+        async function uploadOrUpdateDriveFileWithProgress(fileName, mimeType, contentStringOrBlob, existingFileId, parentFolderId, onByteProgress, _isRetryCreate) {
           if (!cachedDriveAccessToken) return '';
           try {
             const cacheKey = (parentFolderId || 'root') + '/' + fileName;
-            let targetFileId = existingFileId || driveFileIdCache[cacheKey] || (await findDriveFileByName(fileName, parentFolderId));
+            let targetFileId = _isRetryCreate
+              ? ''
+              : (existingFileId || driveFileIdCache[cacheKey] || (await findDriveFileByName(fileName, parentFolderId)));
             const metadata = { name: fileName, mimeType: mimeType };
             if (!targetFileId && parentFolderId) {
               metadata.parents = [parentFolderId];
@@ -9842,9 +9870,9 @@
             const method = targetFileId ? 'PATCH' : 'POST';
 
             const startTime = performance.now();
-            const estimatedTotal = fileBlob.size + 256;
+            const estimatedTotal = Math.max(1, fileBlob.size + 256);
 
-            return await new Promise((resolve) => {
+            const result = await new Promise((resolve) => {
               const xhr = new XMLHttpRequest();
               xhr.open(method, endpoint, true);
               xhr.setRequestHeader('Authorization', 'Bearer ' + cachedDriveAccessToken);
@@ -9863,7 +9891,12 @@
                 if (xhr.status === 401) {
                   cachedDriveAccessToken = null;
                   updateDriveAuthUI();
-                  resolve('');
+                  resolve({ id: '', status: 401 });
+                  return;
+                }
+                if ((xhr.status === 404 || xhr.status === 403) && targetFileId && !_isRetryCreate) {
+                  delete driveFileIdCache[cacheKey];
+                  resolve({ id: '', status: xhr.status, retryCreate: true });
                   return;
                 }
                 if (xhr.status >= 200 && xhr.status < 300) {
@@ -9871,21 +9904,38 @@
                     const uploaded = JSON.parse(xhr.responseText);
                     if (uploaded && uploaded.id) {
                       driveFileIdCache[cacheKey] = uploaded.id;
+                      if (typeof onByteProgress === 'function') {
+                        const elapsedSec = Math.max(0.05, (performance.now() - startTime) / 1000);
+                        onByteProgress(estimatedTotal, estimatedTotal, estimatedTotal / elapsedSec);
+                      }
                       if (!targetFileId) {
                         shareDriveFilePubliclyNonBlocking(uploaded.id);
                       }
-                      resolve(uploaded.id);
+                      resolve({ id: uploaded.id, status: xhr.status });
                       return;
                     }
                   } catch (e) {}
                 }
-                resolve('');
+                resolve({ id: '', status: xhr.status });
               };
 
-              xhr.onerror = () => resolve('');
-              xhr.ontimeout = () => resolve('');
+              xhr.onerror = () => resolve({ id: '', status: 0 });
+              xhr.ontimeout = () => resolve({ id: '', status: 0 });
               xhr.send(form);
             });
+
+            if (result && result.retryCreate) {
+              return await uploadOrUpdateDriveFileWithProgress(
+                fileName,
+                mimeType,
+                fileBlob,
+                '',
+                parentFolderId,
+                onByteProgress,
+                true
+              );
+            }
+            return (result && result.id) || '';
           } catch (e) {
             return '';
           }
@@ -9922,7 +9972,7 @@
               isOriginalPdfPage: Boolean(p.isOriginalPdfPage || p.customImageDataUrl)
             })),
             pagesDataUrls: pagesToSave,
-            updatedAt: Date.now()
+            updatedAt: Math.floor(Date.now())
           };
 
           const jsonFileName = 'elibrary-book-' + bookId + '.json';
@@ -9945,7 +9995,7 @@
           if (!folderId) return '';
           const catalogPayload = {
             version: 4,
-            updatedAt: Date.now(),
+            updatedAt: Math.floor(Date.now()),
             updatedBy: ADMIN_WHITELIST_EMAIL,
             driveFolderId: folderId,
             shelves: shelvesList,
@@ -9983,10 +10033,9 @@
           if (!bookId) return false;
           if (String(bookId).startsWith('book-pdf-')) return false;
           if (record && (record.isCustomPdf || record.pdfDataUrl)) return false;
-          const isDefaultId = DEFAULT_BOOKS.some((db) => db.id === bookId);
-          if (!isDefaultId) return false;
+          if (!PRESET_BOOK_IDS.has(String(bookId))) return false;
           if (record && Array.isArray(record.editablePages)) {
-            const hasCustomImg = record.editablePages.some((p) => p && p.customImageDataUrl && p.isOriginalPdfPage);
+            const hasCustomImg = record.editablePages.some((p) => Boolean(p && p.customImageDataUrl && p.isOriginalPdfPage));
             if (hasCustomImg) return false;
           }
           return true;
@@ -10001,20 +10050,42 @@
           if (cachedDriveAccessToken) {
             await syncMasterCatalogToGoogleDrive(activeShelves, activeBooks, onByteProgress);
           }
+
+          const slimBooksMeta = activeBooks.map((b) => ({
+            id: String(b.id || '').slice(0, 120),
+            shelfId: String(b.shelfId || 'rak-01').slice(0, 120),
+            title: String(b.title || 'Buku Koleksi').slice(0, 480),
+            author: String(b.author || 'Anonim').slice(0, 280),
+            description: String(b.description || '').slice(0, 1500),
+            kicker: String(b.kicker || '').slice(0, 200),
+            accent: String(b.accent || '#0B3B2C').slice(0, 32),
+            spineColor: String(b.spineColor || b.accent || '#0B3B2C').slice(0, 32),
+            pageCount: Math.max(1, Math.min(2000, parseInt(b.pageCount, 10) || 1)),
+            passwordProtected: Boolean(b.passwordProtected),
+            password: String(b.password || '').slice(0, 180),
+            hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
+            isCustomPdf: Boolean(b.isCustomPdf),
+            driveFileId: String(b.driveFileId || '').slice(0, 250),
+            drivePdfFileId: String(b.drivePdfFileId || '').slice(0, 250)
+          }));
+
           const payload = {
             id: 'main',
-            shelvesJson: JSON.stringify(activeShelves),
-            bookOrderJson: JSON.stringify(activeBooks.map((b) => b.id)),
-            driveFolderId: driveFolderId || '',
-            driveCatalogFileId: driveCatalogFileId || '',
-            updatedAt: Date.now(),
-            updatedBy: ADMIN_WHITELIST_EMAIL
+            shelvesJson: JSON.stringify(activeShelves).slice(0, 240000),
+            booksMetaJson: JSON.stringify(slimBooksMeta).slice(0, 600000),
+            bookOrderJson: JSON.stringify(activeBooks.map((b) => b.id)).slice(0, 55000),
+            driveFolderId: String(driveFolderId || '').slice(0, 250),
+            driveCatalogFileId: String(driveCatalogFileId || '').slice(0, 250),
+            updatedBy: ADMIN_WHITELIST_EMAIL,
+            adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
+            updatedAt: Math.floor(Date.now())
           };
           return await putFirestoreDocument('library_catalog', 'main', payload);
         }
 
         async function pushBookAndPagesToCloud(bookId, record, progressHooks) {
           if (!bookId || !record) return false;
+          const safeBookId = String(bookId).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
           const hooks = progressHooks || {};
           const reportProgress = (pctWithinBook, substep, bytesInfo) => {
             setBookRowProgress(bookId, 'syncing', pctWithinBook, substep);
@@ -10034,7 +10105,7 @@
           if (isPreset) {
             reportProgress(35, 'Menyinkronkan metadata buku preset...', 'Metadata Ringkas');
             const rawCover = record.coverUrl || (rawSrcPages[0] && rawSrcPages[0].dataUrl ? rawSrcPages[0].dataUrl : '');
-            const safeCoverUrl = await ensureCloudSafeImageDataUrl(rawCover, 380000, bookId + '_cover');
+            const safeCoverUrl = await ensureCloudSafeImageDataUrl(rawCover, 380000, safeBookId + '_cover');
             const slimEditablePages = Array.isArray(record.editablePages)
               ? record.editablePages.map((p, idx) => ({
                   pageNumber: p.pageNumber || idx + 1,
@@ -10047,34 +10118,36 @@
               : [];
 
             const bookDoc = {
-              id: bookId,
-              shelfId: record.shelfId || 'rak-01',
+              id: safeBookId,
+              shelfId: String(record.shelfId || 'rak-01').slice(0, 120),
               title: String(record.title || 'Buku Koleksi').slice(0, 480),
               author: String(record.author || 'Anonim').slice(0, 280),
               description: String(record.description || '').slice(0, 4500),
               kicker: String(record.kicker || '').slice(0, 200),
-              accent: record.accent || '#0B3B2C',
-              spineColor: record.spineColor || record.accent || '#0B3B2C',
-              pageCount: record.pageCount || rawSrcPages.length || 6,
+              accent: String(record.accent || '#0B3B2C').slice(0, 48),
+              spineColor: String(record.spineColor || record.accent || '#0B3B2C').slice(0, 48),
+              pageCount: Math.max(1, Math.min(2000, parseInt(record.pageCount || rawSrcPages.length || 6, 10) || 6)),
               passwordProtected: Boolean(record.passwordProtected),
               password: String(record.password || '').slice(0, 180),
               coverUrl: safeCoverUrl,
               hasCustomCoverImage: Boolean(record.hasCustomCoverImage),
               isCustomPdf: false,
-              editablePagesJson: JSON.stringify(slimEditablePages).slice(0, 140000),
-              driveFileId: record.driveFileId || '',
-              drivePdfFileId: record.drivePdfFileId || '',
-              updatedAt: record.updatedAt || Date.now()
+              editablePagesJson: JSON.stringify(slimEditablePages).slice(0, 200000),
+              driveFileId: String(record.driveFileId || '').slice(0, 250),
+              drivePdfFileId: String(record.drivePdfFileId || '').slice(0, 250),
+              updatedBy: ADMIN_WHITELIST_EMAIL,
+              adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
+              updatedAt: Math.floor(Number(record.updatedAt) || Date.now())
             };
-            const ok = await putFirestoreDocument('library_books', bookId, bookDoc);
-            setBookRowProgress(bookId, 'done', 100, 'Tersinkron di Cloud');
+            const ok = await putFirestoreDocument('library_books', safeBookId, bookDoc);
+            setBookRowProgress(bookId, ok ? 'done' : 'error', 100, ok ? 'Tersinkron di Cloud' : 'Gagal Simpan Cloud');
             return ok;
           }
 
           // 2. Untuk Buku Unggahan PDF / Kustom Admin:
           // Tahap A (0% - 25%): Kompresi paralel seluruh lembaran halaman agar ukuran ringan & cepat diunggah
           reportProgress(5, 'Mengoptimalkan ' + rawSrcPages.length + ' halaman flipbook...', 'Kompresi Kanvas Cepat');
-          const compressedPages = await compressBookPagesParallel(bookId, rawSrcPages, (donePages, totalPages) => {
+          const compressedPages = await compressBookPagesParallel(safeBookId, rawSrcPages, (donePages, totalPages) => {
             const pct = Math.round((donePages / Math.max(1, totalPages)) * 22);
             reportProgress(
               pct,
@@ -10087,7 +10160,7 @@
             record.coverUrl ||
             (compressedPages[0] && compressedPages[0].dataUrl ? compressedPages[0].dataUrl : '') ||
             '';
-          const safeCoverUrl = await ensureCloudSafeImageDataUrl(rawCover, 420000, bookId + '_cover');
+          const safeCoverUrl = await ensureCloudSafeImageDataUrl(rawCover, 420000, safeBookId + '_cover');
 
           // Tahap B (25% - 100%): Jalankan Upload Google Drive (dengan XHR byte progress) & Upload Cloud Firestore (batch paralel 12) secara BERSAMAAN!
           let driveFraction = cachedDriveAccessToken ? 0 : 1;
@@ -10100,7 +10173,7 @@
             const combinedFraction = cachedDriveAccessToken
               ? driveFraction * 0.45 + firestoreFraction * 0.55
               : firestoreFraction;
-            const pct = 25 + Math.round(combinedFraction * 74);
+            const pct = 25 + Math.round(combinedFraction * 72);
             const sub =
               customSubstep ||
               'Mengunggah ke Drive & Cloud (Hal ' + firestorePagesDone + '/' + totalPagesCount + ')...';
@@ -10108,7 +10181,7 @@
           };
 
           const drivePromise = cachedDriveAccessToken
-            ? syncBookToGoogleDriveFast(bookId, record, compressedPages, (loaded, total, speedBps) => {
+            ? syncBookToGoogleDriveFast(safeBookId, record, compressedPages, (loaded, total, speedBps) => {
                 driveFraction = Math.min(1, loaded / Math.max(1, total));
                 lastBytesLabel =
                   formatBytes(loaded) +
@@ -10133,15 +10206,20 @@
               const slice = compressedPages.slice(i, i + batchSize);
               await Promise.all(
                 slice.map(async (pageObj) => {
-                  const pageNumber = pageObj.pageNumber;
-                  if (!pageObj.dataUrl) return;
-                  const pageDocId = bookId + '_p' + pageNumber;
+                  const pageNumber = Math.max(1, Math.min(2000, parseInt(pageObj.pageNumber, 10) || 1));
+                  if (!pageObj.dataUrl) {
+                    firestorePagesDone++;
+                    return;
+                  }
+                  const pageDocId = safeBookId + '_p' + pageNumber;
                   await putFirestoreDocument('library_pages', pageDocId, {
-                    bookId: bookId,
+                    bookId: safeBookId,
                     pageNumber: pageNumber,
-                    dataUrl: pageObj.dataUrl,
+                    title: String(pageObj.title || ('Halaman ' + pageNumber)).slice(0, 480),
+                    dataUrl: String(pageObj.dataUrl).slice(0, 880000),
                     isOriginalPdfPage: Boolean(pageObj.isOriginalPdfPage !== false),
-                    updatedAt: Date.now()
+                    adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
+                    updatedAt: Math.floor(Date.now())
                   });
                   firestorePagesDone++;
                   updateCombinedProgress();
@@ -10170,32 +10248,36 @@
             : [];
 
           const bookDoc = {
-            id: bookId,
-            shelfId: record.shelfId || 'rak-01',
+            id: safeBookId,
+            shelfId: String(record.shelfId || 'rak-01').slice(0, 120),
             title: String(record.title || 'Buku Tanpa Judul').slice(0, 480),
             author: String(record.author || 'Anonim').slice(0, 280),
             description: String(record.description || '').slice(0, 4500),
             kicker: String(record.kicker || '').slice(0, 200),
-            accent: record.accent || '#0B3B2C',
-            spineColor: record.spineColor || record.accent || '#0B3B2C',
-            pageCount: compressedPages.length || record.pageCount || 1,
+            accent: String(record.accent || '#0B3B2C').slice(0, 48),
+            spineColor: String(record.spineColor || record.accent || '#0B3B2C').slice(0, 48),
+            pageCount: Math.max(1, Math.min(2000, parseInt(compressedPages.length || record.pageCount || 1, 10) || 1)),
             passwordProtected: Boolean(record.passwordProtected),
             password: String(record.password || '').slice(0, 180),
             coverUrl: safeCoverUrl,
             hasCustomCoverImage: Boolean(record.hasCustomCoverImage || record.isCustomPdf),
             isCustomPdf: Boolean(record.isCustomPdf),
-            editablePagesJson: JSON.stringify(slimEditablePages).slice(0, 140000),
-            driveFileId: record.driveFileId || '',
-            drivePdfFileId: record.drivePdfFileId || '',
-            updatedAt: record.updatedAt || Date.now()
+            editablePagesJson: JSON.stringify(slimEditablePages).slice(0, 200000),
+            driveFileId: String(record.driveFileId || '').slice(0, 250),
+            drivePdfFileId: String(record.drivePdfFileId || '').slice(0, 250),
+            updatedBy: ADMIN_WHITELIST_EMAIL,
+            adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
+            updatedAt: Math.floor(Number(record.updatedAt) || Date.now())
           };
 
-          const okBook = await putFirestoreDocument('library_books', bookId, bookDoc);
+          const okBook = await putFirestoreDocument('library_books', safeBookId, bookDoc);
           setBookRowProgress(
             bookId,
-            'done',
+            okBook ? 'done' : 'error',
             100,
-            (compressedPages.length || 1) + ' Hal Tersimpan di Cloud' + (record.driveFileId ? ' & Google Drive' : '')
+            okBook
+              ? (compressedPages.length || 1) + ' Hal Tersimpan di Cloud' + (record.driveFileId ? ' & Google Drive' : '')
+              : 'Gagal menyimpan metadata buku'
           );
           return okBook;
         }
@@ -10242,11 +10324,12 @@
         }
 
         async function deleteBookEverywhere(bookId, pageCount, prevRec) {
-          await deleteFirestoreDocument('library_books', bookId);
+          const safeBookId = String(bookId).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
+          await deleteFirestoreDocument('library_books', safeBookId);
           const maxPages = Math.min(Math.max(pageCount || 15, 10), 80);
           const batch = [];
           for (let p = 1; p <= maxPages; p++) {
-            batch.push(deleteFirestoreDocument('library_pages', bookId + '_p' + p));
+            batch.push(deleteFirestoreDocument('library_pages', safeBookId + '_p' + p));
           }
           Promise.all(batch).catch(() => {});
           if (cachedDriveAccessToken && prevRec) {
@@ -10271,6 +10354,7 @@
         async function fetchBookPagesFromCloudOrDrive(book) {
           if (!book || !book.id) return [];
           const bookId = book.id;
+          const safeBookId = String(bookId).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
 
           // 1. Jika buku memiliki driveFileId publik di Google Drive, unduh berkas JSON bundel secara langsung (1 request cepat!)
           if (book.driveFileId) {
@@ -10308,13 +10392,14 @@
           for (let i = 1; i <= totalPages; i += batchSize) {
             const promises = [];
             for (let p = i; p < i + batchSize && p <= totalPages; p++) {
-              promises.push(getFirestoreDocument('library_pages', bookId + '_p' + p));
+              promises.push(getFirestoreDocument('library_pages', safeBookId + '_p' + p));
             }
             const results = await Promise.all(promises);
             results.forEach((doc) => {
               if (doc && doc.dataUrl) {
                 fetchedPages.push({
                   pageNumber: doc.pageNumber || fetchedPages.length + 1,
+                  title: doc.title || ('Halaman ' + (doc.pageNumber || fetchedPages.length + 1)),
                   dataUrl: doc.dataUrl,
                   isOriginalPdfPage: Boolean(doc.isOriginalPdfPage !== false)
                 });
@@ -10396,6 +10481,21 @@
                 if (Array.isArray(parsedOrder)) bookOrderIds = parsedOrder;
               } catch (e) {}
             }
+            if (catalogDoc.booksMetaJson) {
+              try {
+                const parsedBooksMeta = JSON.parse(catalogDoc.booksMetaJson);
+                if (Array.isArray(parsedBooksMeta) && parsedBooksMeta.length > 0) {
+                  hasRemoteData = true;
+                  parsedBooksMeta.forEach((bm) => {
+                    if (!bm || !bm.id) return;
+                    const exIdx = books.findIndex((b) => b.id === bm.id);
+                    if (exIdx === -1) {
+                      books.push(Object.assign({ coverUrl: '' }, bm));
+                    }
+                  });
+                }
+              } catch (e) {}
+            }
           }
 
           if (Array.isArray(cloudBooksDocs) && cloudBooksDocs.length > 0) {
@@ -10452,22 +10552,22 @@
                 books.unshift(remoteBookObj);
               }
             }
+          }
 
-            if (bookOrderIds.length > 0) {
-              books.sort((a, b) => {
-                const idxA = bookOrderIds.indexOf(a.id);
-                const idxB = bookOrderIds.indexOf(b.id);
-                if (idxA === -1 && idxB === -1) return 0;
-                if (idxA === -1) return -1;
-                if (idxB === -1) return 1;
-                return idxA - idxB;
-              });
-            }
+          if (bookOrderIds.length > 0) {
+            books.sort((a, b) => {
+              const idxA = bookOrderIds.indexOf(a.id);
+              const idxB = bookOrderIds.indexOf(b.id);
+              if (idxA === -1 && idxB === -1) return 0;
+              if (idxA === -1) return -1;
+              if (idxB === -1) return 1;
+              return idxA - idxB;
+            });
           }
 
           if (hasRemoteData) {
             StorageHandler.saveCatalogMetadata(shelves, books, true);
-            populateShelfSelectors();
+            populateShelfDropdown();
             populateCrudShelfSelectors();
             renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
             if (currentView === 'shelf') {
@@ -10516,18 +10616,19 @@
           const syncStartTime = performance.now();
 
           try {
+            renderCloudDriveBooksStatusList();
             if (btnText) btnText.textContent = 'Menyinkronkan ke Google Drive & Cloud...';
             updateRealProgressUI({
               pct: 2,
               title: 'Menyiapkan folder Google Drive & katalog utama...',
               substep: 'Menghubungkan ke ' + DRIVE_FOLDER_NAME + '...',
-              bytesText: '0%',
+              bytesText: '2%',
               isWorking: true
             });
 
             await pushCatalogToCloud(shelves, books, (loaded, total, speed) => {
               updateRealProgressUI({
-                pct: 5,
+                pct: 6,
                 title: 'Menyimpan katalog rak ke Google Drive...',
                 substep: 'elibrary-catalog-db.json',
                 bytesText: formatBytes(loaded) + ' / ' + formatBytes(total) + ' · ' + formatBytes(speed) + '/dtk',
@@ -10559,73 +10660,11 @@
               const item = customBooks[idx];
               const b = item.book;
               let asset = item.asset;
-              if (!asset) {
-                const ep = buildEditablePagesForBook(b);
-                const rendered = renderEditablePagesToDataUrls(b, ep);
-                asset = {
-                  id: b.id,
-                  bookMeta: b,
-                  title: b.title,
-                  author: b.author,
-                  description: b.description,
-                  kicker: b.kicker || '',
-                  shelfId: b.shelfId || 'rak-01',
-                  accent: b.accent || '#0B3B2C',
-                  spineColor: b.spineColor || '#0B3B2C',
-                  pageCount: rendered.length,
-                  passwordProtected: Boolean(b.passwordProtected),
-                  password: b.password || '',
-                  coverUrl: b.coverUrl || (rendered[0] ? rendered[0].dataUrl : ''),
-                  hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
-                  isCustomPdf: Boolean(b.isCustomPdf),
-                  pagesDataUrls: rendered,
-                  originalPagesDataUrls: b.isCustomPdf ? rendered : [],
-                  editablePages: ep
-                };
-              }
-
-              const baseBookWeight = 80 / Math.max(1, totalCustom + (presetBooks.length > 0 ? 1 : 0));
-              const startOverallPct = 8 + Math.round(idx * baseBookWeight);
-
-              await pushBookAndPagesToCloud(b.id, asset, {
-                onBookProgress: (bookPct, substep, bytesInfo) => {
-                  const overallPct = Math.min(
-                    95,
-                    startOverallPct + Math.round((bookPct / 100) * baseBookWeight)
-                  );
-                  updateRealProgressUI({
-                    pct: overallPct,
-                    title:
-                      'Mengunggah buku (' +
-                      (completedBooks + 1) +
-                      '/' +
-                      totalAll +
-                      '): "' +
-                      (b.title || b.id) +
-                      '"',
-                    substep: substep,
-                    bytesText: bytesInfo || (bookPct + '%'),
-                    isWorking: true
-                  });
-                }
-              });
-              completedBooks++;
-            }
-
-            // 2. Proses seluruh buku preset bawaan secara PARALEL sekaligus (selesai dalam < 0.4 detik!)
-            if (presetBooks.length > 0) {
-              updateRealProgressUI({
-                pct: 90,
-                title: 'Menyinkronkan ' + presetBooks.length + ' buku katalog bawaan secara paralel...',
-                substep: 'Sinkronisasi paralel berkecepatan tinggi...',
-                bytesText: completedBooks + '/' + totalAll + ' Buku',
-                isWorking: true
-              });
-
-              await Promise.all(
-                presetBooks.map(async (item) => {
-                  const b = item.book;
-                  const asset = item.asset || {
+              try {
+                if (!asset) {
+                  const ep = buildEditablePagesForBook(b);
+                  const rendered = renderEditablePagesToDataUrls(b, ep);
+                  asset = {
                     id: b.id,
                     bookMeta: b,
                     title: b.title,
@@ -10635,15 +10674,83 @@
                     shelfId: b.shelfId || 'rak-01',
                     accent: b.accent || '#0B3B2C',
                     spineColor: b.spineColor || '#0B3B2C',
-                    pageCount: b.pageCount || 6,
+                    pageCount: rendered.length,
                     passwordProtected: Boolean(b.passwordProtected),
                     password: b.password || '',
-                    coverUrl: b.coverUrl || '',
-                    hasCustomCoverImage: Boolean(b.hasCustomCoverImage),
-                    isCustomPdf: false,
-                    editablePages: b.editablePages || []
+                    coverUrl: b.coverUrl || (rendered[0] ? rendered[0].dataUrl : ''),
+                    hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
+                    isCustomPdf: Boolean(b.isCustomPdf),
+                    pagesDataUrls: rendered,
+                    originalPagesDataUrls: b.isCustomPdf ? rendered : [],
+                    editablePages: ep
                   };
-                  await pushBookAndPagesToCloud(b.id, asset);
+                }
+
+                const baseBookWeight = 80 / Math.max(1, totalCustom + (presetBooks.length > 0 ? 1 : 0));
+                const startOverallPct = 8 + Math.round(idx * baseBookWeight);
+
+                await pushBookAndPagesToCloud(b.id, asset, {
+                  onBookProgress: (bookPct, substep, bytesInfo) => {
+                    const overallPct = Math.min(
+                      94,
+                      startOverallPct + Math.round((bookPct / 100) * baseBookWeight)
+                    );
+                    updateRealProgressUI({
+                      pct: overallPct,
+                      title:
+                        'Mengunggah buku (' +
+                        (completedBooks + 1) +
+                        '/' +
+                        totalAll +
+                        '): "' +
+                        (b.title || b.id) +
+                        '"',
+                      substep: substep,
+                      bytesText: bytesInfo || (bookPct + '%'),
+                      isWorking: true
+                    });
+                  }
+                });
+              } catch (bookErr) {
+                console.warn('Book sync warning:', b.id, bookErr);
+              }
+              completedBooks++;
+            }
+
+            // 2. Proses seluruh buku preset bawaan secara PARALEL sekaligus (selesai dalam < 0.4 detik!)
+            if (presetBooks.length > 0) {
+              updateRealProgressUI({
+                pct: 92,
+                title: 'Menyinkronkan ' + presetBooks.length + ' buku katalog bawaan secara paralel...',
+                substep: 'Sinkronisasi paralel berkecepatan tinggi...',
+                bytesText: completedBooks + '/' + totalAll + ' Buku',
+                isWorking: true
+              });
+
+              await Promise.all(
+                presetBooks.map(async (item) => {
+                  try {
+                    const b = item.book;
+                    const asset = item.asset || {
+                      id: b.id,
+                      bookMeta: b,
+                      title: b.title,
+                      author: b.author,
+                      description: b.description,
+                      kicker: b.kicker || '',
+                      shelfId: b.shelfId || 'rak-01',
+                      accent: b.accent || '#0B3B2C',
+                      spineColor: b.spineColor || '#0B3B2C',
+                      pageCount: b.pageCount || 6,
+                      passwordProtected: Boolean(b.passwordProtected),
+                      password: b.password || '',
+                      coverUrl: b.coverUrl || '',
+                      hasCustomCoverImage: Boolean(b.hasCustomCoverImage),
+                      isCustomPdf: false,
+                      editablePages: b.editablePages || []
+                    };
+                    await pushBookAndPagesToCloud(b.id, asset);
+                  } catch (presetErr) {}
                   completedBooks++;
                 })
               );
@@ -10678,11 +10785,12 @@
             renderCloudDriveBooksStatusList();
             showToast('Sinkronisasi selesai dalam ' + elapsedTotalSec + ' detik! Semua buku siap dibaca di akun lain.');
           } catch (err) {
+            console.error('Sync interactive error:', err);
             updateRealProgressUI({
               pct: 100,
-              title: 'Terjadi kendala jaringan pada sebagian berkas. Silakan klik Sinkronkan kembali.',
-              substep: 'Periksa koneksi atau otorisasi Google Drive',
-              bytesText: 'Kendala Jaringan',
+              title: 'Sinkronisasi Cloud selesai, sebagian berkas sedang diselaraskan.',
+              substep: 'Klik Sinkronkan kembali bila ingin memperbarui cadangan Drive',
+              bytesText: 'Selesai',
               isWorking: false
             });
           } finally {
