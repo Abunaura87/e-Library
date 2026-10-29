@@ -19,6 +19,9 @@ import {
   buildDefaultEditablePagesForBook,
   applyPageCrudAction,
   applyEtalaseBookCrudAction,
+  isOriginalUploadedBook,
+  hydrateEditablePagesPreservingOriginals,
+  applyMetadataUpdatePreservingOriginalContent,
 } from './flipbookLogic';
 
 test('calculateSpreadState handles desktop 2-page spread transitions accurately', () => {
@@ -374,5 +377,59 @@ test('applyEtalaseBookCrudAction supports create, update, duplicate, reorder, an
   assert.equal(withDeleted.length, 2);
 });
 
+test('uploaded PDF and custom image books preserve 100% original cover and page images when hydrated or edited in CRUD', () => {
+  const uploadedPdfBook = {
+    id: 'book-pdf-1793250884163',
+    shelfId: 'rak-motivasi',
+    title: 'Keyakinan Tak Berbatas',
+    author: 'Abeh H. Syarif Matnadjih',
+    description: 'Dokumen PDF terpublikasi dengan resolusi tinggi Retina DPI.',
+    kicker: 'Motivasi',
+    pageCount: 3,
+    passwordProtected: false,
+    accent: '#0B3B2C',
+    spineColor: '#0B3B2C',
+    coverUrl: 'data:image/jpeg;base64,ORIGINAL_PDF_COVER_PAGE_1',
+    isCustomPdf: true,
+    hasCustomCoverImage: true,
+    customCoverDataUrl: 'data:image/jpeg;base64,ORIGINAL_PDF_COVER_PAGE_1',
+  };
 
+  const storedPdfAsset = {
+    id: 'book-pdf-1793250884163',
+    isCustomPdf: true,
+    pdfDataUrl: 'data:application/pdf;base64,JVBERi0xLjQ=',
+    pagesDataUrls: [
+      { pageNumber: 1, title: 'Sampul Depan', dataUrl: 'data:image/jpeg;base64,ORIGINAL_PDF_COVER_PAGE_1' },
+      { pageNumber: 2, title: 'Halaman 2', dataUrl: 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_2' },
+      { pageNumber: 3, title: 'Halaman 3', dataUrl: 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_3' },
+    ],
+  };
 
+  assert.equal(isOriginalUploadedBook(uploadedPdfBook, storedPdfAsset), true);
+
+  const hydratedPages = hydrateEditablePagesPreservingOriginals(uploadedPdfBook, storedPdfAsset);
+  assert.equal(hydratedPages.length, 3);
+  assert.equal(hydratedPages[0].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_COVER_PAGE_1');
+  assert.equal(hydratedPages[1].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_2');
+  assert.equal(hydratedPages[2].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_3');
+
+  // Editing metadata (title, author, kicker, accent, description) MUST NOT clear customCoverDataUrl or page customImageDataUrl
+  const { updatedBook, updatedPages } = applyMetadataUpdatePreservingOriginalContent(
+    uploadedPdfBook,
+    hydratedPages,
+    {
+      title: 'Keyakinan Tak Berbatas - Merasakan Sentuhan Pertolongan',
+      author: 'Abeh H. Syarif Matnadjih',
+      kicker: 'Motivasi',
+      accent: '#1E3A8A',
+    }
+  );
+
+  assert.equal(updatedBook.hasCustomCoverImage, true);
+  assert.equal(updatedBook.isCustomPdf, true);
+  assert.equal(updatedBook.coverUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_COVER_PAGE_1');
+  assert.equal(updatedPages[0].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_COVER_PAGE_1');
+  assert.equal(updatedPages[1].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_2');
+  assert.equal(updatedPages[2].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_3');
+});

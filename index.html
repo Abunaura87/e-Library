@@ -1110,10 +1110,11 @@
               <i data-lucide="folder-pen" class="w-4 h-4 text-[#D4AF37]"></i>
               <span class="hidden sm:inline">Edit Rak</span>
             </button>
-            <button type="button" id="btn-upload-to-shelf" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer">
+            <button type="button" id="btn-upload-to-shelf" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer" title="Unggah PDF atau Gambar Orisinal langsung ke Etalase sebagai Flipbook 3D">
               <i data-lucide="upload" class="w-4 h-4 text-[#D4AF37]"></i>
-              <span>+ Unggah PDF</span>
+              <span>+ Unggah PDF / Gambar</span>
             </button>
+            <input id="etalase-direct-upload-input" type="file" accept="application/pdf,.pdf,image/*" multiple class="sr-only" />
           </div>
         </div>
 
@@ -1808,7 +1809,12 @@
                   </div>
 
                   <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-2">
-                    <span class="block text-xs font-bold text-[#F3E5AB]">Ganti Sampul atau Muat Dokumen PDF:</span>
+                    <div class="flex flex-wrap items-center justify-between gap-1.5">
+                      <span class="block text-xs font-bold text-[#F3E5AB]">Sampul &amp; Dokumen PDF/Gambar:</span>
+                      <span id="crud-original-content-badge" class="hidden text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-900/90 text-[#F3E5AB] border border-[#D4AF37]/70 whitespace-nowrap shrink-0">
+                        ✓ Orisinal Flipbook 3D
+                      </span>
+                    </div>
                     <div class="flex flex-wrap items-center gap-2">
                       <label for="crud-cover-image-input" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer inline-flex items-center gap-1.5">
                         <i data-lucide="image" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
@@ -1830,9 +1836,9 @@
                 <div>
                   <div class="flex items-center justify-between text-[10px] font-classical-label uppercase tracking-wider text-[#9E7B1C] font-bold mb-2">
                     <span>PRATINJAU KARTU ETALASE 3D</span>
-                    <button type="button" id="btn-crud-regen-cover" class="px-2 py-0.5 rounded bg-[#0B3B2C] text-[#F3E5AB] hover:bg-[#12543F] text-[10px] font-sans font-semibold flex items-center gap-1 cursor-pointer" title="Render ulang gambar sampul 3D sesuai judul &amp; penulis di samping">
+                    <button type="button" id="btn-crud-regen-cover" class="px-2 py-0.5 rounded bg-[#0B3B2C] text-[#F3E5AB] hover:bg-[#12543F] text-[10px] font-sans font-semibold flex items-center gap-1 cursor-pointer" title="Kembalikan sampul asli PDF/gambar atau sinkronkan sampul">
                       <i data-lucide="refresh-cw" class="w-2.5 h-2.5 text-[#D4AF37]"></i>
-                      <span>Sinkron Sampul</span>
+                      <span id="btn-crud-regen-cover-label">Sinkron Sampul</span>
                     </button>
                   </div>
 
@@ -2559,26 +2565,48 @@
 
         async saveBookAsset(bookId, assetPayload) {
           if (!bookId) return false;
+          const prevRecord = bookAssetsCache[bookId] || {};
           const meta = assetPayload.bookMeta || assetPayload || {};
+          const isPdfFlag = Boolean(
+            meta.isCustomPdf ||
+            assetPayload.isCustomPdf ||
+            prevRecord.isCustomPdf ||
+            String(bookId).startsWith('book-pdf-') ||
+            assetPayload.pdfDataUrl ||
+            prevRecord.pdfDataUrl
+          );
+          const preservedOriginalPages =
+            (Array.isArray(assetPayload.originalPagesDataUrls) && assetPayload.originalPagesDataUrls.length > 0
+              ? assetPayload.originalPagesDataUrls
+              : null) ||
+            (Array.isArray(prevRecord.originalPagesDataUrls) && prevRecord.originalPagesDataUrls.length > 0
+              ? prevRecord.originalPagesDataUrls
+              : null) ||
+            (isPdfFlag && Array.isArray(assetPayload.pagesDataUrls) && assetPayload.pagesDataUrls.some((p) => p && p.isOriginalPdfPage)
+              ? assetPayload.pagesDataUrls
+              : null);
+
           const record = {
             id: bookId,
             bookMeta: meta,
-            title: meta.title || assetPayload.title || '',
-            author: meta.author || assetPayload.author || '',
-            description: meta.description || assetPayload.description || '',
-            kicker: meta.kicker || assetPayload.kicker || '',
-            accent: meta.accent || assetPayload.accent || '#0B3B2C',
-            spineColor: meta.spineColor || assetPayload.spineColor || meta.accent || '#0B3B2C',
-            shelfId: meta.shelfId || assetPayload.shelfId || 'rak-01',
-            pageCount: (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls.length) || meta.pageCount || assetPayload.pageCount || 1,
+            title: meta.title || assetPayload.title || prevRecord.title || '',
+            author: meta.author || assetPayload.author || prevRecord.author || '',
+            description: meta.description || assetPayload.description || prevRecord.description || '',
+            kicker: meta.kicker || assetPayload.kicker || prevRecord.kicker || '',
+            accent: meta.accent || assetPayload.accent || prevRecord.accent || '#0B3B2C',
+            spineColor: meta.spineColor || assetPayload.spineColor || meta.accent || prevRecord.spineColor || '#0B3B2C',
+            shelfId: meta.shelfId || assetPayload.shelfId || prevRecord.shelfId || 'rak-01',
+            pageCount: (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls.length) || meta.pageCount || assetPayload.pageCount || prevRecord.pageCount || 1,
             passwordProtected: Boolean(meta.passwordProtected !== undefined ? meta.passwordProtected : assetPayload.passwordProtected),
             password: meta.password || assetPayload.password || '',
-            coverUrl: assetPayload.coverUrl || meta.coverUrl || (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls[0] ? assetPayload.pagesDataUrls[0].dataUrl : ''),
-            pagesDataUrls: assetPayload.pagesDataUrls || [],
-            editablePages: assetPayload.editablePages || meta.editablePages || [],
-            isCustomPdf: Boolean(meta.isCustomPdf || assetPayload.isCustomPdf),
-            pdfDataUrl: assetPayload.pdfDataUrl || '',
-            pdfUrl: meta.pdfUrl || assetPayload.pdfUrl || '',
+            coverUrl: assetPayload.coverUrl || meta.coverUrl || (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls[0] ? assetPayload.pagesDataUrls[0].dataUrl : prevRecord.coverUrl || ''),
+            hasCustomCoverImage: Boolean(meta.hasCustomCoverImage || assetPayload.hasCustomCoverImage || prevRecord.hasCustomCoverImage || isPdfFlag),
+            pagesDataUrls: assetPayload.pagesDataUrls || prevRecord.pagesDataUrls || [],
+            originalPagesDataUrls: preservedOriginalPages || [],
+            editablePages: assetPayload.editablePages || meta.editablePages || prevRecord.editablePages || [],
+            isCustomPdf: isPdfFlag,
+            pdfDataUrl: assetPayload.pdfDataUrl || prevRecord.pdfDataUrl || '',
+            pdfUrl: meta.pdfUrl || assetPayload.pdfUrl || prevRecord.pdfUrl || '',
             updatedAt: Date.now()
           };
           bookAssetsCache[bookId] = record;
@@ -3999,16 +4027,117 @@
         return canvas.toDataURL('image/jpeg', 0.92);
       }
 
-      // Helper Membangun Struktur Halaman Editable Default untuk Buku
-      function buildEditablePagesForBook(book) {
-        if (book && Array.isArray(book.editablePages) && book.editablePages.length > 0) {
-          return book.editablePages.map((p, idx) => ({
+      // Helper mendeteksi apakah buku adalah hasil unggahan PDF atau Gambar Orisinal yang tidak boleh dikonversi ke kanvas template
+      function isBookOriginalPdfOrImage(book, assetOverride) {
+        const asset = assetOverride || (book && book.id ? bookAssetsCache[book.id] : null);
+        if (!book && !asset) return false;
+        const idStr = String((book && book.id) || (asset && asset.id) || '');
+        if (idStr.startsWith('book-pdf-')) return true;
+        if ((book && book.isCustomPdf) || (asset && asset.isCustomPdf)) return true;
+        if ((book && book.hasStoredPages) || (asset && asset.pdfDataUrl)) return true;
+        if (book && book.hasCustomCoverImage) return true;
+        if (asset && Array.isArray(asset.originalPagesDataUrls) && asset.originalPagesDataUrls.length > 0) return true;
+        if (book && Array.isArray(book.editablePages) && book.editablePages.some((p) => Boolean(p && p.customImageDataUrl))) return true;
+        if (asset && Array.isArray(asset.editablePages) && asset.editablePages.some((p) => Boolean(p && p.customImageDataUrl))) return true;
+        return false;
+      }
+
+      // Helper merender ulang halaman orisinal PDF dari pdfDataUrl tanpa modifikasi/konversi template
+      async function renderOriginalPdfPagesFromDataUrl(pdfDataUrl) {
+        if (!pdfDataUrl || !window.pdfjsLib) return null;
+        try {
+          let pdfSource = { url: pdfDataUrl };
+          if (String(pdfDataUrl).startsWith('data:')) {
+            const base64Idx = pdfDataUrl.indexOf('base64,');
+            if (base64Idx >= 0) {
+              const rawBase64 = pdfDataUrl.slice(base64Idx + 7);
+              const binaryStr = window.atob(rawBase64);
+              const bytes = new Uint8Array(binaryStr.length);
+              for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+              }
+              pdfSource = { data: bytes };
+            }
+          }
+          const pdf = await window.pdfjsLib.getDocument(pdfSource).promise;
+          const total = pdf.numPages;
+          const dpr = Math.min(window.devicePixelRatio || 2, 2.25);
+          const rendered = [];
+          for (let i = 1; i <= total; i++) {
+            const page = await pdf.getPage(i);
+            const vp1 = page.getViewport({ scale: 1 });
+            const scale = (650 / vp1.width) * dpr;
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            rendered.push({
+              pageNumber: i,
+              title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
+              dataUrl: canvas.toDataURL('image/jpeg', 0.91),
+              isOriginalPdfPage: true
+            });
+          }
+          return rendered;
+        } catch (err) {
+          console.warn('Gagal merender ulang PDF orisinal dari dataUrl:', err);
+          return null;
+        }
+      }
+
+      // Helper Membangun Struktur Halaman Editable untuk Buku (Mempertahankan 100% Konten Orisinal PDF / Gambar)
+      function buildEditablePagesForBook(book, assetOverride) {
+        const asset = assetOverride || (book && book.id ? bookAssetsCache[book.id] : null);
+        const isOriginal = isBookOriginalPdfOrImage(book, asset);
+
+        const originalSourcePages =
+          (asset && Array.isArray(asset.originalPagesDataUrls) && asset.originalPagesDataUrls.length > 0
+            ? asset.originalPagesDataUrls
+            : null) ||
+          (isOriginal && asset && Array.isArray(asset.pagesDataUrls) && asset.pagesDataUrls.length > 0
+            ? asset.pagesDataUrls
+            : null);
+
+        if (originalSourcePages && originalSourcePages.length > 0) {
+          const existingEditable =
+            (asset && Array.isArray(asset.editablePages) && asset.editablePages.length > 0
+              ? asset.editablePages
+              : (book && Array.isArray(book.editablePages) ? book.editablePages : [])) || [];
+
+          return originalSourcePages.map((item, idx) => {
+            const existingP = existingEditable[idx] || {};
+            return {
+              pageNumber: idx + 1,
+              kicker: existingP.kicker || (idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1)),
+              title: existingP.title || item.title || (idx === 0 ? (book && book.title) || 'Sampul Depan' : 'Halaman ' + (idx + 1)),
+              subtitle: existingP.subtitle || 'Konten Orisinal Flipbook 3D',
+              body: existingP.body || '',
+              customImageDataUrl: existingP.customImageDataUrl || item.dataUrl || '',
+              isOriginalPdfPage: true
+            };
+          });
+        }
+
+        const sourceEditable =
+          (asset && Array.isArray(asset.editablePages) && asset.editablePages.length > 0
+            ? asset.editablePages
+            : (book && Array.isArray(book.editablePages) && book.editablePages.length > 0
+                ? book.editablePages
+                : null));
+
+        if (sourceEditable) {
+          return sourceEditable.map((p, idx) => ({
             pageNumber: idx + 1,
-            kicker: p.kicker || (idx === 0 ? (book.kicker || 'SAMPUL DEPAN') : 'BAGIAN ' + String(idx).padStart(2, '0')),
-            title: p.title || (idx === 0 ? book.title : 'Bab ' + idx + ': Pembahasan & Analisis'),
-            subtitle: p.subtitle || (idx === 0 ? (book.description || '').slice(0, 68) : 'Eksplorasi literatur dan kajian utama'),
-            body: p.body || book.description || '',
-            customImageDataUrl: p.customImageDataUrl || ''
+            kicker: p.kicker || (idx === 0 ? ((book && book.kicker) || 'SAMPUL DEPAN') : 'BAGIAN ' + String(idx).padStart(2, '0')),
+            title: p.title || (idx === 0 ? (book && book.title) : 'Bab ' + idx + ': Pembahasan & Analisis'),
+            subtitle: p.subtitle || (idx === 0 ? ((book && book.description) || '').slice(0, 68) : 'Eksplorasi literatur dan kajian utama'),
+            body: p.body || (book && book.description) || '',
+            customImageDataUrl: p.customImageDataUrl || '',
+            isOriginalPdfPage: Boolean(p.isOriginalPdfPage)
           }));
         }
 
@@ -4045,7 +4174,7 @@
         return list;
       }
 
-      // Render Array editablePages Menjadi Array pagesDataUrls Kanvas Resolusi Tinggi
+      // Render Array editablePages Menjadi Array pagesDataUrls (Mempertahankan Gambar/PDF Orisinal Tanpa Konversi)
       function renderEditablePagesToDataUrls(book, editablePagesInput) {
         const pagesList = Array.isArray(editablePagesInput) && editablePagesInput.length > 0
           ? editablePagesInput
@@ -4070,7 +4199,8 @@
           return {
             pageNumber: idx + 1,
             title: p.title || (isCover ? book.title : 'Halaman ' + (idx + 1)),
-            dataUrl
+            dataUrl,
+            isOriginalPdfPage: Boolean(p.isOriginalPdfPage || p.customImageDataUrl)
           };
         });
       }
@@ -4692,14 +4822,30 @@
           isLocked = false;
         }
 
-        // Periksa apakah buku ini memiliki lembaran PDF/halaman tersimpan di IndexedDB (StorageHandler)
+        // Periksa apakah buku ini memiliki lembaran PDF/gambar orisinal tersimpan di IndexedDB (StorageHandler)
         const cachedAsset = bookAssetsCache[book.id];
-        if (cachedAsset && Array.isArray(cachedAsset.editablePages) && cachedAsset.editablePages.length > 0 && !cachedAsset.isCustomPdf) {
+        const isOriginalBook = isBookOriginalPdfOrImage(book, cachedAsset);
+
+        if (cachedAsset && Array.isArray(cachedAsset.originalPagesDataUrls) && cachedAsset.originalPagesDataUrls.length > 0) {
+          pagesDataUrls = cachedAsset.originalPagesDataUrls;
+          rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
+          currentPage = 1;
+          document.getElementById('source-badge').textContent = 'Dokumen Orisinal Flipbook 3D';
+          renderStage('forward');
+          renderThumbnailsGrid();
+        } else if (isOriginalBook && cachedAsset && cachedAsset.pagesDataUrls && cachedAsset.pagesDataUrls.length > 0) {
+          pagesDataUrls = cachedAsset.pagesDataUrls;
+          rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
+          currentPage = 1;
+          document.getElementById('source-badge').textContent = 'Dokumen Orisinal Flipbook 3D';
+          renderStage('forward');
+          renderThumbnailsGrid();
+        } else if (cachedAsset && Array.isArray(cachedAsset.editablePages) && cachedAsset.editablePages.length > 0) {
           book.editablePages = cachedAsset.editablePages;
           pagesDataUrls = renderEditablePagesToDataUrls(book, cachedAsset.editablePages);
           rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
           currentPage = 1;
-          document.getElementById('source-badge').textContent = 'Konten Halaman Kustom';
+          document.getElementById('source-badge').textContent = isOriginalBook ? 'Dokumen Orisinal Flipbook 3D' : 'Konten Halaman Kustom';
           renderStage('forward');
           renderThumbnailsGrid();
         } else if (cachedAsset && cachedAsset.pagesDataUrls && cachedAsset.pagesDataUrls.length > 0) {
@@ -4712,7 +4858,7 @@
         } else if (Array.isArray(book.editablePages) && book.editablePages.length > 0) {
           pagesDataUrls = renderEditablePagesToDataUrls(book, book.editablePages);
           currentPage = 1;
-          document.getElementById('source-badge').textContent = 'Konten Halaman Kustom';
+          document.getElementById('source-badge').textContent = isOriginalBook ? 'Dokumen Orisinal Flipbook 3D' : 'Konten Halaman Kustom';
           renderStage('forward');
           renderThumbnailsGrid();
         } else if (book.id === 'book-arch') {
@@ -4721,12 +4867,18 @@
           generateBookPagesForReader(book);
           // Juga cek secara asinkron di IndexedDB bila cache belum terisi
           StorageHandler.getBookAsset(book.id).then((dbAsset) => {
-            if (dbAsset && dbAsset.pagesDataUrls && dbAsset.pagesDataUrls.length > 0 && activeBookId === book.id) {
-              pagesDataUrls = dbAsset.pagesDataUrls;
-              rawPdfBlobUrl = dbAsset.pdfDataUrl || null;
-              document.getElementById('source-badge').textContent = 'Tersimpan di IndexedDB';
-              renderStage('forward');
-              renderThumbnailsGrid();
+            if (dbAsset && activeBookId === book.id) {
+              const srcPages =
+                (Array.isArray(dbAsset.originalPagesDataUrls) && dbAsset.originalPagesDataUrls.length > 0
+                  ? dbAsset.originalPagesDataUrls
+                  : dbAsset.pagesDataUrls) || [];
+              if (srcPages.length > 0) {
+                pagesDataUrls = srcPages;
+                rawPdfBlobUrl = dbAsset.pdfDataUrl || null;
+                document.getElementById('source-badge').textContent = 'Dokumen Orisinal Flipbook 3D';
+                renderStage('forward');
+                renderThumbnailsGrid();
+              }
             }
           });
         }
@@ -4770,9 +4922,10 @@
 
       // =========================================================
       // MESIN RENDER PDF.JS (RETINA DPI / DEVICEPIXELRATIO)
-      // + OTOMATIS DISIMPAN KE INDEXEDDB & LOCALSTORAGE
+      // + OTOMATIS DISIMPAN KE INDEXEDDB & LOCALSTORAGE SEBAGAI ORISINAL
       // =========================================================
       let lastUploadedPdfDataUrl = '';
+      let currentUploadedPdfDataUrl = '';
 
       async function loadPdfDocument(sourceObj, labelName, pdfDataUrlForIdb) {
         const overlay = document.getElementById('loading-overlay');
@@ -4791,10 +4944,10 @@
 
           for (let i = 1; i <= total; i++) {
             bar.style.width = Math.round((i / total) * 100) + '%';
-            progText.textContent = 'Merender Halaman ' + i + ' dari ' + total;
+            progText.textContent = 'Merender Halaman Asli PDF ' + i + ' dari ' + total;
             const page = await pdf.getPage(i);
             const vp1 = page.getViewport({ scale: 1 });
-            const scale = (600 / vp1.width) * dpr;
+            const scale = (650 / vp1.width) * dpr;
             const viewport = page.getViewport({ scale });
 
             const canvas = document.createElement('canvas');
@@ -4808,7 +4961,8 @@
             rendered.push({
               pageNumber: i,
               title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
-              dataUrl: canvas.toDataURL('image/jpeg', 0.90)
+              dataUrl: canvas.toDataURL('image/jpeg', 0.91),
+              isOriginalPdfPage: true
             });
           }
 
@@ -4816,17 +4970,29 @@
           currentPage = 1;
           if (pdfDataUrlForIdb) {
             lastUploadedPdfDataUrl = pdfDataUrlForIdb;
+            currentUploadedPdfDataUrl = pdfDataUrlForIdb;
           }
           document.getElementById('source-badge').textContent = labelName;
 
-          // Otomatis simpan buku PDF yang baru diunggah ke IndexedDB & Katalog Rak agar tahan Refresh!
+          // Otomatis simpan buku PDF yang baru diunggah ke IndexedDB & Katalog Rak dengan mempertahankan 100% tampilan orisinalnya
           const targetShelfId = document.getElementById('select-shelf-target').value || config.shelfId || activeShelfId || 'rak-01';
           const autoBookId = (activeBookId && String(activeBookId).startsWith('book-pdf-'))
             ? activeBookId
             : 'book-pdf-' + Date.now();
           activeBookId = autoBookId;
+          config.activeBookId = autoBookId;
 
           const coverDataUrl = rendered.length > 0 ? rendered[0].dataUrl : '';
+          const pdfEditablePages = rendered.map((r, idx) => ({
+            pageNumber: idx + 1,
+            kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
+            title: idx === 0 ? (config.title || 'Sampul Depan') : ('Halaman ' + (idx + 1)),
+            subtitle: 'Konten Orisinal Flipbook 3D',
+            body: '',
+            customImageDataUrl: r.dataUrl,
+            isOriginalPdfPage: true
+          }));
+
           const autoBookRecord = {
             id: autoBookId,
             shelfId: targetShelfId,
@@ -4837,8 +5003,11 @@
             passwordProtected: Boolean(config.passwordProtected),
             password: config.password || '',
             coverUrl: coverDataUrl,
+            hasCustomCoverImage: true,
+            isCustomPdf: true,
             pdfUrl: config.pdfUrl || '',
             hasStoredPages: true,
+            editablePages: pdfEditablePages,
             accent: '#0B3B2C',
             spineColor: '#0B3B2C'
           };
@@ -4853,13 +5022,23 @@
 
           await StorageHandler.saveBookAsset(autoBookId, {
             ...autoBookRecord,
+            bookMeta: autoBookRecord,
+            coverUrl: coverDataUrl,
+            hasCustomCoverImage: true,
+            isCustomPdf: true,
             pagesDataUrls: rendered,
+            originalPagesDataUrls: rendered,
+            editablePages: pdfEditablePages,
             pdfDataUrl: lastUploadedPdfDataUrl || ''
           });
 
+          renderLobbyView(document.getElementById('lobby-search-input').value || '');
+          if (currentView === 'shelf') {
+            renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+          }
           renderStage('forward');
           renderThumbnailsGrid();
-          showToast('Berhasil merender & menyimpan permanen ' + total + ' halaman PDF ke IndexedDB.');
+          showToast('Berhasil memuat ' + total + ' halaman PDF orisinal sebagai Flipbook 3D.');
         } catch (err) {
           errBox.textContent = 'Gagal memuat berkas PDF: Pastikan berkas PDF valid dan URL publik mengizinkan CORS.';
           errBox.classList.remove('hidden');
@@ -6405,13 +6584,129 @@
 
       document.getElementById('btn-upload-to-shelf').onclick = () => {
         requireAdminAuth(() => {
-          config.shelfId = activeShelfId;
-          document.getElementById('select-shelf-target').value = activeShelfId;
-          switchViewTo('reader');
-          document.getElementById('admin-sidebar').classList.remove('hidden');
-          document.getElementById('pdf-file-input').click();
+          const directInp = document.getElementById('etalase-direct-upload-input');
+          if (directInp) {
+            directInp.value = '';
+            directInp.click();
+          } else {
+            config.shelfId = activeShelfId;
+            document.getElementById('select-shelf-target').value = activeShelfId;
+            switchViewTo('reader');
+            document.getElementById('admin-sidebar').classList.remove('hidden');
+            document.getElementById('pdf-file-input').click();
+          }
         });
       };
+
+      const etalaseDirectUploadInput = document.getElementById('etalase-direct-upload-input');
+      if (etalaseDirectUploadInput) {
+        etalaseDirectUploadInput.onchange = async (e) => {
+          const files = Array.from(e.target.files || []);
+          if (!files.length) return;
+          const firstFile = files[0];
+          const isPdf = firstFile.type === 'application/pdf' || /\.pdf$/i.test(firstFile.name);
+          const targetShelfId = activeShelfId || config.shelfId || 'rak-01';
+          config.shelfId = targetShelfId;
+          document.getElementById('select-shelf-target').value = targetShelfId;
+
+          if (isPdf) {
+            const cleanName = firstFile.name.replace(/\.pdf$/i, '');
+            config.title = cleanName;
+            config.author = 'Koleksi e-Book Orisinal';
+            config.description = 'Dokumen PDF orisinal terpublikasi dalam format Flipbook 3D.';
+            config.activeBookId = 'book-pdf-' + Date.now();
+            activeBookId = config.activeBookId;
+            inpTitle.value = config.title;
+            inpAuthor.value = config.author;
+            inpDesc.value = config.description;
+
+            if (rawPdfBlobUrl && rawPdfBlobUrl.startsWith('blob:')) URL.revokeObjectURL(rawPdfBlobUrl);
+            rawPdfBlobUrl = URL.createObjectURL(firstFile);
+
+            const pdfDataUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result || null);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(firstFile);
+            });
+            currentUploadedPdfDataUrl = pdfDataUrl;
+
+            const buf = await firstFile.arrayBuffer();
+            await loadPdfDocument({ data: new Uint8Array(buf) }, 'PDF Orisinal', pdfDataUrl);
+            renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+          } else {
+            // Unggah 1 atau beberapa gambar langsung sebagai buku Flipbook 3D dengan konten gambar orisinal utuh
+            const imgDataUrls = [];
+            for (let i = 0; i < files.length; i++) {
+              const f = files[i];
+              if (!f.type.startsWith('image/')) continue;
+              const dUrl = await new Promise((resolve) => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result || null);
+                r.onerror = () => resolve(null);
+                r.readAsDataURL(f);
+              });
+              if (dUrl) imgDataUrls.push({ file: f, dataUrl: dUrl });
+            }
+            if (!imgDataUrls.length) return;
+
+            const cleanImgTitle = firstFile.name.replace(/\.[a-z0-9]+$/i, '');
+            const newBookId = 'book-pdf-' + Date.now();
+            const renderedPages = imgDataUrls.map((item, idx) => ({
+              pageNumber: idx + 1,
+              title: idx === 0 ? cleanImgTitle : 'Halaman ' + (idx + 1),
+              dataUrl: item.dataUrl,
+              isOriginalPdfPage: true
+            }));
+            const editablePages = imgDataUrls.map((item, idx) => ({
+              pageNumber: idx + 1,
+              kicker: idx === 0 ? 'SAMPUL GAMBAR ASLI' : 'HALAMAN GAMBAR ' + (idx + 1),
+              title: idx === 0 ? cleanImgTitle : 'Halaman ' + (idx + 1),
+              subtitle: 'Konten Gambar Orisinal Flipbook 3D',
+              body: '',
+              customImageDataUrl: item.dataUrl,
+              isOriginalPdfPage: true
+            }));
+
+            const imgBookRecord = {
+              id: newBookId,
+              shelfId: targetShelfId,
+              title: cleanImgTitle,
+              author: 'Koleksi Visual Orisinal',
+              description: 'Publikasi gambar orisinal dalam tampilan e-Book Flipbook 3D.',
+              pageCount: renderedPages.length,
+              passwordProtected: false,
+              password: '',
+              coverUrl: renderedPages[0].dataUrl,
+              hasCustomCoverImage: true,
+              isCustomPdf: true,
+              hasStoredPages: true,
+              editablePages: editablePages,
+              accent: '#0B3B2C',
+              spineColor: '#0B3B2C'
+            };
+
+            books.unshift(imgBookRecord);
+            saveBooksToStorage();
+            await StorageHandler.saveBookAsset(newBookId, {
+              ...imgBookRecord,
+              bookMeta: imgBookRecord,
+              coverUrl: renderedPages[0].dataUrl,
+              hasCustomCoverImage: true,
+              isCustomPdf: true,
+              pagesDataUrls: renderedPages,
+              originalPagesDataUrls: renderedPages,
+              editablePages: editablePages
+            });
+
+            renderLobbyView(document.getElementById('lobby-search-input').value || '');
+            if (currentView === 'shelf') {
+              renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+            }
+            showToast('Gambar orisinal "' + cleanImgTitle + '" berhasil ditambahkan ke Etalase sebagai Flipbook 3D!');
+          }
+        };
+      }
 
       document.getElementById('btn-save-to-shelf').onclick = async () => {
         const targetShelfId = document.getElementById('select-shelf-target').value || activeShelfId || 'rak-01';
@@ -6423,11 +6718,14 @@
         const targetBookId = config.activeBookId || activeBookId;
         const existingIdx = targetBookId ? books.findIndex((b) => b.id === targetBookId) : -1;
         const existingBook = existingIdx >= 0 ? books[existingIdx] : null;
+        const existingAsset = targetBookId ? bookAssetsCache[targetBookId] : null;
 
-        // Jika pengguna mengubah judul jauh berbeda dari buku bawaan (misal dari Panduan Kurikulum ke judul baru),
-        // atau belum ada buku aktif, pastikan sampul & halaman 1 diselaraskan dengan judul baru!
-        const isFreshPdfUpload = Boolean(currentUploadedPdfDataUrl && String(targetBookId || '').startsWith('book-pdf-'));
-        const bookId = existingIdx >= 0 ? targetBookId : ('book-' + Date.now());
+        const isOriginalPdfOrImg = Boolean(
+          isBookOriginalPdfOrImage(existingBook, existingAsset) ||
+          currentUploadedPdfDataUrl ||
+          String(targetBookId || '').startsWith('book-pdf-')
+        );
+        const bookId = existingIdx >= 0 ? targetBookId : (isOriginalPdfOrImg ? ('book-pdf-' + Date.now()) : ('book-' + Date.now()));
         config.activeBookId = bookId;
         activeBookId = bookId;
 
@@ -6435,19 +6733,22 @@
         const kickerLabel = (existingBook && existingBook.kicker) || (shelfObj ? shelfObj.code : 'KOLEKSI PUSTAKA 3D');
         const accentHex = (existingBook && existingBook.accent) || '#0B3B2C';
 
-        let editablePages = existingBook && Array.isArray(existingBook.editablePages) && existingBook.editablePages.length > 0
-          ? existingBook.editablePages.map((p) => Object.assign({}, p))
-          : buildEditablePagesForBook({
-              title: config.title,
-              author: config.author,
-              description: config.description,
-              kicker: kickerLabel,
-              shelfId: targetShelfId,
-              pageCount: pagesDataUrls.length || 6
-            });
+        let editablePages = buildEditablePagesForBook(
+          existingBook || {
+            id: bookId,
+            title: config.title,
+            author: config.author,
+            description: config.description,
+            kicker: kickerLabel,
+            shelfId: targetShelfId,
+            pageCount: pagesDataUrls.length || 6,
+            isCustomPdf: isOriginalPdfOrImg
+          },
+          existingAsset
+        );
 
-        // Selalu sinkronkan halaman 1 (Sampul) dengan judul, penulis, dan deskripsi terbaru jika bukan PDF murni
-        if (!isFreshPdfUpload && editablePages.length > 0) {
+        // Hanya sinkronkan halaman 1 (Sampul) dengan teks kanvas apabila BUKAN buku PDF/gambar orisinal
+        if (!isOriginalPdfOrImg && editablePages.length > 0 && !editablePages[0].customImageDataUrl) {
           editablePages[0].title = config.title;
           editablePages[0].kicker = editablePages[0].kicker || kickerLabel;
           editablePages[0].subtitle = config.description.slice(0, 68) || editablePages[0].subtitle;
@@ -6462,11 +6763,26 @@
             },
             editablePages
           );
+        } else if (isOriginalPdfOrImg && pagesDataUrls.length > 0) {
+          // Pertahankan 100% gambar halaman asli PDF/gambar
+          editablePages = pagesDataUrls.map((p, idx) => ({
+            pageNumber: idx + 1,
+            kicker: (editablePages[idx] && editablePages[idx].kicker) || (idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1)),
+            title: (editablePages[idx] && editablePages[idx].title) || p.title || (idx === 0 ? config.title : 'Halaman ' + (idx + 1)),
+            subtitle: (editablePages[idx] && editablePages[idx].subtitle) || 'Konten Orisinal Flipbook 3D',
+            body: (editablePages[idx] && editablePages[idx].body) || '',
+            customImageDataUrl: p.dataUrl,
+            isOriginalPdfPage: true
+          }));
         }
 
-        const coverDataUrl = pagesDataUrls.length > 0
-          ? pagesDataUrls[0].dataUrl
-          : generateCanvasPageDataUrl(config.title, config.description, kickerLabel, config.author, config.description, true, editablePages.length || 6, 0, accentHex);
+        const coverDataUrl = isOriginalPdfOrImg
+          ? ((existingAsset && existingAsset.originalPagesDataUrls && existingAsset.originalPagesDataUrls[0] && existingAsset.originalPagesDataUrls[0].dataUrl) ||
+             (pagesDataUrls[0] && pagesDataUrls[0].dataUrl) ||
+             (existingBook && existingBook.coverUrl) || '')
+          : (pagesDataUrls.length > 0
+              ? pagesDataUrls[0].dataUrl
+              : generateCanvasPageDataUrl(config.title, config.description, kickerLabel, config.author, config.description, true, editablePages.length || 6, 0, accentHex));
 
         const savedBook = {
           id: bookId,
@@ -6480,10 +6796,12 @@
           password: config.password,
           pdfUrl: config.pdfUrl || '',
           coverUrl: coverDataUrl,
+          hasCustomCoverImage: isOriginalPdfOrImg || Boolean(existingBook && existingBook.hasCustomCoverImage),
           accent: accentHex,
           spineColor: accentHex,
           editablePages: editablePages,
-          isCustomPdf: isFreshPdfUpload
+          isCustomPdf: isOriginalPdfOrImg,
+          hasStoredPages: isOriginalPdfOrImg
         };
 
         if (existingIdx >= 0) {
@@ -6496,10 +6814,12 @@
         await StorageHandler.saveBookAsset(bookId, {
           bookMeta: savedBook,
           coverUrl: coverDataUrl,
+          hasCustomCoverImage: savedBook.hasCustomCoverImage,
           pagesDataUrls: pagesDataUrls.slice(),
+          originalPagesDataUrls: isOriginalPdfOrImg ? pagesDataUrls.slice() : (existingAsset && existingAsset.originalPagesDataUrls) || [],
           editablePages: editablePages,
-          isCustomPdf: isFreshPdfUpload,
-          pdfDataUrl: currentUploadedPdfDataUrl || null
+          isCustomPdf: isOriginalPdfOrImg,
+          pdfDataUrl: currentUploadedPdfDataUrl || (existingAsset && existingAsset.pdfDataUrl) || null
         });
 
         renderStage('forward');
@@ -6508,7 +6828,7 @@
         if (currentView === 'shelf') renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
 
         const targetShelf = shelves.find((s) => s.id === targetShelfId);
-        showToast('Buku "' + config.title + '" & sampul 3D berhasil disimpan permanen ke ' + (targetShelf ? targetShelf.name : 'etalase'));
+        showToast('Buku "' + config.title + '" berhasil disimpan permanen ke ' + (targetShelf ? targetShelf.name : 'etalase'));
       };
 
       // =========================================================
@@ -6649,7 +6969,18 @@
         crudIsNewBook = false;
         crudCurrentBookId = found.id;
 
+        const cachedAsset = bookAssetsCache[found.id];
+        const isOriginalPdfOrImg = isBookOriginalPdfOrImage(found, cachedAsset);
         const shelfObj = shelves.find((s) => s.id === found.shelfId) || shelves[0];
+
+        crudWorkingPages = buildEditablePagesForBook(found, cachedAsset);
+
+        const originalPage1DataUrl =
+          (cachedAsset && Array.isArray(cachedAsset.originalPagesDataUrls) && cachedAsset.originalPagesDataUrls[0] && cachedAsset.originalPagesDataUrls[0].dataUrl) ||
+          (crudWorkingPages[0] && crudWorkingPages[0].customImageDataUrl) ||
+          (isOriginalPdfOrImg && found.coverUrl) ||
+          '';
+
         crudWorkingBook = {
           id: found.id,
           shelfId: found.shelfId || (shelfObj ? shelfObj.id : 'rak-01'),
@@ -6657,50 +6988,68 @@
           author: found.author || '',
           description: found.description || '',
           kicker: found.kicker || (shelfObj ? shelfObj.code : 'KOLEKSI PUSTAKA 3D'),
-          pageCount: found.pageCount || 6,
+          pageCount: crudWorkingPages.length || found.pageCount || 6,
           passwordProtected: Boolean(found.passwordProtected),
           password: found.password || '',
           accent: found.accent || found.spineColor || '#0B3B2C',
           spineColor: found.spineColor || found.accent || '#0B3B2C',
-          hasCustomCoverImage: Boolean(found.hasCustomCoverImage),
-          customCoverDataUrl: found.hasCustomCoverImage ? found.coverUrl : '',
-          isCustomPdf: Boolean(found.isCustomPdf)
+          hasCustomCoverImage: Boolean(found.hasCustomCoverImage || isOriginalPdfOrImg || originalPage1DataUrl),
+          customCoverDataUrl: originalPage1DataUrl || (found.hasCustomCoverImage ? found.coverUrl : ''),
+          isCustomPdf: isOriginalPdfOrImg,
+          pdfDataUrl: (cachedAsset && cachedAsset.pdfDataUrl) || '',
+          originalPagesDataUrls: (cachedAsset && cachedAsset.originalPagesDataUrls) || null
         };
 
-        const cachedAsset = bookAssetsCache[found.id];
-        if (cachedAsset && Array.isArray(cachedAsset.editablePages) && cachedAsset.editablePages.length > 0) {
-          crudWorkingPages = cachedAsset.editablePages.map((p, i) => ({
-            pageNumber: i + 1,
-            kicker: p.kicker || '',
-            title: p.title || '',
-            subtitle: p.subtitle || '',
-            body: p.body || '',
-            customImageDataUrl: p.customImageDataUrl || ''
-          }));
-        } else if (Array.isArray(found.editablePages) && found.editablePages.length > 0) {
-          crudWorkingPages = found.editablePages.map((p, i) => ({
-            pageNumber: i + 1,
-            kicker: p.kicker || '',
-            title: p.title || '',
-            subtitle: p.subtitle || '',
-            body: p.body || '',
-            customImageDataUrl: p.customImageDataUrl || ''
-          }));
-        } else {
-          crudWorkingPages = buildEditablePagesForBook(crudWorkingBook);
+        // Pastikan Halaman 1 memiliki judul yang sinkron dengan judul buku hanya jika BUKAN PDF/gambar orisinal
+        if (crudWorkingPages.length > 0 && !crudWorkingBook.isCustomPdf && !crudWorkingPages[0].customImageDataUrl) {
+          crudWorkingPages[0].title = crudWorkingBook.title;
         }
 
-        // Pastikan Halaman 1 memiliki judul yang sinkron dengan judul buku
-        if (crudWorkingPages.length > 0 && !crudWorkingBook.isCustomPdf) {
-          crudWorkingPages[0].title = crudWorkingBook.title;
+        // Jika buku ini adalah PDF unggahan (book-pdf-*) yang sebelumnya sempat tertimpa kanvas hijau padahal pdfDataUrl ada di IndexedDB,
+        // otomatis pulihkan lembaran asli PDF-nya!
+        if (
+          isOriginalPdfOrImg &&
+          cachedAsset &&
+          cachedAsset.pdfDataUrl &&
+          crudWorkingPages.some((p) => !p.customImageDataUrl)
+        ) {
+          renderOriginalPdfPagesFromDataUrl(cachedAsset.pdfDataUrl).then((restoredPages) => {
+            if (restoredPages && restoredPages.length > 0 && crudCurrentBookId === found.id) {
+              crudWorkingPages = restoredPages.map((r, idx) => ({
+                pageNumber: idx + 1,
+                kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
+                title: idx === 0 ? crudWorkingBook.title : 'Halaman ' + (idx + 1),
+                subtitle: 'Konten Orisinal Flipbook 3D',
+                body: '',
+                customImageDataUrl: r.dataUrl,
+                isOriginalPdfPage: true
+              }));
+              crudWorkingBook.hasCustomCoverImage = true;
+              crudWorkingBook.customCoverDataUrl = restoredPages[0].dataUrl;
+              crudWorkingBook.isCustomPdf = true;
+              crudWorkingBook.originalPagesDataUrls = restoredPages;
+              updateCrudMetadataLivePreview();
+              renderCrudPagesList();
+              loadCrudPageIntoForm(crudSelectedPageIdx);
+            }
+          });
         }
 
         crudSelectedPageIdx = 0;
 
         const badge = document.getElementById('crud-active-mode-badge');
         if (badge) {
-          badge.textContent = 'MODE EDIT BUKU';
+          badge.textContent = isOriginalPdfOrImg ? 'MODE EDIT (ORISINAL FLIPBOOK 3D)' : 'MODE EDIT BUKU';
           badge.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/60 text-[#F3E5AB]';
+        }
+
+        const origBadge = document.getElementById('crud-original-content-badge');
+        if (origBadge) {
+          origBadge.classList.toggle('hidden', !isOriginalPdfOrImg);
+        }
+        const regenLabel = document.getElementById('btn-crud-regen-cover-label');
+        if (regenLabel) {
+          regenLabel.textContent = isOriginalPdfOrImg ? 'Sampul Asli PDF' : 'Sinkron Sampul';
         }
 
         populateCrudMetadataFormFromWorking();
@@ -6735,7 +7084,13 @@
         crudWorkingBook.passwordProtected = document.getElementById('crud-chk-password').checked;
         crudWorkingBook.password = document.getElementById('crud-inp-password').value.trim();
 
-        if (alsoSyncPage1 && crudWorkingPages.length > 0) {
+        // JANGAN mengubah halaman 1 jika buku berasal dari PDF/Gambar orisinal!
+        if (
+          alsoSyncPage1 &&
+          crudWorkingPages.length > 0 &&
+          !crudWorkingBook.isCustomPdf &&
+          !crudWorkingPages[0].customImageDataUrl
+        ) {
           crudWorkingPages[0].title = crudWorkingBook.title;
           crudWorkingPages[0].kicker = crudWorkingBook.kicker;
           crudWorkingPages[0].subtitle = crudWorkingBook.description.slice(0, 68) || crudWorkingPages[0].subtitle;
@@ -6950,12 +7305,21 @@
         if (!crudWorkingBook) return;
         syncWorkingBookFromMetadataInputs(false);
 
+        const prevAsset = bookAssetsCache[crudWorkingBook.id] || {};
+        const isOriginalPdfOrImg = Boolean(
+          crudWorkingBook.isCustomPdf ||
+          String(crudWorkingBook.id || '').startsWith('book-pdf-') ||
+          prevAsset.isCustomPdf ||
+          prevAsset.pdfDataUrl ||
+          crudWorkingPages.some((p) => Boolean(p && p.customImageDataUrl))
+        );
+
         if (crudWorkingPages.length === 0) {
-          crudWorkingPages = buildEditablePagesForBook(crudWorkingBook);
+          crudWorkingPages = buildEditablePagesForBook(crudWorkingBook, prevAsset);
         }
 
-        // Pastikan Halaman 1 (Sampul) selaras dengan judul buku jika bukan gambar kustom
-        if (crudWorkingPages[0] && !crudWorkingPages[0].customImageDataUrl) {
+        // Pastikan Halaman 1 (Sampul) selaras dengan judul buku HANYA jika BUKAN gambar/PDF orisinal
+        if (!isOriginalPdfOrImg && crudWorkingPages[0] && !crudWorkingPages[0].customImageDataUrl) {
           crudWorkingPages[0].title = crudWorkingBook.title;
           crudWorkingPages[0].kicker = crudWorkingBook.kicker || crudWorkingPages[0].kicker || 'SAMPUL DEPAN';
           if (!crudWorkingPages[0].subtitle) {
@@ -6984,9 +7348,10 @@
           accent: crudWorkingBook.accent || '#0B3B2C',
           spineColor: crudWorkingBook.accent || '#0B3B2C',
           coverUrl: finalCoverUrl,
-          hasCustomCoverImage: Boolean(crudWorkingBook.hasCustomCoverImage),
+          hasCustomCoverImage: Boolean(crudWorkingBook.hasCustomCoverImage || isOriginalPdfOrImg),
           editablePages: crudWorkingPages.map((p, idx) => Object.assign({}, p, { pageNumber: idx + 1 })),
-          isCustomPdf: false
+          isCustomPdf: isOriginalPdfOrImg,
+          hasStoredPages: isOriginalPdfOrImg
         };
 
         const existingIdx = books.findIndex((b) => b.id === finalBookRecord.id);
@@ -7001,9 +7366,15 @@
         await StorageHandler.saveBookAsset(finalBookRecord.id, {
           bookMeta: finalBookRecord,
           coverUrl: finalCoverUrl,
+          hasCustomCoverImage: finalBookRecord.hasCustomCoverImage,
           pagesDataUrls: renderedPages,
+          originalPagesDataUrls:
+            crudWorkingBook.originalPagesDataUrls ||
+            prevAsset.originalPagesDataUrls ||
+            (isOriginalPdfOrImg ? renderedPages : []),
           editablePages: finalBookRecord.editablePages,
-          isCustomPdf: false
+          isCustomPdf: isOriginalPdfOrImg,
+          pdfDataUrl: crudWorkingBook.pdfDataUrl || prevAsset.pdfDataUrl || ''
         });
 
         populateCrudShelfSelectors();
@@ -7160,7 +7531,7 @@
         const el = document.getElementById(id);
         if (el) {
           el.oninput = () => {
-            if (crudWorkingBook) crudWorkingBook.hasCustomCoverImage = false;
+            // JANGAN menghapus hasCustomCoverImage saat menyunting metadata agar sampul asli PDF/gambar tidak berubah!
             updateCrudMetadataLivePreview();
           };
           el.onchange = () => updateCrudMetadataLivePreview();
@@ -7172,14 +7543,57 @@
           const c = btn.getAttribute('data-color');
           if (c) {
             document.getElementById('crud-inp-accent').value = c;
-            if (crudWorkingBook) crudWorkingBook.hasCustomCoverImage = false;
             updateCrudMetadataLivePreview();
           }
         };
       });
 
-      document.getElementById('btn-crud-regen-cover').onclick = () => {
+      document.getElementById('btn-crud-regen-cover').onclick = async () => {
         if (!crudWorkingBook) return;
+        const asset = bookAssetsCache[crudWorkingBook.id];
+        if (crudWorkingBook.isCustomPdf || String(crudWorkingBook.id || '').startsWith('book-pdf-') || (asset && asset.pdfDataUrl)) {
+          // Untuk buku PDF/gambar orisinal, kembalikan ke Halaman 1 asli PDF (bukan template hijau!)
+          if (asset && Array.isArray(asset.originalPagesDataUrls) && asset.originalPagesDataUrls[0]) {
+            const origUrl = asset.originalPagesDataUrls[0].dataUrl;
+            crudWorkingBook.hasCustomCoverImage = true;
+            crudWorkingBook.customCoverDataUrl = origUrl;
+            if (crudWorkingPages[0]) crudWorkingPages[0].customImageDataUrl = origUrl;
+            updateCrudMetadataLivePreview();
+            showToast('Sampul asli dokumen PDF berhasil dipulihkan.');
+            return;
+          }
+          if (asset && asset.pdfDataUrl) {
+            showToast('Memulihkan halaman sampul asli dari dokumen PDF...');
+            const restored = await renderOriginalPdfPagesFromDataUrl(asset.pdfDataUrl);
+            if (restored && restored.length > 0) {
+              crudWorkingPages = restored.map((r, idx) => ({
+                pageNumber: idx + 1,
+                kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
+                title: idx === 0 ? crudWorkingBook.title : 'Halaman ' + (idx + 1),
+                subtitle: 'Konten Orisinal Flipbook 3D',
+                body: '',
+                customImageDataUrl: r.dataUrl,
+                isOriginalPdfPage: true
+              }));
+              crudWorkingBook.hasCustomCoverImage = true;
+              crudWorkingBook.customCoverDataUrl = restored[0].dataUrl;
+              crudWorkingBook.originalPagesDataUrls = restored;
+              updateCrudMetadataLivePreview();
+              renderCrudPagesList();
+              loadCrudPageIntoForm(0);
+              showToast('Sampul & seluruh halaman asli PDF berhasil dipulihkan!');
+              return;
+            }
+          }
+          if (crudWorkingPages[0] && crudWorkingPages[0].customImageDataUrl) {
+            crudWorkingBook.hasCustomCoverImage = true;
+            crudWorkingBook.customCoverDataUrl = crudWorkingPages[0].customImageDataUrl;
+            updateCrudMetadataLivePreview();
+            showToast('Sampul asli halaman 1 dipertahankan.');
+            return;
+          }
+        }
+
         crudWorkingBook.hasCustomCoverImage = false;
         crudWorkingBook.customCoverDataUrl = '';
         if (crudWorkingPages[0]) {
@@ -7189,7 +7603,7 @@
         showToast('Sampul 3D disinkronkan dengan Judul & Penulis terbaru.');
       };
 
-      // Unggah gambar sampul kustom di modal CRUD
+      // Unggah gambar sampul kustom di modal CRUD (Mempertahankan gambar asli 100%)
       document.getElementById('crud-cover-image-input').onchange = (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file || !crudWorkingBook) return;
@@ -7201,28 +7615,37 @@
             if (crudWorkingPages[0]) {
               crudWorkingPages[0].customImageDataUrl = reader.result;
             }
+            const origBadge = document.getElementById('crud-original-content-badge');
+            if (origBadge) origBadge.classList.remove('hidden');
             updateCrudMetadataLivePreview();
-            showToast('Gambar sampul kustom diterapkan.');
+            showToast('Gambar sampul orisinal diterapkan sebagai sampul Flipbook 3D.');
           }
         };
         reader.readAsDataURL(file);
       };
 
-      // Impor halaman dari file PDF di dalam modal CRUD
+      // Impor halaman dari file PDF di dalam modal CRUD (Mempertahankan 100% tampilan asli PDF)
       document.getElementById('crud-pdf-file-input').onchange = async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file || !crudWorkingBook || !window.pdfjsLib) return;
-        showToast('Mengimpor halaman dari berkas PDF...');
+        showToast('Memuat seluruh halaman asli berkas PDF...');
         try {
+          const pdfDataUrl = await new Promise((resolve) => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result || '');
+            r.onerror = () => resolve('');
+            r.readAsDataURL(file);
+          });
           const buf = await file.arrayBuffer();
           const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
           const total = pdf.numPages;
-          const dpr = Math.min(window.devicePixelRatio || 2, 2);
+          const dpr = Math.min(window.devicePixelRatio || 2, 2.25);
           const importedPages = [];
+          const rawRenderedPages = [];
           for (let i = 1; i <= total; i++) {
             const page = await pdf.getPage(i);
             const vp1 = page.getViewport({ scale: 1 });
-            const scale = (580 / vp1.width) * dpr;
+            const scale = (650 / vp1.width) * dpr;
             const viewport = page.getViewport({ scale });
             const canvas = document.createElement('canvas');
             canvas.width = viewport.width;
@@ -7231,22 +7654,38 @@
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             await page.render({ canvasContext: ctx, viewport }).promise;
-            const imgData = canvas.toDataURL('image/jpeg', 0.90);
+            const imgData = canvas.toDataURL('image/jpeg', 0.91);
+            rawRenderedPages.push({
+              pageNumber: i,
+              title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
+              dataUrl: imgData,
+              isOriginalPdfPage: true
+            });
             importedPages.push({
               pageNumber: i,
-              kicker: i === 1 ? 'SAMPUL PDF' : 'HALAMAN PDF ' + i,
+              kicker: i === 1 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + i,
               title: i === 1 ? crudWorkingBook.title : 'Halaman ' + i,
               subtitle: file.name,
-              body: 'Halaman diimpor dari dokumen PDF: ' + file.name,
-              customImageDataUrl: imgData
+              body: '',
+              customImageDataUrl: imgData,
+              isOriginalPdfPage: true
             });
           }
           crudWorkingPages = importedPages;
+          crudWorkingBook.isCustomPdf = true;
+          crudWorkingBook.hasCustomCoverImage = true;
+          crudWorkingBook.customCoverDataUrl = importedPages[0] ? importedPages[0].customImageDataUrl : '';
+          crudWorkingBook.pdfDataUrl = pdfDataUrl;
+          crudWorkingBook.originalPagesDataUrls = rawRenderedPages;
           crudSelectedPageIdx = 0;
+
+          const origBadge = document.getElementById('crud-original-content-badge');
+          if (origBadge) origBadge.classList.remove('hidden');
+
           updateCrudMetadataLivePreview();
           renderCrudPagesList();
           loadCrudPageIntoForm(0);
-          showToast('Berhasil mengimpor ' + total + ' halaman dari PDF!');
+          showToast('Berhasil memuat ' + total + ' halaman PDF orisinal tanpa konversi!');
         } catch (err) {
           showToast('Gagal mengimpor PDF. Pastikan berkas PDF valid.');
         }
@@ -7266,11 +7705,13 @@
       document.getElementById('btn-crud-sync-cover-page').onclick = () => {
         if (!crudWorkingBook || !crudWorkingPages.length) return;
         syncWorkingBookFromMetadataInputs(true);
-        crudWorkingPages[0].customImageDataUrl = '';
+        if (!crudWorkingBook.isCustomPdf && !String(crudWorkingBook.id || '').startsWith('book-pdf-')) {
+          crudWorkingPages[0].customImageDataUrl = '';
+        }
         crudSelectedPageIdx = 0;
         renderCrudPagesList();
         loadCrudPageIntoForm(0);
-        showToast('Halaman 1 (Sampul) berhasil disinkronkan dengan Judul & Penulis buku.');
+        showToast('Halaman 1 (Sampul) berhasil diselaraskan.');
       };
 
       document.getElementById('btn-crud-add-page').onclick = () => {
@@ -7619,13 +8060,14 @@
         }
       };
 
-      // Unggah File PDF Lokal (disimpan permanen ke IndexedDB + Katalog)
+      // Unggah File PDF Lokal (disimpan permanen ke IndexedDB + Katalog sebagai Orisinal Flipbook 3D)
       document.getElementById('pdf-file-input').onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         document.getElementById('file-name-label').textContent = 'Aktif: ' + file.name;
         config.title = file.name.replace(/\.pdf$/i, '');
-        config.activeBookId = 'book-' + Date.now();
+        config.activeBookId = 'book-pdf-' + Date.now();
+        activeBookId = config.activeBookId;
         inpTitle.value = config.title;
         if (rawPdfBlobUrl && rawPdfBlobUrl.startsWith('blob:')) URL.revokeObjectURL(rawPdfBlobUrl);
         rawPdfBlobUrl = URL.createObjectURL(file);
@@ -7639,7 +8081,7 @@
         currentUploadedPdfDataUrl = pdfDataUrl;
 
         const buf = await file.arrayBuffer();
-        await loadPdfDocument({ data: new Uint8Array(buf) }, 'PDF Lokal', pdfDataUrl);
+        await loadPdfDocument({ data: new Uint8Array(buf) }, 'PDF Orisinal', pdfDataUrl);
       };
 
       // Muat Direct URL PDF
@@ -8043,17 +8485,68 @@
           const storedAssets = await StorageHandler.getAllBookAssets();
           if (Array.isArray(storedAssets) && storedAssets.length > 0) {
             let catalogChanged = false;
-            storedAssets.forEach((asset) => {
-              if (!asset || !asset.id) return;
+            for (let aIdx = 0; aIdx < storedAssets.length; aIdx++) {
+              const asset = storedAssets[aIdx];
+              if (!asset || !asset.id) continue;
               const existingBook = books.find((b) => b.id === asset.id);
-              if (existingBook) {
-                if (Array.isArray(asset.editablePages) && asset.editablePages.length > 0) {
-                  existingBook.editablePages = asset.editablePages;
+              const isPdfOrOriginal = isBookOriginalPdfOrImage(existingBook, asset);
+
+              // Pemulihan otomatis bila buku PDF (book-pdf-*) sempat tertimpa kanvas hijau padahal pdfDataUrl masih tersimpan
+              if (
+                isPdfOrOriginal &&
+                asset.pdfDataUrl &&
+                (!Array.isArray(asset.originalPagesDataUrls) || asset.originalPagesDataUrls.length === 0) &&
+                (!Array.isArray(asset.editablePages) || asset.editablePages.some((p) => !p.customImageDataUrl))
+              ) {
+                const restored = await renderOriginalPdfPagesFromDataUrl(asset.pdfDataUrl);
+                if (restored && restored.length > 0) {
+                  asset.originalPagesDataUrls = restored;
+                  asset.pagesDataUrls = restored;
+                  asset.coverUrl = restored[0].dataUrl;
+                  asset.isCustomPdf = true;
+                  asset.hasCustomCoverImage = true;
+                  asset.editablePages = restored.map((r, idx) => ({
+                    pageNumber: idx + 1,
+                    kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
+                    title: idx === 0 ? ((existingBook && existingBook.title) || asset.title || 'Sampul Depan') : 'Halaman ' + (idx + 1),
+                    subtitle: 'Konten Orisinal Flipbook 3D',
+                    body: '',
+                    customImageDataUrl: r.dataUrl,
+                    isOriginalPdfPage: true
+                  }));
+                  await StorageHandler.saveBookAsset(asset.id, asset);
+                  catalogChanged = true;
                 }
-                const isPdfBook = Boolean(asset.isCustomPdf || existingBook.isCustomPdf || String(asset.id).startsWith('book-pdf-'));
-                if (!isPdfBook && !existingBook.hasCustomCoverImage) {
-                  // Pastikan coverUrl selalu selaras dengan judul buku asli (mencegah cover buku lain terbawa)
-                  const ep = buildEditablePagesForBook(existingBook);
+              }
+
+              if (existingBook) {
+                if (isPdfOrOriginal) {
+                  existingBook.isCustomPdf = true;
+                  existingBook.hasCustomCoverImage = true;
+                  const origPages =
+                    (Array.isArray(asset.originalPagesDataUrls) && asset.originalPagesDataUrls.length > 0
+                      ? asset.originalPagesDataUrls
+                      : asset.pagesDataUrls) || [];
+                  if (origPages.length > 0) {
+                    existingBook.pageCount = origPages.length;
+                    if (origPages[0] && origPages[0].dataUrl) {
+                      existingBook.coverUrl = origPages[0].dataUrl;
+                    }
+                    existingBook.editablePages = origPages.map((p, idx) => ({
+                      pageNumber: idx + 1,
+                      kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
+                      title: idx === 0 ? existingBook.title : 'Halaman ' + (idx + 1),
+                      subtitle: 'Konten Orisinal Flipbook 3D',
+                      body: '',
+                      customImageDataUrl: p.dataUrl,
+                      isOriginalPdfPage: true
+                    }));
+                  } else if (Array.isArray(asset.editablePages) && asset.editablePages.length > 0) {
+                    existingBook.editablePages = asset.editablePages;
+                  }
+                } else if (!existingBook.hasCustomCoverImage) {
+                  // Untuk buku preset teks bawaan, pastikan coverUrl selalu selaras dengan judul buku
+                  const ep = buildEditablePagesForBook(existingBook, asset);
                   ep[0].title = existingBook.title;
                   existingBook.editablePages = ep;
                   const rendered = renderEditablePagesToDataUrls(existingBook, ep);
@@ -8061,11 +8554,6 @@
                   existingBook.pageCount = rendered.length;
                   asset.coverUrl = existingBook.coverUrl;
                   asset.pagesDataUrls = rendered;
-                } else {
-                  if (asset.coverUrl) existingBook.coverUrl = asset.coverUrl;
-                  if (asset.pagesDataUrls && asset.pagesDataUrls.length > 0) {
-                    existingBook.pageCount = asset.pagesDataUrls.length;
-                  }
                 }
               } else if (asset.bookMeta) {
                 const hydratedBook = Object.assign({}, asset.bookMeta);
@@ -8079,7 +8567,7 @@
                 books.unshift(hydratedBook);
                 catalogChanged = true;
               }
-            });
+            }
             if (catalogChanged) {
               saveBooksToStorage();
             }
@@ -8090,12 +8578,18 @@
             // Jika buku aktif saat ini memiliki data tersimpan di IndexedDB, muat langsung
             if (config.activeBookId) {
               const activeAsset = storedAssets.find((a) => a && a.id === config.activeBookId);
-              if (activeAsset && Array.isArray(activeAsset.pagesDataUrls) && activeAsset.pagesDataUrls.length > 0) {
-                pagesDataUrls = activeAsset.pagesDataUrls;
-                rawPdfBlobUrl = activeAsset.pdfDataUrl || null;
-                currentUploadedPdfDataUrl = activeAsset.pdfDataUrl || null;
-                renderThumbnails();
-                renderStage('forward');
+              if (activeAsset) {
+                const srcPages =
+                  (Array.isArray(activeAsset.originalPagesDataUrls) && activeAsset.originalPagesDataUrls.length > 0
+                    ? activeAsset.originalPagesDataUrls
+                    : activeAsset.pagesDataUrls) || [];
+                if (srcPages.length > 0) {
+                  pagesDataUrls = srcPages;
+                  rawPdfBlobUrl = activeAsset.pdfDataUrl || null;
+                  currentUploadedPdfDataUrl = activeAsset.pdfDataUrl || null;
+                  renderThumbnailsGrid();
+                  renderStage('forward');
+                }
               }
             }
           }

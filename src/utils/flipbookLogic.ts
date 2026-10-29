@@ -1187,5 +1187,181 @@ export function applyEtalaseBookCrudAction(
   return list;
 }
 
+export interface StoredBookAssetLike {
+  id?: string;
+  isCustomPdf?: boolean;
+  pdfDataUrl?: string;
+  coverUrl?: string;
+  pagesDataUrls?: Array<{ pageNumber: number; title?: string; dataUrl: string }>;
+  originalPagesDataUrls?: Array<{ pageNumber: number; title?: string; dataUrl: string }>;
+  editablePages?: EditableBookPage[];
+}
+
+/**
+ * Determines whether a book record or its stored asset represents an original uploaded PDF or custom image book
+ * whose visual page content must never be overwritten by synthetic canvas templates.
+ */
+export function isOriginalUploadedBook(
+  book?: Partial<EtalaseBookRecord> & { isCustomPdf?: boolean; hasCustomCoverImage?: boolean; pdfUrl?: string } | null,
+  asset?: StoredBookAssetLike | null
+): boolean {
+  if (!book && !asset) return false;
+  const id = String(book?.id || asset?.id || '');
+  if (id.startsWith('book-pdf-')) return true;
+  if (book?.isCustomPdf || asset?.isCustomPdf) return true;
+  if (asset?.pdfDataUrl) return true;
+  if (book?.hasCustomCoverImage) return true;
+  if (Array.isArray(asset?.originalPagesDataUrls) && asset.originalPagesDataUrls.length > 0) return true;
+  if (Array.isArray(book?.editablePages) && book.editablePages.some((p) => Boolean(p?.customImageDataUrl))) {
+    return true;
+  }
+  if (Array.isArray(asset?.editablePages) && asset.editablePages.some((p) => Boolean(p?.customImageDataUrl))) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Hydrates editable pages for a book while strictly preserving original rendered PDF page images
+ * (`originalPagesDataUrls` / `pagesDataUrls`) or uploaded custom page images (`customImageDataUrl`).
+ */
+export function hydrateEditablePagesPreservingOriginals(
+  book: {
+    id?: string;
+    title: string;
+    author: string;
+    description: string;
+    kicker?: string;
+    pageCount?: number;
+    isCustomPdf?: boolean;
+    hasCustomCoverImage?: boolean;
+    editablePages?: EditableBookPage[];
+  },
+  asset?: StoredBookAssetLike | null
+): EditableBookPage[] {
+  const isOriginal = isOriginalUploadedBook(book, asset);
+  const originalSourceUrls =
+    (Array.isArray(asset?.originalPagesDataUrls) && asset.originalPagesDataUrls.length > 0
+      ? asset.originalPagesDataUrls
+      : null) ||
+    (isOriginal && Array.isArray(asset?.pagesDataUrls) && asset.pagesDataUrls.length > 0
+      ? asset.pagesDataUrls
+      : null);
+
+  if (originalSourceUrls && originalSourceUrls.length > 0) {
+    const existingEditable =
+      (Array.isArray(asset?.editablePages) && asset.editablePages.length > 0
+        ? asset.editablePages
+        : book.editablePages) || [];
+
+    return originalSourceUrls.map((item, idx) => {
+      const existingPage = existingEditable[idx];
+      return {
+        pageNumber: idx + 1,
+        kicker: existingPage?.kicker || (idx === 0 ? 'SAMPUL DOKUMEN ASLI' : `HALAMAN PDF ${idx + 1}`),
+        title:
+          existingPage?.title ||
+          item.title ||
+          (idx === 0 ? book.title || 'Sampul Depan' : `Halaman ${idx + 1}`),
+        subtitle: existingPage?.subtitle || 'Konten Orisinal Flipbook 3D',
+        body: existingPage?.body || '',
+        customImageDataUrl: existingPage?.customImageDataUrl || item.dataUrl,
+      };
+    });
+  }
+
+  const candidatePages =
+    (Array.isArray(asset?.editablePages) && asset.editablePages.length > 0
+      ? asset.editablePages
+      : book.editablePages) || [];
+
+  if (candidatePages.length > 0) {
+    return candidatePages.map((p, idx) => ({
+      pageNumber: idx + 1,
+      kicker: p.kicker || (idx === 0 ? book.kicker || 'SAMPUL DEPAN' : `BAGIAN ${String(idx).padStart(2, '0')}`),
+      title: p.title || (idx === 0 ? book.title : `Halaman ${idx + 1}`),
+      subtitle: p.subtitle || '',
+      body: p.body || '',
+      customImageDataUrl: p.customImageDataUrl || '',
+    }));
+  }
+
+  return buildDefaultEditablePagesForBook(book);
+}
+
+/**
+ * Updates a book's Etalase metadata (title, author, shelfId, kicker, accent, description, password)
+ * while strictly preserving original PDF/image cover and page data URLs without converting them.
+ */
+export function applyMetadataUpdatePreservingOriginalContent(
+  book: EtalaseBookRecord & {
+    isCustomPdf?: boolean;
+    hasCustomCoverImage?: boolean;
+    customCoverDataUrl?: string;
+  },
+  pages: EditableBookPage[],
+  patch: Partial<
+    Pick<
+      EtalaseBookRecord,
+      'title' | 'author' | 'shelfId' | 'kicker' | 'accent' | 'spineColor' | 'description' | 'passwordProtected' | 'password'
+    >
+  >
+): {
+  updatedBook: EtalaseBookRecord & {
+    isCustomPdf?: boolean;
+    hasCustomCoverImage?: boolean;
+    customCoverDataUrl?: string;
+  };
+  updatedPages: EditableBookPage[];
+} {
+  const isOriginal = isOriginalUploadedBook(book, { editablePages: pages });
+  const nextBook = {
+    ...book,
+    ...patch,
+    spineColor: patch.spineColor || patch.accent || book.spineColor || book.accent,
+    isCustomPdf: Boolean(book.isCustomPdf || String(book.id || '').startsWith('book-pdf-')),
+    hasCustomCoverImage: Boolean(
+      book.hasCustomCoverImage ||
+        isOriginal ||
+        (pages[0] && Boolean(pages[0].customImageDataUrl))
+    ),
+  };
+
+  const nextPages = pages.map((p, idx) => {
+    if (idx === 0 && !isOriginal && !p.customImageDataUrl) {
+      return {
+        ...p,
+        pageNumber: 1,
+        title: nextBook.title,
+        kicker: nextBook.kicker || p.kicker,
+        subtitle: nextBook.description.slice(0, 68) || p.subtitle,
+        body: nextBook.description || p.body,
+      };
+    }
+    return {
+      ...p,
+      pageNumber: idx + 1,
+    };
+  });
+
+  if (nextPages[0]?.customImageDataUrl) {
+    nextBook.coverUrl = nextBookCoverFromOriginal(nextBook, nextPages[0].customImageDataUrl);
+    nextBook.customCoverDataUrl = nextBook.coverUrl;
+  }
+
+  return {
+    updatedBook: nextBook,
+    updatedPages: nextPages,
+  };
+}
+
+function nextBookCoverFromOriginal(
+  book: { customCoverDataUrl?: string; coverUrl?: string },
+  page1CustomImageDataUrl: string
+): string {
+  return book.customCoverDataUrl || page1CustomImageDataUrl || book.coverUrl || '';
+}
+
+
 
 
