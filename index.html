@@ -866,6 +866,234 @@
     @media print {
       .no-print { display: none !important; }
     }
+
+    /* =========================================================
+       TOP BAR MODERN PREMIUM INTERAKTIF ADAPTIF DENGAN EFEK 3D HALUS
+       ========================================================= */
+    .topbar-3d-shell {
+      background: linear-gradient(180deg, #FFFDF9 0%, #F7F3EA 56%, #EDE6D8 100%);
+      border-bottom: 2px solid #D4AF37;
+      box-shadow:
+        0 12px 28px -10px rgba(7, 42, 32, 0.22),
+        0 2.5px 0 rgba(158, 123, 28, 0.38),
+        inset 0 1.5px 0 #FFFFFF,
+        inset 0 -1px 0 rgba(212, 175, 55, 0.35);
+      perspective: 1000px;
+    }
+
+    /* Card Identitas Brand 3D di Sisi Kiri Top Bar */
+    .brand-card-3d {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 4px 12px 4px 6px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #FFFFFF 0%, #F7F3E8 58%, #EDE5D4 100%);
+      border: 1.5px solid rgba(212, 175, 55, 0.8);
+      box-shadow:
+        0 4px 10px -2px rgba(7, 42, 32, 0.14),
+        0 2px 0 #C5B07B,
+        inset 0 1px 0 #FFFFFF;
+      transition:
+        transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.24s ease,
+        border-color 0.24s ease;
+      transform-style: preserve-3d;
+    }
+    .brand-card-3d:hover {
+      transform: translateY(-1.5px) rotateX(2deg);
+      border-color: #0B3B2C;
+      box-shadow:
+        0 8px 16px -4px rgba(7, 42, 32, 0.24),
+        0 3px 0 #9E7B1C,
+        inset 0 1px 0 #FFFFFF;
+    }
+    .brand-card-3d:active {
+      transform: translateY(0.5px);
+      box-shadow:
+        0 2px 4px rgba(7, 42, 32, 0.14),
+        0 1px 0 #9E7B1C,
+        inset 0 1px 0 #FFFFFF;
+    }
+
+    .brand-emblem-3d {
+      background: linear-gradient(145deg, #155E46 0%, #0B3B2C 55%, #062118 100%);
+      border: 1.5px solid #D4AF37;
+      box-shadow:
+        0 3px 8px rgba(7, 42, 32, 0.38),
+        inset 0 1px 1px rgba(254, 240, 138, 0.55),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+      transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .brand-card-3d:hover .brand-emblem-3d {
+      transform: scale(1.06) rotate(-3deg);
+    }
+
+    /* Dock Navigasi 3 Tahap dengan Rongga 3D Halus (Recessed 3D Stage Deck) */
+    .nav-stage-deck-3d {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3.5px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #E4DDD0 0%, #EFEAE0 100%);
+      border: 1.5px solid rgba(212, 175, 55, 0.72);
+      box-shadow:
+        inset 0 2px 5px rgba(7, 42, 32, 0.14),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.85),
+        0 2px 6px rgba(7, 42, 32, 0.08),
+        0 1px 0 #FFFFFF;
+    }
+
+    .nav-tab-3d-active {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: 9px;
+      background: linear-gradient(180deg, #155E46 0%, #0B3B2C 55%, #072A20 100%);
+      color: #F3E5AB;
+      font-weight: 700;
+      border: 1px solid #D4AF37;
+      box-shadow:
+        0 4px 10px -2px rgba(7, 42, 32, 0.42),
+        0 2px 0 #041913,
+        inset 0 1px 0 rgba(254, 240, 138, 0.52);
+      transform: translateY(-1px);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .nav-tab-3d-active:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 6px 14px -2px rgba(7, 42, 32, 0.5),
+        0 2.5px 0 #041913,
+        inset 0 1px 0 rgba(254, 240, 138, 0.68);
+    }
+
+    .nav-tab-3d-idle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 9px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(246, 242, 232, 0.52) 100%);
+      color: #0B3B2C;
+      font-weight: 600;
+      border: 1px solid rgba(212, 175, 55, 0.38);
+      box-shadow:
+        0 1px 2px rgba(7, 42, 32, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .nav-tab-3d-idle:hover {
+      background: linear-gradient(180deg, #FFFFFF 0%, #F7F3E8 100%);
+      color: #072A20;
+      border-color: #D4AF37;
+      transform: translateY(-1.5px);
+      box-shadow:
+        0 4px 8px -2px rgba(7, 42, 32, 0.16),
+        0 1.5px 0 #C5B07B,
+        inset 0 1px 0 #FFFFFF;
+    }
+    .nav-tab-3d-idle:active,
+    .nav-tab-3d-active:active {
+      transform: translateY(0.5px);
+    }
+
+    /* Card Tombol Aksi 3D (Tactile 3D Keycaps) pada Top Bar Kanan */
+    .topbar-keycap-3d {
+      background: linear-gradient(180deg, #135640 0%, #0B3B2C 55%, #072A20 100%);
+      color: #F3E5AB;
+      border: 1px solid #D4AF37;
+      box-shadow:
+        0 3px 8px -2px rgba(7, 42, 32, 0.34),
+        0 2px 0 #041913,
+        inset 0 1px 0 rgba(254, 240, 138, 0.38);
+      transition:
+        transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+    }
+    .topbar-keycap-3d:hover {
+      transform: translateY(-1.5px);
+      filter: brightness(1.07);
+      box-shadow:
+        0 6px 12px -2px rgba(7, 42, 32, 0.45),
+        0 2.5px 0 #041913,
+        inset 0 1px 0 rgba(254, 240, 138, 0.6);
+    }
+    .topbar-keycap-3d:active {
+      transform: translateY(1px);
+      box-shadow:
+        0 1px 3px rgba(7, 42, 32, 0.28),
+        0 0.5px 0 #041913;
+    }
+
+    .topbar-keycap-gold-3d {
+      background: linear-gradient(180deg, #FAF0CA 0%, #E1BD4B 52%, #C49A23 100%);
+      color: #072A20;
+      border: 1px solid #FFFDF5;
+      box-shadow:
+        0 3px 8px -2px rgba(158, 123, 28, 0.45),
+        0 2px 0 #78580A,
+        inset 0 1px 0 #FFFFFF;
+      transition:
+        transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+    }
+    .topbar-keycap-gold-3d:hover {
+      transform: translateY(-1.5px);
+      filter: brightness(1.05);
+      box-shadow:
+        0 6px 14px -2px rgba(158, 123, 28, 0.55),
+        0 2.5px 0 #78580A,
+        inset 0 1px 0 #FFFFFF;
+    }
+    .topbar-keycap-gold-3d:active {
+      transform: translateY(1px);
+    }
+
+    .topbar-keycap-danger-3d {
+      background: linear-gradient(180deg, #741616 0%, #4E0A0A 62%, #360505 100%);
+      color: #FECACA;
+      border: 1px solid rgba(248, 113, 113, 0.68);
+      box-shadow:
+        0 3px 8px -2px rgba(69, 10, 10, 0.38),
+        0 2px 0 #240303,
+        inset 0 1px 0 rgba(254, 202, 202, 0.32);
+      transition:
+        transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+    }
+    .topbar-keycap-danger-3d:hover {
+      transform: translateY(-1.5px);
+      filter: brightness(1.1);
+      box-shadow:
+        0 6px 12px -2px rgba(69, 10, 10, 0.5),
+        0 2.5px 0 #240303;
+    }
+    .topbar-keycap-danger-3d:active {
+      transform: translateY(1px);
+    }
+
+    .topbar-status-card-3d {
+      background: linear-gradient(180deg, #FFFFFF 0%, #EFE9D8 100%);
+      color: #072A20;
+      border: 1.5px solid rgba(212, 175, 55, 0.78);
+      box-shadow:
+        0 2px 6px rgba(7, 42, 32, 0.08),
+        0 1.5px 0 #C5B07B,
+        inset 0 1px 0 #FFFFFF;
+    }
   </style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
@@ -873,94 +1101,106 @@
   <div id="global-ambient-veil" class="global-dark-veil" aria-hidden="true"></div>
 
   <!-- ========================================================= -->
-  <!-- 1. HEADER REBRANDING & NAVIGASI BREADCRUMB / TAB          -->
+  <!-- 1. TOP BAR MODERN PREMIUM INTERAKTIF ADAPTIF BERDIMENSI 3D -->
   <!-- ========================================================= -->
-  <header class="no-print shrink-0 flex flex-wrap lg:flex-nowrap items-center justify-between gap-x-2 gap-y-2 px-3 sm:px-5 py-2 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5] z-20 shadow-xs relative">
-    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-      <a href="#view=catalog" id="brand-home" class="flex items-center gap-2 sm:gap-2.5 text-[#072A20] group whitespace-nowrap shrink-0">
-        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg btn-emerald-gold flex items-center justify-center shadow-sm">
-          <i data-lucide="book-open" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#D4AF37]"></i>
+  <header class="no-print topbar-3d-shell shrink-0 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 px-2.5 sm:px-3.5 lg:px-4 py-1.5 z-20 relative">
+    <!-- Kiri: Card Identitas Brand 3D & Dock Navigasi 3 Tahap Terpadu -->
+    <div class="flex items-center flex-wrap gap-1.5 sm:gap-2 shrink-0">
+      <a href="#view=catalog" id="brand-home" class="brand-card-3d text-[#072A20] group whitespace-nowrap shrink-0" title="Kembali ke Lobi Utama e-Library">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg brand-emblem-3d flex items-center justify-center shrink-0">
+          <i data-lucide="book-open" class="w-3.5 h-3.5 text-[#FEF08A]"></i>
         </div>
-        <div>
-          <span class="text-base sm:text-xl font-bold tracking-tight font-serif-editorial text-[#072A20] leading-none block">
-            e-Library
-          </span>
-          <span class="text-[9px] sm:text-[10px] text-[#12543F] font-classical-label tracking-widest uppercase hidden sm:block mt-0.5">
+        <div class="pr-0.5">
+          <div class="flex items-center gap-1">
+            <span class="text-sm sm:text-base font-bold tracking-tight font-serif-editorial text-[#072A20] leading-none">
+              e-Library
+            </span>
+            <span class="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]"></span>
+          </div>
+          <span class="text-[7.5px] sm:text-[8.5px] text-[#12543F] font-classical-label tracking-wider uppercase hidden sm:block mt-0.5 font-bold">
             Perpustakaan Elektronik 3D
           </span>
         </div>
       </a>
 
-      <!-- Breadcrumb Lintas Tahap (Tampil di layar Desktop Lebar 2XL) -->
-      <nav aria-label="Breadcrumb Perpustakaan" class="hidden 2xl:flex items-center gap-2 text-xs font-medium text-[#12543F] border-l border-[#D4AF37]/50 pl-3 py-0.5">
-        <button type="button" id="bc-lobby-btn" class="hover:text-[#072A20] transition-colors flex items-center gap-1.5">
-          <i data-lucide="library" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
-          <span class="font-serif-editorial text-sm font-semibold">Lobi Rak</span>
+      <!-- Elemen Aksesibilitas Breadcrumb Lobi (Disinkronkan ke Dock 3D tanpa tabrakan visual) -->
+      <button type="button" id="bc-lobby-btn" class="sr-only" tabindex="-1" aria-hidden="true">Lobi Rak</button>
+
+      <!-- Dock Navigasi 3 Tahap dengan Efek 3D Halus & Konteks Terintegrasi -->
+      <nav aria-label="Navigasi Utama" class="nav-stage-deck-3d text-xs shrink-0">
+        <button type="button" id="tab-lobby-btn" class="nav-tab-3d-active">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
+          <span class="text-[11px] tracking-tight">Rak 3D</span>
         </button>
-        <span class="text-[#D4AF37]">/</span>
-        <button type="button" id="bc-shelf-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[160px] font-serif-editorial text-sm font-semibold">
-          Etalase
+
+        <span class="text-[#9E7B1C]/60 text-[10px] font-bold select-none" aria-hidden="true">›</span>
+
+        <button type="button" id="tab-shelf-btn" class="nav-tab-3d-idle">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-[#9E7B1C] shrink-0"></i>
+          <span id="tab-shelf-label" class="text-[11px] tracking-tight">Etalase</span>
+          <span id="bc-shelf-btn" class="hidden 2xl:inline-block max-w-[105px] truncate text-[10px] opacity-80 font-serif-editorial font-normal border-l border-current/25 pl-1.5 ml-0.5">
+            Koleksi Rak
+          </span>
         </button>
-        <span id="bc-sep-reader" class="text-[#D4AF37] hidden">/</span>
-        <button type="button" id="bc-reader-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[160px] text-[#072A20] font-serif-editorial text-sm font-bold hidden">
-          Ruang Baca 3D
+
+        <span class="text-[#9E7B1C]/60 text-[10px] font-bold select-none" aria-hidden="true">›</span>
+
+        <button type="button" id="tab-reader-btn" class="nav-tab-3d-idle">
+          <i data-lucide="book-marked" class="w-3.5 h-3.5 text-[#9E7B1C] shrink-0"></i>
+          <span class="text-[11px] tracking-tight">Ruang Baca</span>
+          <span id="bc-sep-reader" class="hidden" aria-hidden="true"></span>
+          <span id="bc-reader-btn" class="hidden max-w-[100px] truncate text-[10px] opacity-85 font-serif-editorial font-normal border-l border-current/25 pl-1.5 ml-0.5">
+            Flipbook 3D
+          </span>
         </button>
       </nav>
     </div>
 
-    <!-- Tab Navigasi 3 Tahap (Kompak & Rapi di Tablet dan Mobile) -->
-    <nav aria-label="Navigasi Utama" class="flex items-center gap-1 text-xs font-medium shrink-0">
-      <button type="button" id="tab-lobby-btn" class="px-2.5 py-1.5 rounded-lg btn-emerald-gold font-semibold transition-all flex items-center gap-1 whitespace-nowrap shadow-xs">
-        <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span class="text-[11px] sm:text-xs">Rak 3D</span>
+    <!-- Kanan: Deretan Card Tombol Aksi 3D Adaptif (Publik & Studio Admin) -->
+    <div class="flex items-center flex-wrap justify-end gap-1 ml-auto">
+      <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
+        <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
+        <span class="hidden md:inline">Suasana<span class="hidden 2xl:inline"> Hening</span></span>
       </button>
-      <button type="button" id="tab-shelf-btn" class="px-2.5 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 whitespace-nowrap">
-        <i data-lucide="layers" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
-        <span id="tab-shelf-label" class="text-[11px] sm:text-xs">Etalase</span>
-      </button>
-      <button type="button" id="tab-reader-btn" class="px-2.5 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 whitespace-nowrap">
-        <i data-lucide="book-marked" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
-        <span class="text-[11px] sm:text-xs">Ruang Baca</span>
-      </button>
-    </nav>
 
-    <!-- Tombol Aksi Header (Tombol Admin & Atur Musik Tersembunyi Total bagi Pengunjung Publik) -->
-    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-      <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
-        <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span class="hidden md:inline">Suasana Hening</span>
+      <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
+        <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
+        <span class="hidden xl:inline">Musik</span>
       </button>
-      <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
-        <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span class="hidden md:inline">Atur Musik</span>
+
+      <button type="button" id="header-share-btn" title="Salin Tautan Publik Bersih" class="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
+        <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
+        <span class="hidden md:inline">Bagikan</span>
       </button>
-      <button type="button" id="header-share-btn" title="Salin Tautan Publik Bersih" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
-        <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span class="hidden md:inline">Salin Tautan</span>
-      </button>
-      <span id="header-cloud-sync-badge" title="Database Cloud & Google Drive Tersinkronisasi Lintas Akun" class="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-[10px] font-mono-tabular font-semibold rounded-lg bg-[#0B3B2C]/10 text-[#072A20] border border-[#D4AF37]/60 whitespace-nowrap">
-        <i data-lucide="cloud-check" class="w-3 h-3 text-[#0F4C3A]"></i>
+
+      <span id="header-cloud-sync-badge" title="Database Cloud & Google Drive Tersinkronisasi Lintas Akun" class="hidden sm:inline-flex items-center gap-1 px-2 py-1.5 text-[10px] font-mono-tabular font-bold rounded-lg topbar-status-card-3d whitespace-nowrap select-none">
+        <i data-lucide="cloud-check" class="w-3 h-3 text-[#0F4C3A] shrink-0"></i>
         <span id="header-cloud-sync-badge-text">Cloud DB Aktif</span>
       </span>
-      <button type="button" id="header-cloud-drive-btn" title="Penyimpanan Database Google Drive & Sinkronisasi Cloud Lintas Akun (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold transition-all whitespace-nowrap shadow-xs cursor-pointer">
-        <i data-lucide="hard-drive-upload" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span id="header-cloud-drive-btn-text" class="hidden lg:inline font-bold">Google Drive DB</span>
+
+      <button type="button" id="header-cloud-drive-btn" title="Penyimpanan Database Google Drive & Sinkronisasi Cloud Lintas Akun (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
+        <i data-lucide="hard-drive-upload" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
+        <span id="header-cloud-drive-btn-text" class="hidden lg:inline font-bold">GDrive DB</span>
       </button>
-      <button type="button" id="header-crud-etalase-btn" title="Menu Edit CRUD Etalase & Konten Buku (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 text-[11px] font-semibold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#F3E5AB] transition-all whitespace-nowrap shadow-sm cursor-pointer">
-        <i data-lucide="file-pen-line" class="w-3.5 h-3.5 text-[#072A20]"></i>
-        <span class="hidden md:inline font-bold">CRUD Etalase &amp; Buku</span>
+
+      <button type="button" id="header-crud-etalase-btn" title="Menu Edit CRUD Etalase & Konten Buku (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-bold rounded-lg topbar-keycap-gold-3d whitespace-nowrap cursor-pointer">
+        <i data-lucide="file-pen-line" class="w-3.5 h-3.5 text-[#072A20] shrink-0"></i>
+        <span class="hidden md:inline font-bold">CRUD Etalase<span class="hidden 2xl:inline"> &amp; Buku</span></span>
       </button>
-      <button type="button" id="header-admin-auth-btn" title="Buka atau Sembunyikan Panel Studio Admin" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg border border-emerald-400 bg-[#0B3B2C] text-emerald-200 transition-all whitespace-nowrap shadow-xs">
-        <i id="header-admin-icon" data-lucide="shield-check" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+
+      <button type="button" id="header-admin-auth-btn" title="Buka atau Sembunyikan Panel Studio Admin" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
+        <i id="header-admin-icon" data-lucide="shield-check" class="w-3.5 h-3.5 text-[#FEF08A] shrink-0"></i>
         <span id="header-admin-text" class="hidden xl:inline">Studio Admin</span>
       </button>
-      <button type="button" id="header-admin-security-btn" title="Pengaturan Kata Sandi & Keamanan Admin" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
-        <i data-lucide="key-round" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span class="hidden xl:inline">Sandi</span>
+
+      <button type="button" id="header-admin-security-btn" title="Pengaturan Kata Sandi & Keamanan Admin" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
+        <i data-lucide="key-round" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
+        <span class="hidden 2xl:inline">Sandi</span>
       </button>
-      <button type="button" id="header-admin-logout-btn" title="Keluar dari Mode Admin (Kembali ke Tampilan Publik)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg border border-red-400/60 bg-red-950/80 text-red-200 hover:bg-red-900 transition-all whitespace-nowrap shadow-xs">
-        <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-300"></i>
-        <span class="hidden xl:inline">Keluar</span>
+
+      <button type="button" id="header-admin-logout-btn" title="Keluar dari Mode Admin (Kembali ke Tampilan Publik)" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-danger-3d whitespace-nowrap cursor-pointer">
+        <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-200 shrink-0"></i>
+        <span class="hidden 2xl:inline">Keluar</span>
       </button>
     </div>
   </header>
@@ -4112,12 +4352,12 @@
 
         if (headerBtn) {
           if (isAmbientPlaying) {
-            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] shadow-md ring-2 ring-[#D4AF37]/80 transition-all whitespace-nowrap animate-pulse';
-            headerBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20]"></i><span class="hidden md:inline">' + activeTheme.name.slice(0, 14) + '...</span>';
+            headerBtn.className = 'inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-bold rounded-lg topbar-keycap-gold-3d whitespace-nowrap cursor-pointer';
+            headerBtn.innerHTML = '<i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#072A20] shrink-0"></i><span class="hidden md:inline">' + activeTheme.name.slice(0, 14) + '...</span>';
             headerBtn.title = 'Musik Aktif: ' + activeTheme.name + ' (Klik untuk Berhenti)';
           } else {
-            headerBtn.className = 'inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold transition-all whitespace-nowrap shadow-xs';
-            headerBtn.innerHTML = '<i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i><span class="hidden md:inline">Suasana Hening</span>';
+            headerBtn.className = 'inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer';
+            headerBtn.innerHTML = '<i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i><span class="hidden md:inline">Suasana<span class="hidden 2xl:inline"> Hening</span></span>';
             headerBtn.title = 'Aktifkan Suara Suasana Perpustakaan Tenang';
           }
         }
@@ -4811,11 +5051,11 @@
             ? 'transform: rotate(-8deg); margin-right: 2px;'
             : '';
 
-          if (matchedBook && i < 2) {
+          if (matchedBook && matchedBook.coverUrl && i < 2) {
             // Tampilkan miniatur sampul 3D buku asli
             html +=
               '<div class="shelf-book-item relative w-7 sm:w-10 lg:w-11 ' + heightClass + ' rounded-[2px] overflow-hidden border border-[#D4AF37]/60 shrink-0" style="' + tiltStyle + '">' +
-                '<img src="' + matchedBook.coverUrl + '" alt="' + matchedBook.title + '" class="w-full h-full object-cover" />' +
+                '<img src="' + matchedBook.coverUrl + '" alt="' + escapeHtml(matchedBook.title) + '" class="w-full h-full object-cover" />' +
                 '<div class="absolute inset-y-0 left-0 w-1 sm:w-1.5 bg-[#072A20]/60"></div>' +
               '</div>';
           } else {
@@ -5844,17 +6084,9 @@
         const tabShelf = document.getElementById('tab-shelf-btn');
         const tabReader = document.getElementById('tab-reader-btn');
 
-        tabLobby.className = view === 'lobby'
-          ? 'px-3 py-1.5 rounded-lg btn-emerald-gold text-[#F3E5AB] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap'
-          : 'px-3 py-1.5 rounded-lg text-[#0B3B2C]/75 hover:text-[#072A20] hover:bg-[#0B3B2C]/10 transition-colors flex items-center gap-1.5 whitespace-nowrap';
-
-        tabShelf.className = view === 'shelf'
-          ? 'px-3 py-1.5 rounded-lg btn-emerald-gold text-[#F3E5AB] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap'
-          : 'px-3 py-1.5 rounded-lg text-[#0B3B2C]/75 hover:text-[#072A20] hover:bg-[#0B3B2C]/10 transition-colors flex items-center gap-1.5 whitespace-nowrap';
-
-        tabReader.className = view === 'reader'
-          ? 'px-3 py-1.5 rounded-lg btn-emerald-gold text-[#F3E5AB] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap'
-          : 'px-3 py-1.5 rounded-lg text-[#0B3B2C]/75 hover:text-[#072A20] hover:bg-[#0B3B2C]/10 transition-colors flex items-center gap-1.5 whitespace-nowrap';
+        tabLobby.className = view === 'lobby' ? 'nav-tab-3d-active' : 'nav-tab-3d-idle';
+        tabShelf.className = view === 'shelf' ? 'nav-tab-3d-active' : 'nav-tab-3d-idle';
+        tabReader.className = view === 'reader' ? 'nav-tab-3d-active' : 'nav-tab-3d-idle';
 
         document.getElementById('bc-sep-reader').classList.toggle('hidden', view !== 'reader');
         const bcReader = document.getElementById('bc-reader-btn');
@@ -10510,6 +10742,20 @@
                 } catch (e) {}
               }
 
+              const fallbackCover = !cb.coverUrl
+                ? generateCanvasPageDataUrl(
+                    cb.title || 'Buku Koleksi',
+                    (cb.description || '').slice(0, 68),
+                    cb.kicker || 'KOLEKSI PUSTAKA 3D',
+                    cb.author || 'Anonim',
+                    cb.description || '',
+                    true,
+                    cb.pageCount || 6,
+                    0,
+                    cb.accent || '#0B3B2C'
+                  )
+                : cb.coverUrl;
+
               const remoteBookObj = {
                 id: cb.id,
                 shelfId: cb.shelfId || 'rak-01',
@@ -10522,7 +10768,7 @@
                 pageCount: cb.pageCount || 1,
                 passwordProtected: Boolean(cb.passwordProtected),
                 password: cb.password || '',
-                coverUrl: cb.coverUrl || '',
+                coverUrl: fallbackCover,
                 hasCustomCoverImage: Boolean(cb.hasCustomCoverImage || cb.isCustomPdf),
                 isCustomPdf: Boolean(cb.isCustomPdf),
                 hasStoredPages: Boolean(cb.isCustomPdf || cb.hasCustomCoverImage),
