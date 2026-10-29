@@ -72,33 +72,51 @@
     }
 
     /* =========================================================
+       ISOLASI MUTLAK MODE PUBLIK VS MODE ADMIN (ZERO EXPOSURE)
+       ========================================================= */
+    body:not(.admin-authenticated) .admin-only-control {
+      display: none !important;
+    }
+
+    /* =========================================================
        SISTEM PENCAHAYAAN INTERAKTIF SAKELAR TARIK (PULL-CHAIN LAMP)
        ========================================================= */
     .pendant-cord {
       background: linear-gradient(90deg, #1A1A1A, #3A3A3A, #1A1A1A);
       box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+      transition: all 0.6s ease;
     }
     .pendant-socket {
       background: linear-gradient(180deg, #072A20 0%, #0B3B2C 50%, #B8860B 100%);
       border: 1px solid #D4AF37;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+      transition: all 0.6s ease;
+    }
+    body.lights-off .pendant-cord {
+      background: #080E0B;
+      box-shadow: none;
+    }
+    body.lights-off .pendant-socket {
+      background: #06130E;
+      border-color: rgba(212, 175, 55, 0.16);
+      box-shadow: none;
     }
 
     /* Kaca Bohlam & Filamen Edison (Kondisi Mati vs Menyala) */
     .pendant-bulb {
       position: relative;
       border-radius: 9999px;
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
     }
 
-    /* KONDISI MATI (LIGHTS OFF - FILAMEN DINGIN & GELAP SAMAR) */
-    .lights-off .pendant-bulb {
-      background: radial-gradient(circle at 40% 35%, rgba(140, 120, 85, 0.28) 0%, rgba(55, 45, 30, 0.75) 55%, rgba(18, 15, 10, 0.95) 100%);
-      border: 1px solid rgba(212, 175, 55, 0.22);
-      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.08), 0 3px 8px rgba(0, 0, 0, 0.4);
+    /* KONDISI MATI (LIGHTS OFF - FILAMEN DINGIN & TANPA GLOW) */
+    body.lights-off .pendant-bulb {
+      background: radial-gradient(circle at 40% 35%, rgba(45, 58, 52, 0.30) 0%, rgba(14, 22, 18, 0.88) 58%, rgba(5, 9, 7, 0.97) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
     }
-    .lights-off .pendant-bulb::after {
+    body.lights-off .pendant-bulb::after {
       content: '';
       position: absolute;
       top: 30%;
@@ -106,14 +124,14 @@
       transform: translateX(-50%);
       width: 5px;
       height: 8px;
-      border: 1px solid rgba(160, 130, 70, 0.35);
+      border: 1px solid rgba(120, 105, 75, 0.22);
       border-bottom: none;
       border-radius: 3px 3px 0 0;
-      opacity: 0.45;
+      opacity: 0.35;
     }
 
     /* KONDISI MENYALA (LIGHTS ON - PENDARAN AMBER GOLD EMAS & GLOW) */
-    .lights-on .pendant-bulb {
+    body.lights-on .pendant-bulb {
       background: radial-gradient(circle at 50% 45%, #FFFFFF 15%, #FEF08A 45%, #F59E0B 75%, #B45309 100%);
       border: 1px solid #FEF08A;
       box-shadow:
@@ -121,7 +139,7 @@
         0 0 38px 14px rgba(245, 158, 11, 0.65),
         0 0 70px 28px rgba(217, 119, 6, 0.35);
     }
-    .lights-on .pendant-bulb::after {
+    body.lights-on .pendant-bulb::after {
       content: '';
       position: absolute;
       top: 28%;
@@ -170,21 +188,26 @@
       transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 5;
     }
-    .lights-on .ceiling-ambient-glow {
+    body.lights-on .ceiling-ambient-glow {
       opacity: 1;
     }
 
-    /* Lapisan Temaram / Gelap Samar Perpustakaan Saat Lampu Mati */
-    .lobby-dark-veil {
-      position: absolute;
+    /* Lapisan Temaram / Gelap Remang Global Seluruh Layar Saat Lampu Mati */
+    .global-dark-veil {
+      position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse 90% 70% at 50% 10%, rgba(7, 32, 24, 0.58) 0%, rgba(5, 22, 16, 0.88) 48%, rgba(3, 13, 9, 0.96) 100%);
+      background: radial-gradient(
+        circle at 30% 10%,
+        rgba(5, 22, 16, 0.84) 0%,
+        rgba(3, 15, 10, 0.93) 42%,
+        rgba(1, 7, 5, 0.97) 100%
+      );
       pointer-events: none;
-      z-index: 12;
+      z-index: 45;
       transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1);
       opacity: 1;
     }
-    .lights-on .lobby-dark-veil {
+    body.lights-on .global-dark-veil {
       opacity: 0;
     }
 
@@ -242,8 +265,8 @@
       opacity: 0;
       transition: opacity 0.4s ease;
     }
-    .lights-off .knob-halo-circle {
-      opacity: 0.85;
+    body.lights-off .knob-halo-circle {
+      opacity: 0.9;
       animation: knobHaloPulse 2.2s ease-in-out infinite;
     }
 
@@ -719,13 +742,16 @@
     }
   </style>
 </head>
-<body class="h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
+<body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
+  <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
+  <div id="global-ambient-veil" class="global-dark-veil" aria-hidden="true"></div>
+
   <!-- ========================================================= -->
   <!-- 1. HEADER REBRANDING & NAVIGASI BREADCRUMB / TAB          -->
   <!-- ========================================================= -->
-  <header class="no-print shrink-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5] z-50 shadow-xs relative">
+  <header class="no-print shrink-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5] z-20 shadow-xs relative">
     <div class="flex items-center gap-2 sm:gap-4 min-w-0">
-      <a href="#view=lobby" id="brand-home" class="flex items-center gap-2 sm:gap-3 text-[#072A20] group whitespace-nowrap shrink-0">
+      <a href="#view=catalog" id="brand-home" class="flex items-center gap-2 sm:gap-3 text-[#072A20] group whitespace-nowrap shrink-0">
         <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg btn-emerald-gold flex items-center justify-center shadow-sm">
           <i data-lucide="book-open" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#D4AF37]"></i>
         </div>
@@ -772,29 +798,33 @@
       </button>
     </nav>
 
-    <!-- Tombol Aksi Header -->
+    <!-- Tombol Aksi Header (Tombol Admin & Atur Musik Tersembunyi Total bagi Pengunjung Publik) -->
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
         <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Suasana Hening</span>
       </button>
-      <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
+      <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
         <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Atur Musik</span>
       </button>
-      <button type="button" id="header-share-btn" title="Salin Tautan Publik" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
+      <button type="button" id="header-share-btn" title="Salin Tautan Publik Bersih" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
         <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Salin Tautan</span>
       </button>
-      <button type="button" id="header-admin-auth-btn" title="Akses Khusus Pengelola Perpustakaan" class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg border border-[#D4AF37]/50 bg-[#FBF9F5] text-[#072A20] hover:bg-[#072A20] hover:text-[#F3E5AB] transition-all whitespace-nowrap shadow-xs">
-        <i id="header-admin-icon" data-lucide="shield" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span id="header-admin-text" class="hidden xl:inline">Masuk Admin</span>
+      <button type="button" id="header-admin-auth-btn" title="Buka atau Sembunyikan Panel Studio Admin" class="admin-only-control hidden inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 text-xs font-semibold rounded-lg border border-emerald-400 bg-[#0B3B2C] text-emerald-200 transition-all whitespace-nowrap shadow-xs">
+        <i id="header-admin-icon" data-lucide="shield-check" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+        <span id="header-admin-text" class="hidden xl:inline">Studio Admin</span>
+      </button>
+      <button type="button" id="header-admin-logout-btn" title="Keluar dari Mode Admin (Kembali ke Tampilan Publik)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-2 text-xs font-semibold rounded-lg border border-red-400/60 bg-red-950/80 text-red-200 hover:bg-red-900 transition-all whitespace-nowrap shadow-xs">
+        <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-300"></i>
+        <span class="hidden xl:inline">Keluar Admin</span>
       </button>
     </div>
   </header>
 
   <!-- Notifikasi Toast Mengambang -->
-  <div id="toast-box" role="status" aria-live="polite" class="no-print hidden fixed bottom-20 right-6 z-50 px-4 py-2.5 rounded-lg btn-emerald-gold text-xs font-medium shadow-xl flex items-center gap-2"></div>
+  <div id="toast-box" role="status" aria-live="polite" class="no-print hidden fixed bottom-20 right-6 z-[80] px-4 py-2.5 rounded-lg btn-emerald-gold text-xs font-medium shadow-xl flex items-center gap-2"></div>
 
   <!-- ========================================================= -->
   <!-- KONTEN APLIKASI (3 TAMPILAN UTAMA)                         -->
@@ -804,15 +834,12 @@
     <!-- ------------------------------------------------------- -->
     <!-- TAHAP 1: LOBI RAK BUKU ARSITEKTURAL KLASIKAL (VIEW 1)   -->
     <!-- ------------------------------------------------------- -->
-    <section id="view-lobby" aria-label="Lobi Rak Klasifikasi Perpustakaan" class="lights-off flex-1 overflow-y-auto wall-plank-backdrop flex flex-col justify-between relative transition-colors duration-700">
+    <section id="view-lobby" aria-label="Lobi Rak Klasifikasi Perpustakaan" class="flex-1 overflow-y-auto wall-plank-backdrop flex flex-col justify-between relative transition-colors duration-700">
       <!-- Pendaran Cahaya Dinding Atas Saat Lampu Menyala -->
       <div id="ceiling-ambient-glow" class="ceiling-ambient-glow"></div>
 
-      <!-- Lapisan Temaram / Gelap Samar Perpustakaan Saat Lampu Mati -->
-      <div id="lobby-ambient-veil" class="lobby-dark-veil"></div>
-
       <!-- Deretan Lampu Gantung Edison Interaktif dengan Sakelar Tarik (Pull-Chain Switch) -->
-      <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-0 pb-2 relative select-none z-30">
+      <div id="ceiling-lamps-bar" class="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-0 pb-2 relative select-none z-50">
         <div class="grid grid-cols-5 sm:grid-cols-9 gap-3 sm:gap-4 justify-items-center">
           <!-- Lampu 01 -->
           <div class="flex flex-col items-center group">
@@ -935,7 +962,7 @@
       </div>
 
       <!-- Bar Kontrol & Pencarian di Atas Lemari Rak Putih -->
-      <div class="max-w-7xl w-full mx-auto px-3 sm:px-8 mb-2.5 sm:mb-3 flex flex-col md:flex-row md:items-end justify-between gap-2.5 sm:gap-3 z-20">
+      <div class="max-w-7xl w-full mx-auto px-3 sm:px-8 mb-2.5 sm:mb-3 flex flex-col md:flex-row md:items-end justify-between gap-2.5 sm:gap-3 z-10">
         <div>
           <span class="text-[10px] sm:text-[11px] font-classical-label uppercase tracking-widest text-[#9E7B1C] font-bold block">
             Katalog Klasifikasi Perpustakaan Digital
@@ -953,12 +980,12 @@
             <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
             <input id="lobby-search-input" type="text" placeholder="Cari rak atau buku..." class="w-full pl-8 pr-3 py-1.5 sm:py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C] shadow-xs" />
           </div>
-          <button type="button" id="btn-admin-shelves-crud" title="Kelola dan Ubah Nama Rak Buku (Admin)" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0 shadow-xs">
+          <button type="button" id="btn-admin-shelves-crud" title="Kelola dan Ubah Nama Rak Buku (Admin)" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0 shadow-xs">
             <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
             <span class="hidden sm:inline">Kelola Rak (Admin)</span>
             <span class="sm:hidden">Admin Rak</span>
           </button>
-          <button type="button" id="btn-add-shelf-modal" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0 shadow-xs">
+          <button type="button" id="btn-add-shelf-modal" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shrink-0 shadow-xs">
             <i data-lucide="plus" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
             <span class="hidden xs:inline">Tambah Kotak Rak</span>
             <span class="xs:hidden">+ Rak</span>
@@ -975,11 +1002,14 @@
         </div>
       </div>
 
-      <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan -->
-      <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center border-t border-[#D4AF37]/50 shadow-inner">
-        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-4 select-none">
+      <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan & Gerbang Rahasia Admin -->
+      <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center gap-2 border-t border-[#D4AF37]/50 shadow-inner z-10">
+        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-2 select-none">
           © 2026 e-Library by @abunaura. All rights reserved.
         </p>
+        <button type="button" id="btn-secret-admin-gate" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="opacity-30 hover:opacity-90 text-[#F3E5AB] hover:text-[#D4AF37] p-1 rounded transition-opacity">
+          <i data-lucide="lock" class="w-3 h-3"></i>
+        </button>
       </div>
     </section>
 
@@ -1016,7 +1046,7 @@
               <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
               <input id="shelf-search-input" type="text" placeholder="Cari judul atau penulis..." class="w-full pl-8 pr-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C]" />
             </div>
-            <button type="button" id="btn-upload-to-shelf" class="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
+            <button type="button" id="btn-upload-to-shelf" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
               <i data-lucide="plus-circle" class="w-4 h-4 text-[#D4AF37]"></i>
               <span>+ Unggah PDF Baru</span>
             </button>
@@ -1055,7 +1085,7 @@
     <!-- ------------------------------------------------------- -->
     <div id="view-reader" class="hidden flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
       <!-- A. PANEL ADMIN CREATOR SIDEBAR (TERSEMBUNYI SECARA STANDAR BAGI PUBLIK) -->
-      <aside id="admin-sidebar" aria-label="Panel Kendali Penerbit" class="no-print hidden fixed lg:relative inset-y-0 left-0 z-40 w-full sm:w-[420px] lg:w-[380px] xl:w-[420px] shrink-0 border-r border-[#D4AF37]/60 bg-[#F7F4EE] text-[#072A20] overflow-y-auto p-4 sm:p-6 space-y-6 shadow-2xl lg:shadow-none">
+      <aside id="admin-sidebar" aria-label="Panel Kendali Penerbit" class="admin-only-control no-print hidden fixed lg:relative inset-y-0 left-0 z-40 w-full sm:w-[420px] lg:w-[380px] xl:w-[420px] shrink-0 border-r border-[#D4AF37]/60 bg-[#F7F4EE] text-[#072A20] overflow-y-auto p-4 sm:p-6 space-y-6 shadow-2xl lg:shadow-none">
         <div class="border-b border-[#D4AF37]/50 pb-4 flex items-start justify-between">
           <div>
             <p class="text-xs font-classical-label uppercase tracking-widest text-[#9E7B1C] font-bold">01. Studio Penerbit Perpustakaan</p>
@@ -1261,7 +1291,7 @@
             </div>
 
             <div class="flex items-center gap-1.5">
-              <button type="button" id="btn-toggle-admin-drawer" class="px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
+              <button type="button" id="btn-toggle-admin-drawer" class="admin-only-control hidden px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap">
                 Admin
               </button>
               <button type="button" id="btn-stage-theme" title="Ubah Tema Warna Pembaca" class="px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#D4AF37] bg-[#FBF9F5] text-[#072A20] hover:bg-[#F3E5AB]/40">
@@ -1362,7 +1392,7 @@
                   <i data-lucide="headphones" class="w-3 h-3 text-[#D4AF37]"></i>
                   <span id="toolbar-ambient-text">Suasana</span>
                 </button>
-                <button type="button" id="toolbar-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 flex items-center gap-1">
+                <button type="button" id="toolbar-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan (Admin)" class="admin-only-control hidden px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 flex items-center gap-1">
                   <i data-lucide="music" class="w-3 h-3 text-[#D4AF37]"></i>
                   <span id="toolbar-music-label">Atur Musik</span>
                 </button>
@@ -1624,7 +1654,7 @@
   </div>
 
   <!-- Modal Otentikasi Administrator Perpustakaan (PIN Login Modal) -->
-  <div id="modal-admin-login" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#072A20]/85 backdrop-blur-xs">
+  <div id="modal-admin-login" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-[#072A20]/85 backdrop-blur-xs">
     <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
         <div class="flex items-center gap-2.5">
@@ -3161,7 +3191,14 @@
 
           const previewTitles = shelfBooks.length > 0
             ? shelfBooks.slice(0, 2).map((b) => '<li class="truncate flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0"></span><span class="truncate">' + b.title + '</span></li>').join('')
-            : '<li class="italic text-[#F3E5AB]/75">Belum ada buku — klik untuk mengunggah PDF</li>';
+            : '<li class="italic text-[#F3E5AB]/75">Belum ada koleksi buku di rak ini</li>';
+
+          const adminQuickEditBtnHtml = isAdminMode
+            ? '<button type="button" class="admin-only-control btn-quick-edit-shelf px-2 py-0.5 rounded bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 text-[9px] flex items-center gap-1 transition-colors shrink-0 shadow-2xs" data-shelf-id="' + shelf.id + '" title="Ubah Nama Kotak Rak Ini">' +
+                '<i data-lucide="edit-3" class="w-2.5 h-2.5 text-[#D4AF37]"></i>' +
+                '<span>Ubah Nama</span>' +
+              '</button>'
+            : '';
 
           cubby.innerHTML =
             '<!-- Baris Atas: Nomor Rak & Badge Jumlah Buku (Otomatis Meredup Saat Hover) -->' +
@@ -3215,10 +3252,7 @@
                   '<span>Buka Koleksi 3D</span>' +
                   '<i data-lucide="arrow-up-right" class="w-3 h-3 text-[#D4AF37] shrink-0"></i>' +
                 '</span>' +
-                '<button type="button" class="btn-quick-edit-shelf px-2 py-0.5 rounded bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 text-[9px] flex items-center gap-1 transition-colors shrink-0 shadow-2xs" data-shelf-id="' + shelf.id + '" title="Ubah Nama Kotak Rak Ini">' +
-                  '<i data-lucide="edit-3" class="w-2.5 h-2.5 text-[#D4AF37]"></i>' +
-                  '<span>Ubah Nama</span>' +
-                '</button>' +
+                adminQuickEditBtnHtml +
               '</div>' +
             '</div>';
 
@@ -3229,7 +3263,7 @@
           btn.onclick = (e) => {
             e.stopPropagation();
             const sid = btn.getAttribute('data-shelf-id');
-            openEditShelfModal(sid);
+            requireAdminAuth(() => openEditShelfModal(sid));
           };
         });
 
@@ -3851,6 +3885,23 @@
           bcReader.textContent = config.title;
         }
 
+        // Pastikan bar lampu gantung & sakelar tarik selalu tampil di atas layar saat lampu masih mati
+        const lampsBar = document.getElementById('ceiling-lamps-bar');
+        const glowEl = document.getElementById('ceiling-ambient-glow');
+        if (lampsBar) {
+          if (view === 'lobby') {
+            if (glowEl && glowEl.parentNode === viewLobby) {
+              viewLobby.insertBefore(lampsBar, glowEl.nextSibling);
+            } else {
+              viewLobby.prepend(lampsBar);
+            }
+            lampsBar.classList.remove('fixed', 'top-12', 'inset-x-0');
+          } else if (!isLobbyLightOn) {
+            document.body.appendChild(lampsBar);
+            lampsBar.classList.add('fixed', 'top-12', 'inset-x-0');
+          }
+        }
+
         if (view === 'lobby') {
           renderLobbyView(document.getElementById('lobby-search-input').value);
         } else if (view === 'shelf') {
@@ -3861,7 +3912,8 @@
           showFloatingDock();
         }
 
-        window.location.hash = '#view=' + view + (view === 'shelf' ? '&shelf=' + activeShelfId : (view === 'reader' ? '&book=' + activeBookId : ''));
+        const hashViewName = view === 'lobby' ? 'catalog' : view;
+        window.location.hash = '#view=' + hashViewName + (view === 'shelf' ? '&shelf=' + activeShelfId : (view === 'reader' ? '&book=' + activeBookId : ''));
       }
 
       function getCleanPublicUrl() {
@@ -3872,7 +3924,7 @@
         if (currentView === 'reader') {
           return base + '#view=reader&book=' + encodeURIComponent(activeBookId) + (currentPage > 1 ? '&page=' + currentPage : '');
         }
-        return base + '#view=lobby';
+        return base + '#view=catalog';
       }
 
       function persistState() {
@@ -3883,34 +3935,59 @@
       }
 
       // =========================================================
-      // SISTEM OTENTIKASI & ISOLASI MODE ADMINISTRATOR
+      // SISTEM OTENTIKASI & ISOLASI TOTAL MODE ADMINISTRATOR
       // =========================================================
-      let isAdminMode = false;
+      let isAdminMode = false; // Selalu terkunci (Mode Publik) saat aplikasi pertama kali dimuat/direfresh
       const ADMIN_PIN_DEFAULT = 'admin2026';
       const STORAGE_ADMIN_SESSION = 'elibrary_admin_session_auth_v2';
       try {
-        if (sessionStorage.getItem(STORAGE_ADMIN_SESSION) === 'true') {
-          isAdminMode = true;
-        }
+        sessionStorage.removeItem(STORAGE_ADMIN_SESSION);
       } catch (e) {}
 
       let pendingAdminAction = null;
 
       function updateAdminModeUI() {
-        const adminBtnText = document.getElementById('header-admin-text');
-        const adminBtn = document.getElementById('header-admin-auth-btn');
-        if (adminBtnText) {
-          adminBtnText.textContent = isAdminMode ? 'Admin Aktif' : 'Akses Admin';
-        }
-        if (adminBtn) {
-          if (isAdminMode) {
-            adminBtn.classList.add('border-emerald-400', 'bg-[#0B3B2C]', 'text-emerald-200');
-            adminBtn.title = 'Mode Admin Aktif — Klik untuk buka panel konfigurasi atau sembunyikan';
-          } else {
-            adminBtn.classList.remove('border-emerald-400', 'bg-[#0B3B2C]', 'text-emerald-200');
-            adminBtn.title = 'Masuk Akses Administrator Perpustakaan';
+        document.body.classList.toggle('admin-authenticated', Boolean(isAdminMode));
+
+        const adminControlIds = [
+          'header-music-settings-btn',
+          'header-admin-auth-btn',
+          'header-admin-logout-btn',
+          'btn-admin-shelves-crud',
+          'btn-add-shelf-modal',
+          'btn-upload-to-shelf',
+          'btn-toggle-admin-drawer',
+          'toolbar-music-settings-btn'
+        ];
+        adminControlIds.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.toggle('hidden', !isAdminMode);
           }
+        });
+
+        const sidebar = document.getElementById('admin-sidebar');
+        if (!isAdminMode && sidebar) {
+          sidebar.classList.add('hidden');
         }
+
+        if (currentView === 'lobby') {
+          const searchInput = document.getElementById('lobby-search-input');
+          renderLobbyView(searchInput ? searchInput.value : '');
+        }
+      }
+
+      function exitAdminMode() {
+        isAdminMode = false;
+        try { sessionStorage.removeItem(STORAGE_ADMIN_SESSION); } catch(e) {}
+        const sidebar = document.getElementById('admin-sidebar');
+        if (sidebar) sidebar.classList.add('hidden');
+        ['modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings'].forEach((mid) => {
+          const m = document.getElementById(mid);
+          if (m) m.classList.add('hidden');
+        });
+        updateAdminModeUI();
+        showToast('Keluar dari Mode Admin. Aplikasi kembali ke Mode Pengunjung Publik.');
       }
 
       function requireAdminAuth(onSuccess) {
@@ -4047,11 +4124,27 @@
 
         const lobby = document.getElementById('view-lobby');
         const hintText = document.getElementById('pull-hint-text');
+        const lampsBar = document.getElementById('ceiling-lamps-bar');
+        const glowEl = document.getElementById('ceiling-ambient-glow');
 
         if (isLobbyLightOn) {
-          lobby.classList.remove('lights-off');
-          lobby.classList.add('lights-on');
+          document.body.classList.remove('lights-off');
+          document.body.classList.add('lights-on');
+          if (lobby) {
+            lobby.classList.remove('lights-off');
+            lobby.classList.add('lights-on');
+          }
           if (hintText) hintText.textContent = 'Matikan Lampu';
+
+          // Jika pengguna sedang di halaman selain lobi saat menyalakan lampu, kembalikan lampu ke lobi
+          if (lampsBar && currentView !== 'lobby' && lobby) {
+            if (glowEl && glowEl.parentNode === lobby) {
+              lobby.insertBefore(lampsBar, glowEl.nextSibling);
+            } else {
+              lobby.prepend(lampsBar);
+            }
+            lampsBar.classList.remove('fixed', 'top-12', 'inset-x-0');
+          }
 
           // Kilatan berurutan (staggered ripple) dari lampu sakelar (#3 / idx 2) ke samping
           const bulbs = Array.from(document.querySelectorAll('.pendant-bulb'));
@@ -4066,8 +4159,12 @@
 
           showToast('Klik! Lampu perpustakaan dinyalakan.');
         } else {
-          lobby.classList.remove('lights-on');
-          lobby.classList.add('lights-off');
+          document.body.classList.remove('lights-on');
+          document.body.classList.add('lights-off');
+          if (lobby) {
+            lobby.classList.remove('lights-on');
+            lobby.classList.add('lights-off');
+          }
           if (hintText) hintText.textContent = 'Tarik Sakelar';
           showToast('Klik! Lampu perpustakaan dimatikan (Mode Temaram).');
         }
@@ -4191,12 +4288,7 @@
       const headerAdminBtn = document.getElementById('header-admin-auth-btn');
       if (headerAdminBtn) {
         headerAdminBtn.onclick = () => {
-          if (!isAdminMode) {
-            requireAdminAuth(() => {
-              document.getElementById('admin-sidebar').classList.remove('hidden');
-              switchViewTo('reader');
-            });
-          } else {
+          requireAdminAuth(() => {
             const sidebar = document.getElementById('admin-sidebar');
             if (sidebar.classList.contains('hidden')) {
               switchViewTo('reader');
@@ -4206,9 +4298,33 @@
               sidebar.classList.add('hidden');
               showToast('Panel Admin disembunyikan.');
             }
-          }
+          });
         };
       }
+
+      const headerAdminLogoutBtn = document.getElementById('header-admin-logout-btn');
+      if (headerAdminLogoutBtn) {
+        headerAdminLogoutBtn.onclick = exitAdminMode;
+      }
+
+      const secretAdminGateBtn = document.getElementById('btn-secret-admin-gate');
+      if (secretAdminGateBtn) {
+        secretAdminGateBtn.onclick = () => {
+          requireAdminAuth(() => {
+            showToast('Mode Admin Aktif. Seluruh fitur konfigurasi kini ditampilkan.');
+          });
+        };
+      }
+
+      // Pintasan Keyboard Rahasia Admin (Ctrl + Shift + A)
+      window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+          e.preventDefault();
+          requireAdminAuth(() => {
+            showToast('Mode Admin Aktif.');
+          });
+        }
+      });
 
       const btnCloseSidebar = document.getElementById('btn-close-admin-sidebar');
       if (btnCloseSidebar) {
@@ -4782,7 +4898,34 @@
 
       window.addEventListener('resize', () => renderStage('forward'));
 
+      function checkHashForSecretAdminGate() {
+        const rawHash = (window.location.hash || '').replace(/^#/, '');
+        if (!rawHash) return false;
+        const params = new URLSearchParams(rawHash);
+        const isSecretAdminHash =
+          rawHash === 'admin-access' ||
+          rawHash === 'admin' ||
+          params.has('admin-access') ||
+          params.get('mode') === 'admin';
+        if (isSecretAdminHash) {
+          history.replaceState(null, '', window.location.pathname + '#view=catalog');
+          requireAdminAuth(() => {
+            showToast('Mode Admin Aktif.');
+          });
+          return true;
+        }
+        return false;
+      }
+
+      window.addEventListener('hashchange', () => {
+        checkHashForSecretAdminGate();
+      });
+
       function handleInitialRouting() {
+        if (checkHashForSecretAdminGate()) {
+          switchViewTo('lobby');
+          return;
+        }
         const hash = window.location.hash || '';
         if (hash) {
           const params = new URLSearchParams(hash.replace(/^#/, ''));
@@ -4795,11 +4938,12 @@
             openShelfView(shelf);
             return;
           }
-          if (view === 'reader') {
-            if (book) {
-              const b = books.find((item) => item.id === book);
+          if (view === 'reader' || params.has('read')) {
+            const bookTarget = book || params.get('read');
+            if (bookTarget) {
+              const b = books.find((item) => item.id === bookTarget);
               if (b) {
-                openReaderForBook(b);
+                openBookInReader(b);
                 if (page && page > 1) {
                   currentPage = Math.min(page, pagesDataUrls.length || 1);
                   renderStage('forward');
