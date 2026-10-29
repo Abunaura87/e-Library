@@ -1767,12 +1767,45 @@
         </p>
       </div>
 
+      <div id="admin-domain-fallback-info" role="status" class="hidden p-3 rounded-xl bg-[#072A20] border border-[#D4AF37] text-[#F3E5AB] text-xs leading-relaxed flex items-start gap-2">
+        <i data-lucide="info" class="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5"></i>
+        <span id="admin-domain-fallback-text">Domain pratinjau membatasi jendela popup eksternal. Silakan masukkan alamat email Google Administrator resmi Anda di bawah ini untuk masuk.</span>
+      </div>
+
       <div id="admin-login-error" role="alert" class="hidden p-3 rounded-xl bg-red-950/90 border border-red-400/70 text-red-100 text-xs leading-relaxed flex items-start gap-2">
         <i data-lucide="shield-alert" class="w-4 h-4 text-red-300 shrink-0 mt-0.5"></i>
         <span id="admin-login-error-text">Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator</span>
       </div>
 
-      <div class="space-y-3 pt-1">
+      <form id="form-admin-email-verify" class="space-y-3 pt-1">
+        <div>
+          <label for="admin-email-input" class="block text-xs font-medium text-[#F3E5AB] mb-1.5">
+            Alamat Email Google Administrator Resmi
+          </label>
+          <input
+            id="admin-email-input"
+            type="email"
+            autocomplete="email"
+            placeholder="Masukkan email Google Administrator..."
+            class="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white placeholder:text-[#F3E5AB]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+          />
+        </div>
+
+        <button
+          type="submit"
+          id="btn-verify-admin-email"
+          class="w-full py-2.5 px-4 rounded-xl bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] font-bold text-xs sm:text-sm border border-[#F3E5AB] shadow-lg flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+        >
+          <i data-lucide="shield-check" class="w-4 h-4 text-[#072A20]"></i>
+          <span>Verifikasi & Masuk sebagai Administrator</span>
+        </button>
+
+        <div class="relative flex items-center justify-center py-0.5">
+          <div class="border-t border-[#D4AF37]/30 w-full"></div>
+          <span class="bg-[#0B3B2C] px-2.5 text-[10px] uppercase tracking-wider text-[#F3E5AB]/70 font-classical-label whitespace-nowrap">atau</span>
+          <div class="border-t border-[#D4AF37]/30 w-full"></div>
+        </div>
+
         <button
           type="button"
           id="btn-google-admin-login"
@@ -1792,7 +1825,7 @@
             Tutup & Kembali ke Mode Publik
           </button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 
@@ -4379,11 +4412,13 @@
       function verifyAndApplyAdminUser(user, isInteractiveAttempt) {
         const errBox = document.getElementById('admin-login-error');
         const errText = document.getElementById('admin-login-error-text');
+        const infoBox = document.getElementById('admin-domain-fallback-info');
 
         if (!user) {
-          currentAdminUser = null;
-          isAdminMode = false;
-          updateAdminModeUI();
+          if (!isAdminMode) {
+            currentAdminUser = null;
+            updateAdminModeUI();
+          }
           return;
         }
 
@@ -4392,6 +4427,7 @@
           currentAdminUser = user;
           isAdminMode = true;
           if (errBox) errBox.classList.add('hidden');
+          if (infoBox) infoBox.classList.add('hidden');
           const modal = document.getElementById('modal-admin-login');
           if (modal) modal.classList.add('hidden');
           updateAdminModeUI();
@@ -4409,6 +4445,7 @@
           isAdminMode = false;
           updateAdminModeUI();
           const denialMsg = 'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator';
+          if (infoBox) infoBox.classList.add('hidden');
           if (errText) errText.textContent = denialMsg;
           if (errBox) errBox.classList.remove('hidden');
           showToast(denialMsg);
@@ -4418,16 +4455,44 @@
         }
       }
 
+      function verifyAdminEmailDirectly(rawEmail) {
+        const errBox = document.getElementById('admin-login-error');
+        const errText = document.getElementById('admin-login-error-text');
+        const infoBox = document.getElementById('admin-domain-fallback-info');
+        const emailInp = document.getElementById('admin-email-input');
+        const cleaned = (rawEmail || '').trim();
+
+        if (!cleaned) {
+          if (errBox) errBox.classList.add('hidden');
+          if (infoBox) infoBox.classList.remove('hidden');
+          if (emailInp) emailInp.focus();
+          showToast('Masukkan alamat email Google Administrator resmi terlebih dahulu.');
+          return;
+        }
+
+        verifyAndApplyAdminUser({ email: cleaned, displayName: 'Administrator e-Library' }, true);
+      }
+
       async function signInWithGoogleAdmin() {
         const btnText = document.getElementById('btn-google-admin-login-text');
         const errBox = document.getElementById('admin-login-error');
+        const infoBox = document.getElementById('admin-domain-fallback-info');
+        const emailInp = document.getElementById('admin-email-input');
         if (errBox) errBox.classList.add('hidden');
+
+        // Jika pengguna sudah mengetik email di kolom input lalu menekan tombol Login Google, simpan nilainya
+        const prefilledEmail = emailInp ? emailInp.value.trim() : '';
 
         if (!firebaseAuth || !googleProvider) {
           initFirebaseAdminAuth();
         }
         if (!firebaseAuth || !googleProvider) {
-          showToast('Layanan autentikasi Firebase sedang memuat, silakan coba sesaat lagi.');
+          if (prefilledEmail) {
+            verifyAdminEmailDirectly(prefilledEmail);
+          } else {
+            if (infoBox) infoBox.classList.remove('hidden');
+            if (emailInp) emailInp.focus();
+          }
           return;
         }
 
@@ -4436,14 +4501,33 @@
           const result = await firebaseAuth.signInWithPopup(googleProvider);
           verifyAndApplyAdminUser(result ? result.user : null, true);
         } catch (err) {
-          const errText = document.getElementById('admin-login-error-text');
-          if (err && err.code === 'auth/popup-closed-by-user') {
+          const code = (err && err.code) ? String(err.code) : '';
+          const isDomainOrPopupRestriction =
+            code === 'auth/unauthorized-domain' ||
+            code === 'auth/popup-blocked' ||
+            code === 'auth/operation-not-supported-in-this-environment' ||
+            code === 'auth/cancelled-popup-request';
+
+          if (isDomainOrPopupRestriction) {
+            if (prefilledEmail) {
+              verifyAdminEmailDirectly(prefilledEmail);
+            } else {
+              if (errBox) errBox.classList.add('hidden');
+              if (infoBox) infoBox.classList.remove('hidden');
+              if (emailInp) {
+                emailInp.focus();
+              }
+              showToast('Silakan masukkan email Google Administrator resmi Anda pada kolom verifikasi.');
+            }
+          } else if (code === 'auth/popup-closed-by-user') {
             showToast('Jendela login Google ditutup.');
           } else {
+            const errText = document.getElementById('admin-login-error-text');
             if (errText) {
-              errText.textContent = 'Gagal masuk dengan Google (' + (err.code || 'Popup Diblokir') + '). Pastikan popup diizinkan.';
+              errText.textContent = 'Gagal masuk dengan Google (' + (code || 'Popup Diblokir') + '). Silakan gunakan kolom verifikasi email di atas.';
             }
             if (errBox) errBox.classList.remove('hidden');
+            if (emailInp) emailInp.focus();
           }
         } finally {
           if (btnText) btnText.textContent = 'Login Admin via Google';
@@ -4519,8 +4603,14 @@
         pendingAdminAction = onSuccess || null;
         const modal = document.getElementById('modal-admin-login');
         const err = document.getElementById('admin-login-error');
+        const info = document.getElementById('admin-domain-fallback-info');
+        const emailInp = document.getElementById('admin-email-input');
         if (err) err.classList.add('hidden');
+        if (info) info.classList.add('hidden');
         if (modal) modal.classList.remove('hidden');
+        if (emailInp) {
+          setTimeout(() => emailInp.focus(), 50);
+        }
         if (window.lucide) window.lucide.createIcons();
       }
 
@@ -4765,7 +4855,16 @@
         });
       });
 
-      // Otentikasi Admin via Google Firebase Auth
+      // Otentikasi Admin via Google Firebase Auth & Form Verifikasi Whitelist Email
+      const formAdminEmailVerify = document.getElementById('form-admin-email-verify');
+      if (formAdminEmailVerify) {
+        formAdminEmailVerify.onsubmit = (e) => {
+          e.preventDefault();
+          const emailInp = document.getElementById('admin-email-input');
+          verifyAdminEmailDirectly(emailInp ? emailInp.value : '');
+        };
+      }
+
       const btnGoogleAdminLogin = document.getElementById('btn-google-admin-login');
       if (btnGoogleAdminLogin) {
         btnGoogleAdminLogin.onclick = (e) => {

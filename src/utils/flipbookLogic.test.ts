@@ -9,6 +9,8 @@ import {
   verifyBookPassword,
   validatePdfUrlInput,
   generateMinimalValidPdfBytes,
+  evaluateAdminAccess,
+  shouldFallbackToDirectEmailVerify,
 } from './flipbookLogic';
 
 test('calculateSpreadState handles desktop 2-page spread transitions accurately', () => {
@@ -101,3 +103,30 @@ test('generateMinimalValidPdfBytes produces valid PDF header and EOF trailer', (
   assert.ok(text.startsWith('%PDF-1.4'));
   assert.ok(text.trimEnd().endsWith('%%EOF'));
 });
+
+test('evaluateAdminAccess enforces single email whitelist for marhaniza05@gmail.com', () => {
+  const allowed = evaluateAdminAccess('  Marhaniza05@gmail.com ');
+  assert.equal(allowed.authorized, true);
+  assert.equal(allowed.normalizedEmail, 'marhaniza05@gmail.com');
+
+  const deniedOther = evaluateAdminAccess('other.user@gmail.com');
+  assert.equal(deniedOther.authorized, false);
+  assert.equal(
+    deniedOther.message,
+    'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator'
+  );
+
+  const deniedEmpty = evaluateAdminAccess('   ');
+  assert.equal(deniedEmpty.authorized, false);
+});
+
+test('shouldFallbackToDirectEmailVerify detects auth/unauthorized-domain and popup restrictions', () => {
+  assert.equal(shouldFallbackToDirectEmailVerify('auth/unauthorized-domain'), true);
+  assert.equal(shouldFallbackToDirectEmailVerify('auth/popup-blocked'), true);
+  assert.equal(
+    shouldFallbackToDirectEmailVerify('auth/operation-not-supported-in-this-environment'),
+    true
+  );
+  assert.equal(shouldFallbackToDirectEmailVerify('auth/popup-closed-by-user'), false);
+});
+

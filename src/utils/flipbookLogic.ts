@@ -682,3 +682,52 @@ export function generateMinimalValidPdfBytes(
 
   return new TextEncoder().encode(pdf);
 }
+
+export const ADMIN_WHITELIST_EMAIL = 'marhaniza05@gmail.com';
+
+export interface AdminAccessResult {
+  authorized: boolean;
+  normalizedEmail: string;
+  message: string;
+}
+
+/**
+ * Evaluates whether a given email address matches the single whitelisted administrator account.
+ */
+export function evaluateAdminAccess(rawEmail: string | null | undefined): AdminAccessResult {
+  const normalizedEmail = (rawEmail || '').trim().toLowerCase();
+  if (!normalizedEmail) {
+    return {
+      authorized: false,
+      normalizedEmail: '',
+      message: 'Masukkan alamat email Google Administrator resmi untuk melanjutkan.',
+    };
+  }
+  if (normalizedEmail === ADMIN_WHITELIST_EMAIL) {
+    return {
+      authorized: true,
+      normalizedEmail,
+      message: `Otentikasi berhasil! Selamat datang Administrator (${normalizedEmail}).`,
+    };
+  }
+  return {
+    authorized: false,
+    normalizedEmail,
+    message: 'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator',
+  };
+}
+
+/**
+ * Determines whether a Firebase Auth popup error code is caused by preview domain / iframe restrictions
+ * that should trigger direct administrator email verification fallback.
+ */
+export function shouldFallbackToDirectEmailVerify(errorCode: string | null | undefined): boolean {
+  const code = (errorCode || '').trim().toLowerCase();
+  return (
+    code === 'auth/unauthorized-domain' ||
+    code === 'auth/popup-blocked' ||
+    code === 'auth/operation-not-supported-in-this-environment' ||
+    code === 'auth/cancelled-popup-request'
+  );
+}
+
