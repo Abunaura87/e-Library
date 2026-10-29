@@ -178,18 +178,14 @@
     .lobby-dark-veil {
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse 95% 75% at 50% 12%, rgba(7, 32, 24, 0.45) 0%, rgba(5, 22, 16, 0.84) 48%, rgba(3, 13, 9, 0.95) 100%);
-      backdrop-filter: blur(2px) brightness(0.68) contrast(1.06);
-      -webkit-backdrop-filter: blur(2px) brightness(0.68) contrast(1.06);
+      background: radial-gradient(ellipse 90% 70% at 50% 10%, rgba(7, 32, 24, 0.58) 0%, rgba(5, 22, 16, 0.88) 48%, rgba(3, 13, 9, 0.96) 100%);
       pointer-events: none;
       z-index: 12;
-      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.85s ease;
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1);
       opacity: 1;
     }
     .lights-on .lobby-dark-veil {
       opacity: 0;
-      backdrop-filter: blur(0px) brightness(1);
-      -webkit-backdrop-filter: blur(0px) brightness(1);
     }
 
     /* =========================================================
@@ -200,10 +196,10 @@
         transform: rotate(0deg);
       }
       25% {
-        transform: rotate(2deg);
+        transform: rotate(1.8deg);
       }
       75% {
-        transform: rotate(-2deg);
+        transform: rotate(-1.8deg);
       }
     }
 
@@ -211,56 +207,77 @@
       position: absolute;
       top: 10px;
       left: 50%;
-      margin-left: 2px;
-      transform-origin: 12px 0px;
-      animation: pullChainSway 5.5s ease-in-out infinite;
-      z-index: 35;
-      cursor: grab;
+      margin-left: -22px;
+      padding: 0 12px 12px 12px;
+      z-index: 40;
+      cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
+    }
+    .pull-chain-wrapper:hover {
+      cursor: grab;
     }
     .pull-chain-wrapper:active {
       cursor: grabbing;
     }
 
-    /* Denyut Pendaran Emas pada Bandul saat Ruangan Gelap */
-    @keyframes knobBreathingGlow {
-      0%, 100% {
-        filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.75)) drop-shadow(0 0 12px rgba(245, 158, 11, 0.4));
-      }
-      50% {
-        filter: drop-shadow(0 0 10px rgba(254, 240, 138, 1)) drop-shadow(0 0 22px rgba(217, 119, 6, 0.85));
-      }
-    }
-    .lights-off .pull-knob-group {
-      animation: knobBreathingGlow 2.4s ease-in-out infinite;
+    .pull-chain-svg {
+      overflow: visible;
+      display: block;
+      transform-origin: 12px 0px;
+      animation: pullChainSway 5.5s ease-in-out infinite;
     }
 
-    /* Lencana Petunjuk Menarik Sakelar */
+    /* Lingkaran Halo Pendaran Emas Halus Tanpa Kotak Clipping */
+    @keyframes knobHaloPulse {
+      0%, 100% {
+        opacity: 0.45;
+      }
+      50% {
+        opacity: 0.95;
+      }
+    }
+    .knob-halo-circle {
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .lights-off .knob-halo-circle {
+      opacity: 0.85;
+      animation: knobHaloPulse 2.2s ease-in-out infinite;
+    }
+
+    /* Lencana Petunjuk Menarik Sakelar (Interaktif & Bisa Diklik Langsung) */
     .pull-switch-hint {
       position: absolute;
-      top: 72px;
-      left: 24px;
+      top: 74px;
+      left: 34px;
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 3.5px 10px;
+      padding: 4px 11px;
       border-radius: 9999px;
-      background: rgba(7, 42, 32, 0.94);
-      border: 1.2px solid #D4AF37;
+      background: rgba(7, 42, 32, 0.96);
+      border: 1.5px solid #D4AF37;
       color: #F3E5AB;
       font-size: 11px;
       font-weight: 700;
       white-space: nowrap;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.65), 0 0 14px rgba(212, 175, 55, 0.4);
-      pointer-events: none;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      animation: hintFloat 3.2s ease-in-out infinite;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 14px rgba(212, 175, 55, 0.45);
+      pointer-events: auto;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: hintGlowPulse 2.8s ease-in-out infinite;
     }
-    @keyframes hintFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-3.5px); }
+    .pull-switch-hint:hover {
+      background: #0B3B2C;
+      border-color: #FEF08A;
+      color: #FFFFFF;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 22px rgba(254, 240, 138, 0.75);
+    }
+    @keyframes hintGlowPulse {
+      0%, 100% { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(212, 175, 55, 0.35); }
+      50% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 22px rgba(254, 240, 138, 0.75); }
     }
     .hint-bullet {
       width: 7px;
@@ -271,15 +288,18 @@
     }
 
     /* Animasi Tarikan Sakelar Membal Elastis (Spring Recoil Physics) */
+    .chain-dragging {
+      animation: none !important;
+    }
     .chain-pulled {
-      animation: chainSpringAction 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      animation: chainSpringAction 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
     }
     @keyframes chainSpringAction {
       0% {
         transform: translateY(0);
       }
       28% {
-        transform: translateY(24px) scaleY(1.08);
+        transform: translateY(26px) scaleY(1.08);
       }
       55% {
         transform: translateY(-6px) scaleY(0.96);
@@ -792,7 +812,7 @@
       <div id="lobby-ambient-veil" class="lobby-dark-veil"></div>
 
       <!-- Deretan Lampu Gantung Edison Interaktif dengan Sakelar Tarik (Pull-Chain Switch) -->
-      <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-0 pb-2 relative select-none z-25">
+      <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-0 pb-2 relative select-none z-30">
         <div class="grid grid-cols-5 sm:grid-cols-9 gap-3 sm:gap-4 justify-items-center">
           <!-- Lampu 01 -->
           <div class="flex flex-col items-center group">
@@ -826,7 +846,15 @@
                       <stop offset="75%" stop-color="#92400E" />
                       <stop offset="100%" stop-color="#451A03" />
                     </linearGradient>
+                    <radialGradient id="knobHaloGrad" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.95" />
+                      <stop offset="45%" stop-color="#F59E0B" stop-opacity="0.55" />
+                      <stop offset="100%" stop-color="#D97706" stop-opacity="0" />
+                    </radialGradient>
                   </defs>
+
+                  <!-- Lingkaran Halo Pendaran Emas Lembut di Sekitar Bandul -->
+                  <circle class="knob-halo-circle" cx="12" cy="96" r="16" fill="url(#knobHaloGrad)" />
 
                   <!-- Garis Kawat Inti Rantai -->
                   <line x1="12" y1="0" x2="12" y2="84" stroke="#78350F" stroke-width="1.2" />
@@ -1828,6 +1856,90 @@
             osc.stop(now + n.time + n.dur + 0.05);
           });
         } catch(e) {}
+      }
+
+      // Sintesis Suara Mekanis "Klik Cetik" Sakelar Tarik Lampu (Web Audio API)
+      function playPullSwitchSound(isOn) {
+        try {
+          const ctx = getOrCreateAudioContext();
+          if (!ctx) return;
+          const now = ctx.currentTime;
+
+          // 1. Klik mekanis tajam (kontak pegas logam dalam rumah fitting)
+          const clickLen = Math.floor(ctx.sampleRate * 0.045);
+          const clickBuf = ctx.createBuffer(1, clickLen, ctx.sampleRate);
+          const clickData = clickBuf.getChannelData(0);
+          for (let i = 0; i < clickLen; i++) {
+            const env = Math.exp(-i / (ctx.sampleRate * 0.0038));
+            clickData[i] = (Math.random() * 2 - 1) * env;
+          }
+          const noiseSrc = ctx.createBufferSource();
+          noiseSrc.buffer = clickBuf;
+
+          const bandpass = ctx.createBiquadFilter();
+          bandpass.type = 'bandpass';
+          bandpass.frequency.setValueAtTime(isOn ? 2350 : 1850, now);
+          bandpass.Q.setValueAtTime(3.2, now);
+
+          const clickGain = ctx.createGain();
+          clickGain.gain.setValueAtTime(0.55, now);
+          clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.042);
+
+          noiseSrc.connect(bandpass);
+          bandpass.connect(clickGain);
+          clickGain.connect(ctx.destination);
+          noiseSrc.start(now);
+
+          // 2. Denting resonansi pegas kuningan & rantai manik ("ping-clink")
+          const pingOsc = ctx.createOscillator();
+          pingOsc.type = 'triangle';
+          pingOsc.frequency.setValueAtTime(isOn ? 1180 : 920, now + 0.003);
+          pingOsc.frequency.exponentialRampToValueAtTime(390, now + 0.065);
+
+          const pingGain = ctx.createGain();
+          pingGain.gain.setValueAtTime(0.0001, now);
+          pingGain.gain.linearRampToValueAtTime(0.38, now + 0.004);
+          pingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
+
+          pingOsc.connect(pingGain);
+          pingGain.connect(ctx.destination);
+          pingOsc.start(now + 0.002);
+          pingOsc.stop(now + 0.08);
+
+          // 3. Klik pantulan kedua saat rantai membal kembali (rebound ratchet click)
+          const reboundOsc = ctx.createOscillator();
+          reboundOsc.type = 'sine';
+          reboundOsc.frequency.setValueAtTime(isOn ? 2900 : 2400, now + 0.055);
+          reboundOsc.frequency.exponentialRampToValueAtTime(1100, now + 0.11);
+
+          const reboundGain = ctx.createGain();
+          reboundGain.gain.setValueAtTime(0.0001, now + 0.055);
+          reboundGain.gain.linearRampToValueAtTime(0.16, now + 0.06);
+          reboundGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+          reboundOsc.connect(reboundGain);
+          reboundGain.connect(ctx.destination);
+          reboundOsc.start(now + 0.055);
+          reboundOsc.stop(now + 0.125);
+
+          // 4. Dengung hangat pengapian filamen pijar saat lampu menyala
+          if (isOn) {
+            const humOsc = ctx.createOscillator();
+            humOsc.type = 'sine';
+            humOsc.frequency.setValueAtTime(115, now + 0.02);
+            humOsc.frequency.linearRampToValueAtTime(60, now + 0.32);
+
+            const humGain = ctx.createGain();
+            humGain.gain.setValueAtTime(0.0001, now + 0.02);
+            humGain.gain.linearRampToValueAtTime(0.09, now + 0.05);
+            humGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+            humOsc.connect(humGain);
+            humGain.connect(ctx.destination);
+            humOsc.start(now + 0.02);
+            humOsc.stop(now + 0.36);
+          }
+        } catch (e) {}
       }
 
       // Sintesis Suara Kertas Halus & Renyah (Web Audio API)
@@ -3899,6 +4011,152 @@
           showFloatingDock();
         });
       }
+
+      // =========================================================
+      // SISTEM PENCAHAYAAN INTERAKTIF SAKELAR TARIK (PULL-CHAIN LAMP)
+      // =========================================================
+      let isLobbyLightOn = false; // Kondisi awal default: lampu mati (mode temaram)
+      let isChainDragging = false;
+      let chainDragStartY = 0;
+      let chainCurrentDeltaY = 0;
+      let chainHasToggledInDrag = false;
+      let lastSwitchToggleTime = 0;
+      let lastPointerInteractionTime = 0;
+
+      function triggerPullChainAnimation() {
+        const svgEl = document.getElementById('pull-chain-svg');
+        if (!svgEl) return;
+        svgEl.style.transform = '';
+        svgEl.classList.remove('chain-dragging');
+        svgEl.classList.remove('chain-pulled');
+        void svgEl.offsetWidth; // trigger reflow
+        svgEl.classList.add('chain-pulled');
+        setTimeout(() => {
+          svgEl.classList.remove('chain-pulled');
+        }, 650);
+      }
+
+      function toggleLobbyLighting() {
+        const now = Date.now();
+        if (now - lastSwitchToggleTime < 180) return;
+        lastSwitchToggleTime = now;
+
+        isLobbyLightOn = !isLobbyLightOn;
+        playPullSwitchSound(isLobbyLightOn);
+        triggerPullChainAnimation();
+
+        const lobby = document.getElementById('view-lobby');
+        const hintText = document.getElementById('pull-hint-text');
+
+        if (isLobbyLightOn) {
+          lobby.classList.remove('lights-off');
+          lobby.classList.add('lights-on');
+          if (hintText) hintText.textContent = 'Matikan Lampu';
+
+          // Kilatan berurutan (staggered ripple) dari lampu sakelar (#3 / idx 2) ke samping
+          const bulbs = Array.from(document.querySelectorAll('.pendant-bulb'));
+          const centerIdx = 2;
+          bulbs.forEach((bulb, idx) => {
+            const dist = Math.abs(idx - centerIdx);
+            setTimeout(() => {
+              bulb.classList.add('bulb-igniting');
+              setTimeout(() => bulb.classList.remove('bulb-igniting'), 550);
+            }, dist * 55);
+          });
+
+          showToast('Klik! Lampu perpustakaan dinyalakan.');
+        } else {
+          lobby.classList.remove('lights-on');
+          lobby.classList.add('lights-off');
+          if (hintText) hintText.textContent = 'Tarik Sakelar';
+          showToast('Klik! Lampu perpustakaan dimatikan (Mode Temaram).');
+        }
+      }
+
+      const pullChainAssembly = document.getElementById('pull-chain-assembly');
+      const pullChainSvg = document.getElementById('pull-chain-svg');
+      const pullSwitchHint = document.getElementById('pull-switch-hint');
+
+      if (pullSwitchHint) {
+        pullSwitchHint.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+        });
+        pullSwitchHint.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleLobbyLighting();
+        });
+      }
+
+      if (pullChainAssembly && pullChainSvg) {
+        pullChainAssembly.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          isChainDragging = true;
+          chainDragStartY = e.clientY;
+          chainCurrentDeltaY = 0;
+          chainHasToggledInDrag = false;
+          pullChainSvg.classList.remove('chain-pulled');
+          pullChainSvg.classList.add('chain-dragging');
+          if (pullChainAssembly.setPointerCapture) {
+            try { pullChainAssembly.setPointerCapture(e.pointerId); } catch(err) {}
+          }
+        });
+
+        pullChainAssembly.addEventListener('pointermove', (e) => {
+          if (!isChainDragging) return;
+          const dy = Math.max(0, Math.min(36, e.clientY - chainDragStartY));
+          chainCurrentDeltaY = dy;
+          pullChainSvg.style.transform = 'translateY(' + dy + 'px) scaleY(' + (1 + dy * 0.003) + ')';
+
+          // Jika ditarik cukup jauh ke bawah (>= 16px), langsung cetik sakelar!
+          if (dy >= 16 && !chainHasToggledInDrag) {
+            chainHasToggledInDrag = true;
+            toggleLobbyLighting();
+          }
+        });
+
+        const finishChainDrag = (e) => {
+          if (!isChainDragging) return;
+          isChainDragging = false;
+          lastPointerInteractionTime = Date.now();
+          if (pullChainAssembly.releasePointerCapture && e && e.pointerId !== undefined) {
+            try { pullChainAssembly.releasePointerCapture(e.pointerId); } catch(err) {}
+          }
+          pullChainSvg.classList.remove('chain-dragging');
+          pullChainSvg.style.transform = '';
+          if (!chainHasToggledInDrag) {
+            toggleLobbyLighting();
+          } else {
+            triggerPullChainAnimation();
+          }
+          chainCurrentDeltaY = 0;
+        };
+
+        pullChainAssembly.addEventListener('pointerup', finishChainDrag);
+        pullChainAssembly.addEventListener('pointercancel', finishChainDrag);
+
+        // Fallback click untuk pemicu non-pointer
+        pullChainAssembly.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (Date.now() - lastPointerInteractionTime < 600) return;
+          toggleLobbyLighting();
+        });
+
+        // Dukungan tombol keyboard (Enter / Space)
+        pullChainAssembly.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleLobbyLighting();
+          }
+        });
+      }
+
+      // Klik langsung pada bohlam lampu juga dapat menyalakan/mematikan sakelar
+      document.querySelectorAll('.pendant-bulb').forEach((bulb) => {
+        bulb.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleLobbyLighting();
+        });
+      });
 
       // Otentikasi Admin Form & Tombol
       document.getElementById('form-admin-login').onsubmit = (e) => {
