@@ -847,4 +847,70 @@ export function validateAdminPasswordChange(
   };
 }
 
+export interface AdminPasswordResetEmailValidation {
+  allowed: boolean;
+  normalizedEmail: string;
+  continueUrl: string;
+  message: string;
+}
+
+/**
+ * Strictly validates an email address before invoking Firebase Auth's sendPasswordResetEmail.
+ * Only the single whitelisted administrator email (marhaniza05@gmail.com) is permitted to receive a reset link.
+ */
+export function validateAdminPasswordResetEmail(
+  rawEmail: string | null | undefined,
+  baseAppUrl = 'http://localhost:3000/'
+): AdminPasswordResetEmailValidation {
+  const normalizedEmail = (rawEmail || '').trim().toLowerCase();
+  if (!normalizedEmail) {
+    return {
+      allowed: false,
+      normalizedEmail: '',
+      continueUrl: '',
+      message: 'Masukkan alamat email Google Administrator resmi terlebih dahulu untuk menerima tautan pemulihan.',
+    };
+  }
+
+  if (normalizedEmail !== ADMIN_WHITELIST_EMAIL) {
+    return {
+      allowed: false,
+      normalizedEmail,
+      continueUrl: '',
+      message:
+        'Akses Ditolak: Tautan pemulihan kata sandi hanya dapat dikirim ke email Administrator resmi yang terdaftar dalam whitelist.',
+    };
+  }
+
+  const cleanBase = (baseAppUrl || 'http://localhost:3000/').split('#')[0].split('?')[0];
+  const continueUrl = `${cleanBase}?adminResetVerify=1&email=${encodeURIComponent(ADMIN_WHITELIST_EMAIL)}`;
+
+  return {
+    allowed: true,
+    normalizedEmail,
+    continueUrl,
+    message: `Tautan verifikasi & reset kata sandi telah dikirim ke email Administrator resmi (${normalizedEmail}).`,
+  };
+}
+
+/**
+ * Validates setting a new security password after completing the email verification / reset link flow,
+ * ensuring the target email strictly matches the whitelist.
+ */
+export function validateVerifiedPasswordResetSubmission(
+  rawEmail: string | null | undefined,
+  newPasswordInput: string,
+  confirmPasswordInput: string
+): { valid: boolean; newHash?: string; message: string } {
+  const whitelistCheck = evaluateAdminAccess(rawEmail);
+  if (!whitelistCheck.authorized) {
+    return {
+      valid: false,
+      message: 'Akses Ditolak: Verifikasi pemulihan sandi hanya berlaku untuk email Administrator resmi.',
+    };
+  }
+
+  return validateAdminPasswordChange('', newPasswordInput, confirmPasswordInput, null, true);
+}
+
 

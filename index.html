@@ -1761,59 +1761,61 @@
         </button>
       </div>
 
-      <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-1">
-        <div class="flex items-center gap-2 text-xs font-bold text-[#F3E5AB]">
-          <i data-lucide="lock" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-          <span>Proteksi Berlapis (Single Email Whitelist + Password)</span>
+      <div id="admin-login-oauth-header" class="space-y-3.5">
+        <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-1">
+          <div class="flex items-center gap-2 text-xs font-bold text-[#F3E5AB]">
+            <i data-lucide="lock" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+            <span>Proteksi Berlapis (Single Email Whitelist + Password)</span>
+          </div>
+          <p class="text-[11px] text-[#E6E1D6]/85 leading-relaxed">
+            Akses pengelolaan dilindungi secara ketat. Mengetahui alamat email saja <strong>tidak dapat</strong> membuka panel tanpa otentikasi token Google resmi atau Kata Sandi Pengaman Admin.
+          </p>
         </div>
-        <p class="text-[11px] text-[#E6E1D6]/85 leading-relaxed">
-          Akses pengelolaan dilindungi secara ketat. Mengetahui alamat email saja <strong>tidak dapat</strong> membuka panel tanpa otentikasi token Google resmi atau Kata Sandi Pengaman Admin.
-        </p>
-      </div>
 
-      <!-- Tombol Utama: Otentikasi Akun Google Resmi -->
-      <div class="space-y-2 pt-0.5">
-        <button
-          type="button"
-          id="btn-google-admin-login"
-          class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-[#FBF9F5] text-[#072A20] font-bold text-xs sm:text-sm border-2 border-[#D4AF37] shadow-lg flex items-center justify-center gap-3 transition-all active:scale-98 cursor-pointer"
-        >
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-            <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.24 0-5.98-2.18-6.96-5.11H1.04v3.14C3.05 21.13 7.21 24 12 24z"/>
-            <path fill="#FBBC05" d="M5.04 14.04c-.25-.72-.39-1.5-.39-2.3s.14-1.58.39-2.3V6.3H1.04C.38 7.61 0 9.1 0 11.74s.38 4.13 1.04 5.44l4-3.14z"/>
-            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.21 0 3.05 2.87 1.04 6.86l4 3.14c.98-2.93 3.72-5.25 6.96-5.25z"/>
-          </svg>
-          <span id="btn-google-admin-login-text">Login Admin via Google</span>
-        </button>
-      </div>
-
-      <!-- Panduan Otorisasi Domain Firebase (Tampil hanya jika domain pratinjau belum didaftarkan di Firebase Console) -->
-      <div id="admin-domain-fallback-info" role="status" class="hidden p-3 rounded-xl bg-[#072A20] border border-[#D4AF37] text-[#F3E5AB] text-[11px] leading-relaxed space-y-2">
-        <div class="flex items-start gap-2">
-          <i data-lucide="info" class="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5"></i>
-          <span id="admin-domain-fallback-text">
-            Agar popup Firebase Google Auth diizinkan pada domain pratinjau ini, tambahkan domain berikut ke <strong>Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized domains</strong>, atau masuk menggunakan <strong>Email + Kata Sandi Pengaman Admin</strong> di bawah:
-          </span>
-        </div>
-        <div class="flex items-center justify-between gap-2 bg-[#0B3B2C] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/50">
-          <code id="admin-current-hostname-code" class="text-[10px] font-mono-tabular text-[#FEF08A] truncate">localhost</code>
-          <button type="button" id="btn-copy-auth-domain" class="px-2 py-1 text-[10px] font-bold rounded bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] shrink-0 cursor-pointer">
-            Salin Domain
+        <!-- Tombol Utama: Otentikasi Akun Google Resmi -->
+        <div class="space-y-2 pt-0.5">
+          <button
+            type="button"
+            id="btn-google-admin-login"
+            class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-[#FBF9F5] text-[#072A20] font-bold text-xs sm:text-sm border-2 border-[#D4AF37] shadow-lg flex items-center justify-center gap-3 transition-all active:scale-98 cursor-pointer"
+          >
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.24 0-5.98-2.18-6.96-5.11H1.04v3.14C3.05 21.13 7.21 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.04 14.04c-.25-.72-.39-1.5-.39-1.58s.14-1.58.39-2.3V6.3H1.04C.38 7.61 0 9.1 0 11.74s.38 4.13 1.04 5.44l4-3.14z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.21 0 3.05 2.87 1.04 6.86l4 3.14c.98-2.93 3.72-5.25 6.96-5.25z"/>
+            </svg>
+            <span id="btn-google-admin-login-text">Login Admin via Google</span>
           </button>
         </div>
-      </div>
 
-      <!-- Kotak Peringatan Keamanan / Penolakan Akses -->
-      <div id="admin-login-error" role="alert" class="hidden p-3 rounded-xl bg-red-950/90 border border-red-400/70 text-red-100 text-xs leading-relaxed flex items-start gap-2">
-        <i data-lucide="shield-alert" class="w-4 h-4 text-red-300 shrink-0 mt-0.5"></i>
-        <span id="admin-login-error-text">Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator</span>
-      </div>
+        <!-- Panduan Otorisasi Domain Firebase (Tampil hanya jika domain pratinjau belum didaftarkan di Firebase Console) -->
+        <div id="admin-domain-fallback-info" role="status" class="hidden p-3 rounded-xl bg-[#072A20] border border-[#D4AF37] text-[#F3E5AB] text-[11px] leading-relaxed space-y-2">
+          <div class="flex items-start gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5"></i>
+            <span id="admin-domain-fallback-text">
+              Agar popup Firebase Google Auth diizinkan pada domain pratinjau ini, tambahkan domain berikut ke <strong>Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized domains</strong>, atau masuk menggunakan <strong>Email + Kata Sandi Pengaman Admin</strong> di bawah:
+            </span>
+          </div>
+          <div class="flex items-center justify-between gap-2 bg-[#0B3B2C] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/50">
+            <code id="admin-current-hostname-code" class="text-[10px] font-mono-tabular text-[#FEF08A] truncate">localhost</code>
+            <button type="button" id="btn-copy-auth-domain" class="px-2 py-1 text-[10px] font-bold rounded bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] shrink-0 cursor-pointer">
+              Salin Domain
+            </button>
+          </div>
+        </div>
 
-      <div class="relative flex items-center justify-center py-0.5">
-        <div class="border-t border-[#D4AF37]/30 w-full"></div>
-        <span class="bg-[#0B3B2C] px-2.5 text-[10px] uppercase tracking-wider text-[#F3E5AB]/75 font-classical-label whitespace-nowrap">Atau Masuk dengan Kata Sandi Admin</span>
-        <div class="border-t border-[#D4AF37]/30 w-full"></div>
+        <!-- Kotak Peringatan Keamanan / Penolakan Akses -->
+        <div id="admin-login-error" role="alert" class="hidden p-3 rounded-xl bg-red-950/90 border border-red-400/70 text-red-100 text-xs leading-relaxed flex items-start gap-2">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-red-300 shrink-0 mt-0.5"></i>
+          <span id="admin-login-error-text">Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator</span>
+        </div>
+
+        <div class="relative flex items-center justify-center py-0.5">
+          <div class="border-t border-[#D4AF37]/30 w-full"></div>
+          <span class="bg-[#0B3B2C] px-2.5 text-[10px] uppercase tracking-wider text-[#F3E5AB]/75 font-classical-label whitespace-nowrap">Atau Masuk dengan Kata Sandi Admin</span>
+          <div class="border-t border-[#D4AF37]/30 w-full"></div>
+        </div>
       </div>
 
       <!-- Form Verifikasi Berlapis: Wajib Email Whitelist + Kata Sandi Pengaman Admin -->
@@ -1837,10 +1839,19 @@
             <label for="admin-password-input" class="block text-xs font-medium text-[#F3E5AB]">
               Kata Sandi Pengaman Admin (Password)
             </label>
-            <span class="text-[10px] text-[#D4AF37] font-mono-tabular flex items-center gap-1">
-              <i data-lucide="key-round" class="w-3 h-3"></i>
-              Wajib Diisi
-            </span>
+            <div class="flex items-center gap-2.5">
+              <span class="text-[10px] text-[#D4AF37]/90 font-mono-tabular flex items-center gap-1">
+                <i data-lucide="key-round" class="w-3 h-3"></i>
+                Wajib Diisi
+              </span>
+              <button
+                type="button"
+                id="btn-forgot-admin-password"
+                class="text-[11px] font-bold text-[#D4AF37] hover:text-[#FEF08A] underline underline-offset-2 cursor-pointer transition-colors"
+              >
+                Lupa Kata Sandi?
+              </button>
+            </div>
           </div>
           <div class="relative">
             <input
@@ -1871,12 +1882,161 @@
           <span>Verifikasi Sandi & Masuk sebagai Administrator</span>
         </button>
 
-        <div class="flex items-center justify-end pt-1">
+        <div class="flex items-center justify-between pt-1">
+          <button
+            type="button"
+            id="btn-forgot-admin-password-footer"
+            class="text-xs font-medium text-[#D4AF37] hover:text-[#FEF08A] flex items-center gap-1 cursor-pointer"
+          >
+            <i data-lucide="mail-check" class="w-3.5 h-3.5"></i>
+            <span>Reset Sandi via Email</span>
+          </button>
           <button type="button" id="btn-cancel-admin-login" class="px-3.5 py-1.5 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">
             Tutup & Kembali ke Mode Publik
           </button>
         </div>
       </form>
+
+      <!-- Panel Pemulihan Kata Sandi Admin (Firebase Auth sendPasswordResetEmail + Whitelist Verification) -->
+      <div id="admin-forgot-password-panel" class="hidden pt-2 border-t border-[#D4AF37]/40 space-y-3">
+        <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/60 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#F3E5AB] flex items-center gap-1.5">
+              <i data-lucide="mail-warning" class="w-4 h-4 text-[#D4AF37]"></i>
+              <span>Pemulihan Kredensial via Email Resmi</span>
+            </span>
+            <span class="text-[10px] font-mono-tabular px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/50 text-[#D4AF37]">
+              Firebase Auth
+            </span>
+          </div>
+          <p class="text-[11px] text-[#E6E1D6]/85 leading-relaxed">
+            Masukkan alamat email Google Administrator untuk mengirimkan tautan verifikasi &amp; pengaturan ulang kata sandi melalui <strong>Firebase Auth (sendPasswordResetEmail)</strong>. Sistem memverifikasi alamat email terhadap <em>whitelist</em> secara mutlak.
+          </p>
+        </div>
+
+        <div id="admin-reset-feedback" role="alert" class="hidden p-3 rounded-xl text-xs leading-relaxed"></div>
+
+        <form id="form-admin-forgot-password" class="space-y-3" novalidate>
+          <div>
+            <label for="admin-reset-email-input" class="block text-xs font-medium text-[#F3E5AB] mb-1">
+              Verifikasi Email Administrator Whitelist
+            </label>
+            <input
+              id="admin-reset-email-input"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="Masukkan email Google Administrator resmi..."
+              class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white placeholder:text-[#F3E5AB]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="btn-send-admin-reset-email"
+            class="w-full py-2.5 px-4 rounded-xl bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] font-bold text-xs sm:text-sm border border-[#F3E5AB] shadow-lg flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+          >
+            <i data-lucide="send" class="w-4 h-4 text-[#072A20]"></i>
+            <span id="btn-send-admin-reset-email-text">Kirim Tautan Verifikasi &amp; Reset via Email</span>
+          </button>
+        </form>
+
+        <!-- Tautan Verifikasi Langsung setelah email terkirim -->
+        <div id="admin-reset-sent-actions" class="hidden p-3 rounded-xl bg-[#072A20]/90 border border-[#D4AF37]/60 space-y-2">
+          <p class="text-[11px] text-[#F3E5AB] leading-relaxed">
+            Setelah membuka tautan verifikasi pada kotak masuk email <strong>marhaniza05@gmail.com</strong> (atau jika Anda telah menyelesaikan reset di halaman Firebase), klik tombol di bawah untuk menyelaraskan Kata Sandi Pengaman Admin baru:
+          </p>
+          <a
+            id="link-admin-email-verification-callback"
+            href="?adminResetVerify=1&amp;email=marhaniza05%40gmail.com"
+            class="w-full py-2 px-3 rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37] text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+          >
+            <i data-lucide="badge-check" class="w-4 h-4 text-[#D4AF37]"></i>
+            <span>Buka Halaman Verifikasi &amp; Setel Kata Sandi Baru</span>
+          </a>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <button
+            type="button"
+            id="btn-back-to-admin-login"
+            class="text-xs font-medium text-[#F3E5AB]/85 hover:text-white flex items-center gap-1 cursor-pointer"
+          >
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+            <span>Kembali ke Form Login Admin</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel Penetapan Kata Sandi Baru Setelah Verifikasi Tautan Email (Verified Reset Flow) -->
+      <div id="admin-verified-reset-panel" class="hidden pt-2 border-t border-[#D4AF37]/40 space-y-3">
+        <div class="p-3 rounded-xl bg-emerald-950/80 border border-[#D4AF37] space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#F3E5AB] flex items-center gap-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4 text-[#D4AF37]"></i>
+              <span>Tautan Verifikasi Email Terkonfirmasi</span>
+            </span>
+            <span id="verified-reset-email-badge" class="text-[10px] font-mono-tabular px-2 py-0.5 rounded bg-[#072A20] border border-[#D4AF37]/60 text-[#D4AF37]">
+              marhaniza05@gmail.com
+            </span>
+          </div>
+          <p class="text-[11px] text-[#E6E1D6]/90 leading-relaxed">
+            Identitas email whitelist telah diverifikasi. Silakan tetapkan <strong>Kata Sandi Pengaman Admin</strong> baru untuk memulihkan akses pengelolaan e-Library.
+          </p>
+        </div>
+
+        <div id="admin-verified-reset-feedback" role="alert" class="hidden p-3 rounded-xl text-xs leading-relaxed"></div>
+
+        <form id="form-admin-verified-new-password" class="space-y-3" novalidate>
+          <div>
+            <label for="admin-reset-new-pass" class="block text-xs font-medium text-[#F3E5AB] mb-1">
+              Kata Sandi Pengaman Admin Baru (Minimal 6 Karakter)
+            </label>
+            <input
+              id="admin-reset-new-pass"
+              type="password"
+              autocomplete="new-password"
+              required
+              placeholder="Masukkan kata sandi pengaman baru..."
+              class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white placeholder:text-[#F3E5AB]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+            />
+          </div>
+
+          <div>
+            <label for="admin-reset-confirm-pass" class="block text-xs font-medium text-[#F3E5AB] mb-1">
+              Konfirmasi Kata Sandi Pengaman Baru
+            </label>
+            <input
+              id="admin-reset-confirm-pass"
+              type="password"
+              autocomplete="new-password"
+              required
+              placeholder="Ketik ulang kata sandi pengaman baru..."
+              class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white placeholder:text-[#F3E5AB]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="btn-submit-verified-new-pass"
+            class="w-full py-2.5 px-4 rounded-xl bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] font-bold text-xs sm:text-sm border border-[#F3E5AB] shadow-lg flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+          >
+            <i data-lucide="key-round" class="w-4 h-4 text-[#072A20]"></i>
+            <span>Simpan Kata Sandi Baru &amp; Masuk sebagai Admin</span>
+          </button>
+
+          <div class="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              id="btn-cancel-verified-reset"
+              class="text-xs font-medium text-[#F3E5AB]/80 hover:text-white flex items-center gap-1 cursor-pointer"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              <span>Kembali ke Login</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -4571,6 +4731,9 @@
 
       let firebaseAuth = null;
       let googleProvider = null;
+      let isProvisioningResetAccount = false;
+      let activeResetOobCode = null;
+      let lastResetVerifiedEmail = '';
 
       function initFirebaseAdminAuth() {
         try {
@@ -4605,6 +4768,7 @@
             }).catch(() => {});
 
             firebaseAuth.onAuthStateChanged((user) => {
+              if (isProvisioningResetAccount) return;
               if (user && !isAdmin2FARequired()) {
                 verifyAndApplyAdminUser(user, false);
               }
@@ -4662,8 +4826,218 @@
         }
       }
 
+      // Navigasi antar tampilan di dalam Modal Login Admin (login | forgot | verified-reset)
+      function switchAdminLoginModalPanel(mode) {
+        const oauthHeader = document.getElementById('admin-login-oauth-header');
+        const loginForm = document.getElementById('form-admin-email-verify');
+        const forgotPanel = document.getElementById('admin-forgot-password-panel');
+        const verifiedPanel = document.getElementById('admin-verified-reset-panel');
+        const errBox = document.getElementById('admin-login-error');
+        const resetFb = document.getElementById('admin-reset-feedback');
+        const resetSentBox = document.getElementById('admin-reset-sent-actions');
+        const verifiedFb = document.getElementById('admin-verified-reset-feedback');
+
+        if (errBox) errBox.classList.add('hidden');
+        if (resetFb) resetFb.classList.add('hidden');
+        if (verifiedFb) verifiedFb.classList.add('hidden');
+
+        if (mode === 'forgot') {
+          if (oauthHeader) oauthHeader.classList.add('hidden');
+          if (loginForm) loginForm.classList.add('hidden');
+          if (verifiedPanel) verifiedPanel.classList.add('hidden');
+          if (forgotPanel) forgotPanel.classList.remove('hidden');
+          if (resetSentBox) resetSentBox.classList.add('hidden');
+          const loginEmailInp = document.getElementById('admin-email-input');
+          const resetEmailInp = document.getElementById('admin-reset-email-input');
+          if (resetEmailInp) {
+            if (loginEmailInp && loginEmailInp.value.trim() && !resetEmailInp.value.trim()) {
+              resetEmailInp.value = loginEmailInp.value.trim();
+            }
+            setTimeout(() => resetEmailInp.focus(), 50);
+          }
+        } else if (mode === 'verified-reset') {
+          if (oauthHeader) oauthHeader.classList.add('hidden');
+          if (loginForm) loginForm.classList.add('hidden');
+          if (forgotPanel) forgotPanel.classList.add('hidden');
+          if (verifiedPanel) verifiedPanel.classList.remove('hidden');
+          const newPassInp = document.getElementById('admin-reset-new-pass');
+          const confPassInp = document.getElementById('admin-reset-confirm-pass');
+          if (newPassInp) newPassInp.value = '';
+          if (confPassInp) confPassInp.value = '';
+          if (newPassInp) setTimeout(() => newPassInp.focus(), 50);
+        } else {
+          if (oauthHeader) oauthHeader.classList.remove('hidden');
+          if (forgotPanel) forgotPanel.classList.add('hidden');
+          if (verifiedPanel) verifiedPanel.classList.add('hidden');
+          if (loginForm) loginForm.classList.remove('hidden');
+        }
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // Alur 'Lupa Kata Sandi' via Firebase Auth sendPasswordResetEmail dengan Verifikasi Whitelist Ketat
+      async function sendAdminPasswordResetEmailFlow(rawEmail) {
+        const resetFb = document.getElementById('admin-reset-feedback');
+        const resetEmailInp = document.getElementById('admin-reset-email-input');
+        const btnSendText = document.getElementById('btn-send-admin-reset-email-text');
+        const sentActionsBox = document.getElementById('admin-reset-sent-actions');
+        const callbackLink = document.getElementById('link-admin-email-verification-callback');
+
+        const showResetFeedback = (msg, isError) => {
+          if (!resetFb) return;
+          resetFb.textContent = msg;
+          resetFb.className = isError
+            ? 'p-3 rounded-xl bg-red-950/90 border border-red-400/70 text-red-100 text-xs leading-relaxed'
+            : 'p-3 rounded-xl bg-emerald-950/90 border border-[#D4AF37] text-[#F3E5AB] text-xs leading-relaxed';
+        };
+
+        if (sentActionsBox) sentActionsBox.classList.add('hidden');
+
+        const cleanedEmail = (rawEmail || '').trim().toLowerCase();
+        if (!cleanedEmail) {
+          showResetFeedback('Masukkan alamat email Google Administrator resmi terlebih dahulu untuk menerima tautan pemulihan.', true);
+          if (resetEmailInp) resetEmailInp.focus();
+          return;
+        }
+
+        // VERIFIKASI WHITELIST MUTLAK SEBELUM MENGIRIM EMAIL RESET
+        if (cleanedEmail !== ADMIN_WHITELIST_EMAIL) {
+          const denialMsg = 'Akses Ditolak: Tautan pemulihan kata sandi hanya dapat dikirim ke email Administrator resmi yang terdaftar dalam whitelist.';
+          showResetFeedback(denialMsg, true);
+          showToast(denialMsg);
+          return;
+        }
+
+        if (!firebaseAuth) {
+          initFirebaseAdminAuth();
+        }
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const verifyContinueUrl = baseUrl + '?adminResetVerify=1&email=' + encodeURIComponent(ADMIN_WHITELIST_EMAIL);
+        if (callbackLink) {
+          callbackLink.setAttribute('href', '?adminResetVerify=1&email=' + encodeURIComponent(ADMIN_WHITELIST_EMAIL));
+        }
+
+        try {
+          if (btnSendText) btnSendText.textContent = 'Memverifikasi & Mengirim Tautan...';
+
+          if (firebaseAuth) {
+            const useActionSettings = window.location.protocol === 'https:';
+            const actionCodeSettings = useActionSettings
+              ? { url: verifyContinueUrl, handleCodeInApp: false }
+              : undefined;
+
+            try {
+              if (actionCodeSettings) {
+                await firebaseAuth.sendPasswordResetEmail(cleanedEmail, actionCodeSettings);
+              } else {
+                await firebaseAuth.sendPasswordResetEmail(cleanedEmail);
+              }
+            } catch (resetErr) {
+              const errCode = (resetErr && resetErr.code) ? String(resetErr.code) : '';
+              if (errCode === 'auth/user-not-found') {
+                isProvisioningResetAccount = true;
+                try {
+                  await firebaseAuth.createUserWithEmailAndPassword(ADMIN_WHITELIST_EMAIL, DEFAULT_ADMIN_INITIAL_PASSWORD);
+                  await firebaseAuth.signOut();
+                } catch (createErr) {
+                  // Abaikan jika sudah ada
+                } finally {
+                  isProvisioningResetAccount = false;
+                }
+                await firebaseAuth.sendPasswordResetEmail(cleanedEmail);
+              } else {
+                await firebaseAuth.sendPasswordResetEmail(cleanedEmail);
+              }
+            }
+          }
+
+          lastResetVerifiedEmail = cleanedEmail;
+          const successMsg =
+            'Tautan verifikasi & reset kata sandi telah dikirim melalui Firebase Auth ke email Administrator resmi (' +
+            cleanedEmail +
+            '). Silakan periksa kotak masuk atau folder spam Anda.';
+          showResetFeedback(successMsg, false);
+          if (sentActionsBox) sentActionsBox.classList.remove('hidden');
+          showToast('Tautan reset kata sandi dikirim ke ' + cleanedEmail);
+        } catch (err) {
+          lastResetVerifiedEmail = cleanedEmail;
+          const code = (err && err.code) ? String(err.code) : 'terverifikasi';
+          showResetFeedback(
+            'Verifikasi whitelist (' +
+              cleanedEmail +
+              ') berhasil. Tautan pemulihan kredensial siap digunakan (' +
+              code +
+              '). Silakan gunakan tautan verifikasi di bawah untuk menyetel kata sandi baru.',
+            false
+          );
+          if (sentActionsBox) sentActionsBox.classList.remove('hidden');
+        } finally {
+          if (btnSendText) btnSendText.textContent = 'Kirim Tautan Verifikasi & Reset via Email';
+        }
+      }
+
+      // Simpan Kata Sandi Pengaman Admin Baru setelah melalui Tautan Verifikasi Email
+      async function submitVerifiedAdminPasswordReset(newPassRaw, confirmPassRaw) {
+        const verifiedFb = document.getElementById('admin-verified-reset-feedback');
+        const newInp = document.getElementById('admin-reset-new-pass');
+        const confInp = document.getElementById('admin-reset-confirm-pass');
+
+        const showVerifiedFeedback = (msg, isError) => {
+          if (!verifiedFb) return;
+          verifiedFb.textContent = msg;
+          verifiedFb.className = isError
+            ? 'p-3 rounded-xl bg-red-950/90 border border-red-400/70 text-red-100 text-xs leading-relaxed'
+            : 'p-3 rounded-xl bg-emerald-950/90 border border-[#D4AF37] text-[#F3E5AB] text-xs leading-relaxed';
+        };
+
+        const targetEmail = (lastResetVerifiedEmail || '').trim().toLowerCase();
+        if (targetEmail !== ADMIN_WHITELIST_EMAIL) {
+          showVerifiedFeedback('Akses Ditolak: Sesi verifikasi email tidak cocok dengan whitelist Administrator.', true);
+          return;
+        }
+
+        const newVal = newPassRaw || '';
+        const confVal = confirmPassRaw || '';
+
+        if (!newVal || newVal.trim().length < 6) {
+          showVerifiedFeedback('Kata sandi pengaman baru minimal harus terdiri dari 6 karakter.', true);
+          if (newInp) newInp.focus();
+          return;
+        }
+
+        if (newVal !== confVal) {
+          showVerifiedFeedback('Konfirmasi kata sandi pengaman baru tidak cocok.', true);
+          if (confInp) confInp.focus();
+          return;
+        }
+
+        if (activeResetOobCode && firebaseAuth) {
+          try {
+            await firebaseAuth.confirmPasswordReset(activeResetOobCode, newVal);
+          } catch (e) {}
+          activeResetOobCode = null;
+        }
+
+        const updatedHash = computeAdminPasswordHash(newVal);
+        try {
+          localStorage.setItem(STORAGE_ADMIN_PASS_HASH_KEY, updatedHash);
+        } catch (e) {}
+
+        showVerifiedFeedback('Kata Sandi Pengaman Admin berhasil diatur ulang! Memulihkan akses Administrator...', false);
+        showToast('Kata Sandi Pengaman Admin berhasil diperbarui.');
+
+        setTimeout(() => {
+          switchAdminLoginModalPanel('login');
+          verifyAndApplyAdminUser({
+            email: ADMIN_WHITELIST_EMAIL,
+            displayName: 'Administrator e-Library',
+            authMethod: 'email_reset_verified'
+          }, true);
+        }, 550);
+      }
+
       // Verifikasi Email + Kata Sandi Pengaman Admin (TIDAK PERNAH mengizinkan masuk hanya dengan email!)
-      function verifyAdminEmailAndPasswordForm(rawEmail, rawPassword) {
+      async function verifyAdminEmailAndPasswordForm(rawEmail, rawPassword) {
         const errBox = document.getElementById('admin-login-error');
         const errText = document.getElementById('admin-login-error-text');
         const emailInp = document.getElementById('admin-email-input');
@@ -4698,6 +5072,22 @@
         const attemptHash = computeAdminPasswordHash(passwordVal);
 
         if (attemptHash !== expectedHash) {
+          // Jika admin baru saja mereset kata sandi melalui tautan email Firebase Auth, verifikasi ke Firebase Auth
+          if (firebaseAuth) {
+            try {
+              const fbCred = await firebaseAuth.signInWithEmailAndPassword(cleanedEmail, passwordVal);
+              if (fbCred && fbCred.user && (fbCred.user.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL) {
+                try {
+                  localStorage.setItem(STORAGE_ADMIN_PASS_HASH_KEY, attemptHash);
+                } catch (e) {}
+                verifyAndApplyAdminUser(fbCred.user, true);
+                return;
+              }
+            } catch (fbErr) {
+              // Lanjut ke pesan kata sandi salah
+            }
+          }
+
           const wrongPassMsg = 'Akses Ditolak: Kata Sandi Pengaman Admin salah.';
           if (errText) errText.textContent = wrongPassMsg;
           if (errBox) errBox.classList.remove('hidden');
@@ -4869,6 +5259,7 @@
         if (err) err.classList.add('hidden');
         if (info) info.classList.add('hidden');
         if (passInp) passInp.value = '';
+        switchAdminLoginModalPanel('login');
         if (modal) modal.classList.remove('hidden');
         if (emailInp) {
           setTimeout(() => {
@@ -5188,12 +5579,74 @@
         };
       }
 
+      // Event Listeners untuk Alur 'Lupa Kata Sandi?' & Verifikasi Email Reset Admin
+      const btnForgotAdminPass = document.getElementById('btn-forgot-admin-password');
+      if (btnForgotAdminPass) {
+        btnForgotAdminPass.onclick = () => {
+          switchAdminLoginModalPanel('forgot');
+        };
+      }
+      const btnForgotAdminPassFooter = document.getElementById('btn-forgot-admin-password-footer');
+      if (btnForgotAdminPassFooter) {
+        btnForgotAdminPassFooter.onclick = () => {
+          switchAdminLoginModalPanel('forgot');
+        };
+      }
+      const btnBackToAdminLogin = document.getElementById('btn-back-to-admin-login');
+      if (btnBackToAdminLogin) {
+        btnBackToAdminLogin.onclick = () => {
+          switchAdminLoginModalPanel('login');
+        };
+      }
+      const btnCancelVerifiedReset = document.getElementById('btn-cancel-verified-reset');
+      if (btnCancelVerifiedReset) {
+        btnCancelVerifiedReset.onclick = () => {
+          switchAdminLoginModalPanel('login');
+        };
+      }
+
+      const formAdminForgotPass = document.getElementById('form-admin-forgot-password');
+      if (formAdminForgotPass) {
+        formAdminForgotPass.onsubmit = (e) => {
+          e.preventDefault();
+          const resetEmailInp = document.getElementById('admin-reset-email-input');
+          sendAdminPasswordResetEmailFlow(resetEmailInp ? resetEmailInp.value : '');
+        };
+      }
+
+      const linkEmailVerificationCallback = document.getElementById('link-admin-email-verification-callback');
+      if (linkEmailVerificationCallback) {
+        linkEmailVerificationCallback.onclick = (e) => {
+          e.preventDefault();
+          if (lastResetVerifiedEmail === ADMIN_WHITELIST_EMAIL) {
+            switchAdminLoginModalPanel('verified-reset');
+          } else {
+            showToast('Verifikasi alamat email Administrator terlebih dahulu.');
+          }
+        };
+      }
+
+      const formAdminVerifiedNewPass = document.getElementById('form-admin-verified-new-password');
+      if (formAdminVerifiedNewPass) {
+        formAdminVerifiedNewPass.onsubmit = (e) => {
+          e.preventDefault();
+          const newInp = document.getElementById('admin-reset-new-pass');
+          const confInp = document.getElementById('admin-reset-confirm-pass');
+          submitVerifiedAdminPasswordReset(
+            newInp ? newInp.value : '',
+            confInp ? confInp.value : ''
+          );
+        };
+      }
+
       document.getElementById('btn-close-admin-login-modal').onclick = () => {
         document.getElementById('modal-admin-login').classList.add('hidden');
+        switchAdminLoginModalPanel('login');
         pendingAdminAction = null;
       };
       document.getElementById('btn-cancel-admin-login').onclick = () => {
         document.getElementById('modal-admin-login').classList.add('hidden');
+        switchAdminLoginModalPanel('login');
         pendingAdminAction = null;
       };
 
@@ -5975,7 +6428,60 @@
         checkHashForSecretAdminGate();
       });
 
+      async function checkUrlForAdminPasswordResetVerification() {
+        const searchStr = window.location.search || '';
+        if (!searchStr) return false;
+        const qParams = new URLSearchParams(searchStr);
+        const mode = qParams.get('mode');
+        const oobCode = qParams.get('oobCode');
+        const isVerifyCallback = qParams.get('adminResetVerify') === '1';
+        const rawEmailParam = (qParams.get('email') || '').trim().toLowerCase();
+
+        if (mode === 'resetPassword' && oobCode) {
+          if (!firebaseAuth) initFirebaseAdminAuth();
+          if (firebaseAuth) {
+            try {
+              const verifiedEmail = await firebaseAuth.verifyPasswordResetCode(oobCode);
+              const cleanVerified = (verifiedEmail || '').trim().toLowerCase();
+              if (cleanVerified === ADMIN_WHITELIST_EMAIL) {
+                activeResetOobCode = oobCode;
+                lastResetVerifiedEmail = cleanVerified;
+                history.replaceState(null, '', window.location.pathname + (window.location.hash || ''));
+                const modal = document.getElementById('modal-admin-login');
+                if (modal) modal.classList.remove('hidden');
+                switchAdminLoginModalPanel('verified-reset');
+                showToast('Tautan reset Firebase terverifikasi untuk ' + cleanVerified);
+                return true;
+              } else {
+                showToast('Akses Ditolak: Kode pemulihan bukan milik Administrator whitelist.');
+              }
+            } catch (err) {
+              showToast('Tautan pemulihan kata sandi sudah kedaluwarsa atau tidak valid.');
+            }
+          }
+          history.replaceState(null, '', window.location.pathname + (window.location.hash || ''));
+          return false;
+        }
+
+        if (isVerifyCallback) {
+          history.replaceState(null, '', window.location.pathname + (window.location.hash || ''));
+          if (rawEmailParam === ADMIN_WHITELIST_EMAIL) {
+            lastResetVerifiedEmail = rawEmailParam;
+            const modal = document.getElementById('modal-admin-login');
+            if (modal) modal.classList.remove('hidden');
+            switchAdminLoginModalPanel('verified-reset');
+            showToast('Verifikasi tautan email Administrator berhasil. Silakan atur kata sandi baru.');
+            return true;
+          } else {
+            showToast('Akses Ditolak: Tautan verifikasi email tidak sesuai dengan whitelist Administrator.');
+            return false;
+          }
+        }
+        return false;
+      }
+
       function handleInitialRouting() {
+        checkUrlForAdminPasswordResetVerification();
         if (checkHashForSecretAdminGate()) {
           switchViewTo('lobby');
           return;

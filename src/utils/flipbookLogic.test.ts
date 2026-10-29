@@ -14,6 +14,8 @@ import {
   computeAdminPasswordHash,
   verifyAdminEmailAndPassword,
   validateAdminPasswordChange,
+  validateAdminPasswordResetEmail,
+  validateVerifiedPasswordResetSubmission,
 } from './flipbookLogic';
 
 test('calculateSpreadState handles desktop 2-page spread transitions accurately', () => {
@@ -192,6 +194,49 @@ test('validateAdminPasswordChange updates password hash and rejects old password
     true
   );
   assert.equal(computeAdminPasswordHash('SandiBaruAman#99'), changeSuccess.newHash);
+});
+
+test('validateAdminPasswordResetEmail strictly enforces whitelist before sending reset email', () => {
+  const emptyCheck = validateAdminPasswordResetEmail('   ');
+  assert.equal(emptyCheck.allowed, false);
+  assert.equal(emptyCheck.continueUrl, '');
+
+  const nonWhitelisted = validateAdminPasswordResetEmail('intruder@gmail.com', 'https://elibrary.example.com/');
+  assert.equal(nonWhitelisted.allowed, false);
+  assert.equal(nonWhitelisted.continueUrl, '');
+  assert.ok(nonWhitelisted.message.includes('Akses Ditolak'));
+
+  const whitelisted = validateAdminPasswordResetEmail('  Marhaniza05@gmail.com ', 'https://elibrary.example.com/');
+  assert.equal(whitelisted.allowed, true);
+  assert.equal(whitelisted.normalizedEmail, 'marhaniza05@gmail.com');
+  assert.equal(
+    whitelisted.continueUrl,
+    'https://elibrary.example.com/?adminResetVerify=1&email=marhaniza05%40gmail.com'
+  );
+});
+
+test('validateVerifiedPasswordResetSubmission enforces whitelist and updates password hash', () => {
+  const intruderReset = validateVerifiedPasswordResetSubmission(
+    'intruder@gmail.com',
+    'SandiResetBaru#2026',
+    'SandiResetBaru#2026'
+  );
+  assert.equal(intruderReset.valid, false);
+
+  const mismatchReset = validateVerifiedPasswordResetSubmission(
+    'marhaniza05@gmail.com',
+    'SandiResetBaru#2026',
+    'SandiBeda#2026'
+  );
+  assert.equal(mismatchReset.valid, false);
+
+  const validReset = validateVerifiedPasswordResetSubmission(
+    'marhaniza05@gmail.com',
+    'SandiResetBaru#2026',
+    'SandiResetBaru#2026'
+  );
+  assert.equal(validReset.valid, true);
+  assert.equal(validReset.newHash, computeAdminPasswordHash('SandiResetBaru#2026'));
 });
 
 
