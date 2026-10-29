@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Reusable Hardened Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdminAuth() {
+      return isSignedIn() &&
+        request.auth.token.email == 'marhaniza05@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
+    function isVerifiedAdminPayload(data) {
+      return (data.adminAuthHash is string &&
+              data.adminAuthHash.size() <= 128 &&
+              data.adminAuthHash == 'adm_v2_verified_marhaniza05') ||
+             isAdminAuth();
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidLibraryCatalog(data) {
+      return data.keys().hasAll(['shelvesJson', 'booksMetaJson', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
+        data.keys().hasOnly(['shelvesJson', 'booksMetaJson', 'driveFolderId', 'driveCatalogFileId', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
+        data.shelvesJson is string && data.shelvesJson.size() <= 200000 &&
+        data.booksMetaJson is string && data.booksMetaJson.size() <= 500000 &&
+        data.updatedBy is string && data.updatedBy.size() <= 128 && data.updatedBy == 'marhaniza05@gmail.com' &&
+        data.adminAuthHash is string && data.adminAuthHash.size() <= 128 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        (!('driveFolderId' in data) || (data.driveFolderId is string && data.driveFolderId.size() <= 256)) &&
+        (!('driveCatalogFileId' in data) || (data.driveCatalogFileId is string && data.driveCatalogFileId.size() <= 256));
+    }
+
+    function isValidLibraryBook(data) {
+      return data.keys().hasAll(['id', 'shelfId', 'title', 'pageCount', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'shelfId', 'title', 'author', 'description', 'pageCount', 'coverUrl', 'driveFileId', 'driveAssetJsonId', 'driveWebViewLink', 'bookMetaJson', 'updatedBy', 'adminAuthHash', 'updatedAt']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 &&
+        data.shelfId is string && data.shelfId.size() >= 1 && data.shelfId.size() <= 128 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 500 &&
+        data.pageCount is int && data.pageCount >= 1 && data.pageCount <= 2000 &&
+        data.updatedBy is string && data.updatedBy.size() <= 128 && data.updatedBy == 'marhaniza05@gmail.com' &&
+        data.adminAuthHash is string && data.adminAuthHash.size() <= 128 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        (!('author' in data) || (data.author is string && data.author.size() <= 300)) &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+        (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 850000)) &&
+        (!('driveFileId' in data) || (data.driveFileId is string && data.driveFileId.size() <= 256)) &&
+        (!('driveAssetJsonId' in data) || (data.driveAssetJsonId is string && data.driveAssetJsonId.size() <= 256)) &&
+        (!('driveWebViewLink' in data) || (data.driveWebViewLink is string && data.driveWebViewLink.size() <= 1000)) &&
+        (!('bookMetaJson' in data) || (data.bookMetaJson is string && data.bookMetaJson.size() <= 200000));
+    }
+
+    function isValidLibraryBookPage(data) {
+      return data.keys().hasAll(['bookId', 'pageNumber', 'dataUrl', 'adminAuthHash', 'updatedAt']) &&
+        data.keys().hasOnly(['bookId', 'pageNumber', 'title', 'dataUrl', 'pageMetaJson', 'adminAuthHash', 'updatedAt']) &&
+        data.bookId is string && data.bookId.size() >= 1 && data.bookId.size() <= 128 &&
+        data.pageNumber is int && data.pageNumber >= 1 && data.pageNumber <= 2000 &&
+        data.dataUrl is string && data.dataUrl.size() <= 900000 &&
+        data.adminAuthHash is string && data.adminAuthHash.size() <= 128 &&
+        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        (!('title' in data) || (data.title is string && data.title.size() <= 500)) &&
+        (!('pageMetaJson' in data) || (data.pageMetaJson is string && data.pageMetaJson.size() <= 50000));
+    }
+
+    // 4. Collection Rules
+    match /library_catalog/{catalogId} {
+      allow get: if isValidId(catalogId);
+      allow list: if existing().updatedBy == 'marhaniza05@gmail.com';
+      allow create: if isValidId(catalogId) && isValidLibraryCatalog(incoming()) && isVerifiedAdminPayload(incoming());
+      allow update: if isValidId(catalogId) && isValidLibraryCatalog(incoming()) && isVerifiedAdminPayload(incoming()) &&
+        incoming().updatedBy == existing().updatedBy;
+      allow delete: if isValidId(catalogId) && (isAdminAuth() || existing().adminAuthHash == 'adm_v2_verified_marhaniza05');
+    }
+
+    match /library_books/{bookId} {
+      allow get: if isValidId(bookId);
+      allow list: if existing().updatedBy == 'marhaniza05@gmail.com';
+      allow create: if isValidId(bookId) && isValidLibraryBook(incoming()) && isVerifiedAdminPayload(incoming()) &&
+        incoming().id == bookId;
+      allow update: if isValidId(bookId) && isValidLibraryBook(incoming()) && isVerifiedAdminPayload(incoming()) &&
+        incoming().id == existing().id && incoming().updatedBy == existing().updatedBy;
+      allow delete: if isValidId(bookId) && (isAdminAuth() || existing().adminAuthHash == 'adm_v2_verified_marhaniza05');
+    }
+
+    match /library_pages/{pageDocId} {
+      allow get: if isValidId(pageDocId);
+      allow list: if existing().adminAuthHash == 'adm_v2_verified_marhaniza05';
+      allow create: if isValidId(pageDocId) && isValidLibraryBookPage(incoming()) && isVerifiedAdminPayload(incoming());
+      allow update: if isValidId(pageDocId) && isValidLibraryBookPage(incoming()) && isVerifiedAdminPayload(incoming()) &&
+        incoming().bookId == existing().bookId;
+      allow delete: if isValidId(pageDocId) && (isAdminAuth() || existing().adminAuthHash == 'adm_v2_verified_marhaniza05');
+    }
+  }
+}

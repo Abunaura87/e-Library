@@ -1,0 +1,180 @@
+{
+  "entities": {
+    "LibraryCatalog": {
+      "title": "LibraryCatalog",
+      "description": "Master catalog state containing shelves JSON, books metadata JSON, and Google Drive sync references.",
+      "type": "object",
+      "properties": {
+        "shelvesJson": {
+          "type": "string",
+          "description": "Serialized JSON array of library shelves.",
+          "maxLength": 200000
+        },
+        "booksMetaJson": {
+          "type": "string",
+          "description": "Serialized JSON array of books metadata without heavy page payloads.",
+          "maxLength": 500000
+        },
+        "driveFolderId": {
+          "type": "string",
+          "description": "Google Drive folder ID where book files and database are stored.",
+          "maxLength": 256
+        },
+        "driveCatalogFileId": {
+          "type": "string",
+          "description": "Google Drive file ID for elibrary-catalog-db.json.",
+          "maxLength": 256
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Administrator email who updated the catalog.",
+          "maxLength": 128
+        },
+        "adminAuthHash": {
+          "type": "string",
+          "description": "Verification signature from administrator session.",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last catalog sync.",
+          "maxLength": 64
+        }
+      },
+      "required": ["shelvesJson", "booksMetaJson", "updatedBy", "adminAuthHash", "updatedAt"]
+    },
+    "LibraryBook": {
+      "title": "LibraryBook",
+      "description": "Individual book record including cover image and Google Drive file references.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique book identifier.",
+          "maxLength": 128
+        },
+        "shelfId": {
+          "type": "string",
+          "description": "Target shelf identifier.",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "description": "Book title.",
+          "maxLength": 500
+        },
+        "author": {
+          "type": "string",
+          "description": "Book author or publisher.",
+          "maxLength": 300
+        },
+        "description": {
+          "type": "string",
+          "description": "Short synopsis of the book.",
+          "maxLength": 2000
+        },
+        "pageCount": {
+          "type": "number",
+          "description": "Total number of pages in the book."
+        },
+        "coverUrl": {
+          "type": "string",
+          "description": "Cover image DataURL or URL.",
+          "maxLength": 850000
+        },
+        "driveFileId": {
+          "type": "string",
+          "description": "Google Drive file ID for the original PDF or image bundle.",
+          "maxLength": 256
+        },
+        "driveAssetJsonId": {
+          "type": "string",
+          "description": "Google Drive file ID for the JSON page asset bundle.",
+          "maxLength": 256
+        },
+        "driveWebViewLink": {
+          "type": "string",
+          "description": "Google Drive web view link.",
+          "maxLength": 1000
+        },
+        "bookMetaJson": {
+          "type": "string",
+          "description": "Serialized metadata and editable page structure without heavy images.",
+          "maxLength": 200000
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Administrator email.",
+          "maxLength": 128
+        },
+        "adminAuthHash": {
+          "type": "string",
+          "description": "Verification signature from administrator session.",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update.",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "shelfId", "title", "pageCount", "updatedBy", "adminAuthHash", "updatedAt"]
+    },
+    "LibraryBookPage": {
+      "title": "LibraryBookPage",
+      "description": "Individual rendered page of a book for 3D Flipbook display across accounts.",
+      "type": "object",
+      "properties": {
+        "bookId": {
+          "type": "string",
+          "description": "Parent book identifier.",
+          "maxLength": 128
+        },
+        "pageNumber": {
+          "type": "number",
+          "description": "1-based page number."
+        },
+        "title": {
+          "type": "string",
+          "description": "Page title or label.",
+          "maxLength": 500
+        },
+        "dataUrl": {
+          "type": "string",
+          "description": "Rendered page DataURL or image URL.",
+          "maxLength": 900000
+        },
+        "pageMetaJson": {
+          "type": "string",
+          "description": "Additional page metadata JSON (kicker, subtitle, body, isOriginalPdfPage).",
+          "maxLength": 50000
+        },
+        "adminAuthHash": {
+          "type": "string",
+          "description": "Verification signature from administrator session.",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp.",
+          "maxLength": 64
+        }
+      },
+      "required": ["bookId", "pageNumber", "dataUrl", "adminAuthHash", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/library_catalog/{catalogId}": {
+      "schema": "LibraryCatalog",
+      "description": "Global library catalog state containing shelves, book index, and Google Drive database IDs."
+    },
+    "/library_books/{bookId}": {
+      "schema": "LibraryBook",
+      "description": "Book records with cover images and Google Drive file references."
+    },
+    "/library_pages/{pageDocId}": {
+      "schema": "LibraryBookPage",
+      "description": "Individual rendered flipbook pages for cross-account reading."
+    }
+  }
+}

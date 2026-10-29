@@ -796,6 +796,73 @@
       border-color: #F3E5AB;
       box-shadow: 0 6px 16px rgba(212, 175, 55, 0.28);
     }
+    /* Official Google Sign-In Material Button (.gsi-material-button) */
+    .gsi-material-button {
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      -webkit-appearance: none;
+      background-color: WHITE;
+      background-image: none;
+      border: 1px solid #747775;
+      -webkit-border-radius: 8px;
+      border-radius: 8px;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+      color: #1f1f1f;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', 'Roboto', arial, sans-serif;
+      font-size: 13px;
+      height: 40px;
+      letter-spacing: 0.25px;
+      outline: none;
+      overflow: hidden;
+      padding: 0 14px;
+      position: relative;
+      text-align: center;
+      -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
+      transition: background-color .218s, border-color .218s, box-shadow .218s;
+      vertical-align: middle;
+      white-space: nowrap;
+      width: auto;
+      max-width: 400px;
+      min-width: min-content;
+    }
+    .gsi-material-button .gsi-material-button-icon {
+      height: 18px;
+      margin-right: 10px;
+      min-width: 18px;
+      width: 18px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .gsi-material-button .gsi-material-button-content-wrapper {
+      -webkit-align-items: center;
+      align-items: center;
+      display: flex;
+      -webkit-flex-direction: row;
+      flex-direction: row;
+      -webkit-flex-wrap: nowrap;
+      flex-wrap: nowrap;
+      height: 100%;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+    }
+    .gsi-material-button .gsi-material-button-contents {
+      -webkit-flex-grow: 0;
+      flex-grow: 0;
+      font-family: 'Plus Jakarta Sans', 'Roboto', arial, sans-serif;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: top;
+    }
+    .gsi-material-button:hover {
+      -webkit-box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+      box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+      background-color: #FBF9F5;
+    }
     @media print {
       .no-print { display: none !important; }
     }
@@ -870,6 +937,14 @@
       <button type="button" id="header-share-btn" title="Salin Tautan Publik Bersih" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
         <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Salin Tautan</span>
+      </button>
+      <span id="header-cloud-sync-badge" title="Database Cloud & Google Drive Tersinkronisasi Lintas Akun" class="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-[10px] font-mono-tabular font-semibold rounded-lg bg-[#0B3B2C]/10 text-[#072A20] border border-[#D4AF37]/60 whitespace-nowrap">
+        <i data-lucide="cloud-check" class="w-3 h-3 text-[#0F4C3A]"></i>
+        <span id="header-cloud-sync-badge-text">Cloud DB Aktif</span>
+      </span>
+      <button type="button" id="header-cloud-drive-btn" title="Penyimpanan Database Google Drive & Sinkronisasi Cloud Lintas Akun (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold transition-all whitespace-nowrap shadow-xs cursor-pointer">
+        <i data-lucide="hard-drive-upload" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+        <span id="header-cloud-drive-btn-text" class="hidden lg:inline font-bold">Google Drive DB</span>
       </button>
       <button type="button" id="header-crud-etalase-btn" title="Menu Edit CRUD Etalase & Konten Buku (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 text-[11px] font-semibold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#F3E5AB] transition-all whitespace-nowrap shadow-sm cursor-pointer">
         <i data-lucide="file-pen-line" class="w-3.5 h-3.5 text-[#072A20]"></i>
@@ -2589,6 +2664,159 @@
     </div>
   </div>
 
+  <!-- Modal Penyimpanan Database Google Drive & Sinkronisasi Cloud Lintas Akun (Khusus Admin) -->
+  <div id="modal-cloud-drive-sync" class="hidden fixed inset-0 z-[88] flex items-center justify-center p-3 sm:p-5 bg-[#072A20]/85 backdrop-blur-xs">
+    <div class="w-full max-w-2xl bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl p-5 sm:p-6 text-[#FBF9F5] shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#072A20] border border-[#D4AF37] flex items-center justify-center text-[#F3E5AB] shrink-0">
+            <i data-lucide="hard-drive-upload" class="w-5 h-5 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold font-serif-editorial text-[#F3E5AB]">Database Google Drive &amp; Cloud Lintas Akun</h3>
+            <p class="text-[11px] text-[#F3E5AB]/80">Penyimpanan terpusat agar buku yang diunggah Admin terbaca di semua akun &amp; perangkat lain</p>
+          </div>
+        </div>
+        <button type="button" id="btn-close-cloud-drive-modal" aria-label="Tutup Modal Google Drive Database" class="text-[#F3E5AB] hover:text-white p-1.5 rounded-lg hover:bg-[#072A20]">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Status Koneksi Dua Lapis: Cloud Firestore Real-Time + Google Drive API v3 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="p-3.5 rounded-xl bg-[#072A20] border border-[#D4AF37]/60 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#F3E5AB] flex items-center gap-1.5">
+              <i data-lucide="database" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              <span>Cloud Database (Multi-Akun)</span>
+            </span>
+            <span id="cloud-firestore-status-pill" class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50">
+              TERHUBUNG
+            </span>
+          </div>
+          <p class="text-[11px] text-[#E6E1D6]/85 leading-relaxed">
+            Menyimpan rak, sampul, dan lembaran halaman flipbook agar langsung tampil saat aplikasi dibuka di akun Google atau perangkat lain.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-[#072A20] border border-[#D4AF37]/60 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#F3E5AB] flex items-center gap-1.5">
+              <i data-lucide="folder-git-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              <span>Google Drive Admin</span>
+            </span>
+            <span id="google-drive-token-pill" class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-amber-950/90 text-[#F3E5AB] border border-[#D4AF37]/60">
+              SIAP OTORISASI
+            </span>
+          </div>
+          <p class="text-[11px] text-[#E6E1D6]/85 leading-relaxed">
+            Menyimpan file PDF &amp; berkas JSON database di folder <strong>e-Library Digital Database</strong> pada Google Drive resmi (<code class="text-[#FEF08A]">drive.file</code>).
+          </p>
+          <div class="pt-1 flex flex-wrap items-center gap-2">
+            <!-- Official Google Sign-In Material Button (.gsi-material-button) -->
+            <button type="button" id="btn-connect-google-drive-oauth" class="gsi-material-button">
+              <div class="gsi-material-button-content-wrapper">
+                <div class="gsi-material-button-icon">
+                  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style="display: block;">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                  </svg>
+                </div>
+                <span id="btn-connect-google-drive-text" class="gsi-material-button-contents">Sign in with Google Drive</span>
+              </div>
+            </button>
+
+            <a
+              id="link-open-drive-folder"
+              href="https://drive.google.com/drive/my-drive"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hidden px-2.5 py-2 text-xs font-bold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37] inline-flex items-center gap-1.5"
+            >
+              <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              <span>Buka Folder Google Drive</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kotak Feedback Progres Sinkronisasi -->
+      <div id="cloud-drive-sync-feedback" role="status" class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 text-xs text-[#F3E5AB] flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <i id="cloud-drive-sync-spinner" data-lucide="check-circle-2" class="w-4 h-4 text-[#D4AF37] shrink-0"></i>
+          <span id="cloud-drive-sync-feedback-text">Siap menyinkronkan buku &amp; rak ke Google Drive serta Cloud Database lintas akun.</span>
+        </div>
+        <span id="cloud-drive-last-sync-time" class="text-[10px] font-mono-tabular text-[#D4AF37] shrink-0"></span>
+      </div>
+
+      <!-- Tombol Aksi Utama Sinkronisasi Penuh -->
+      <div class="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+        <button
+          type="button"
+          id="btn-sync-all-cloud-drive"
+          class="flex-1 py-2.5 px-4 rounded-xl bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] font-bold text-xs sm:text-sm border border-[#F3E5AB] shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
+        >
+          <i data-lucide="cloud-upload" class="w-4 h-4 text-[#072A20]"></i>
+          <span id="btn-sync-all-cloud-drive-text">Sinkronkan Seluruh Buku ke Google Drive &amp; Cloud Database</span>
+        </button>
+
+        <button
+          type="button"
+          id="btn-pull-from-cloud-drive"
+          class="py-2.5 px-3.5 rounded-xl bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] font-semibold text-xs border border-[#D4AF37]/80 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+          title="Tarik data terbaru dari Cloud Database & Google Drive"
+        >
+          <i data-lucide="cloud-download" class="w-4 h-4 text-[#D4AF37]"></i>
+          <span>Muat dari Cloud</span>
+        </button>
+      </div>
+
+      <!-- Daftar Buku & Status Sinkronisasi Cloud / Google Drive -->
+      <div class="space-y-2 pt-1">
+        <div class="flex items-center justify-between text-xs font-bold text-[#F3E5AB]">
+          <span>Daftar Koleksi Buku &amp; Status Database Lintas Akun</span>
+          <span id="cloud-drive-books-summary-count" class="text-[11px] font-mono-tabular text-[#D4AF37]">0 Buku</span>
+        </div>
+        <div id="cloud-drive-books-status-list" class="max-h-56 overflow-y-auto rounded-xl bg-[#072A20] border border-[#D4AF37]/40 divide-y divide-[#D4AF37]/20">
+          <!-- Dirender secara dinamis -->
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-2 border-t border-[#D4AF37]/30">
+        <button type="button" id="btn-close-cloud-drive-footer" class="px-4 py-2 text-xs font-semibold rounded-xl bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/60 cursor-pointer">
+          Selesai &amp; Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Tindakan Penting Google Drive / Katalog (Mandatory User Confirmation) -->
+  <div id="modal-drive-confirm-dialog" class="hidden fixed inset-0 z-[95] flex items-center justify-center p-4 bg-[#072A20]/85 backdrop-blur-xs">
+    <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
+      <div class="flex items-center gap-3 border-b border-[#D4AF37]/40 pb-3">
+        <div class="w-9 h-9 rounded-xl bg-[#072A20] border border-[#D4AF37] flex items-center justify-center text-[#D4AF37] shrink-0">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h4 id="drive-confirm-title" class="text-sm sm:text-base font-bold font-serif-editorial text-[#F3E5AB]">Konfirmasi Tindakan Database</h4>
+          <p class="text-[11px] text-[#F3E5AB]/75">Verifikasi perubahan pada Google Drive &amp; Cloud Database</p>
+        </div>
+      </div>
+      <p id="drive-confirm-message" class="text-xs text-[#E6E1D6] leading-relaxed"></p>
+      <div id="drive-confirm-details" class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 text-[11px] font-mono-tabular text-[#F3E5AB] space-y-1"></div>
+      <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-[#D4AF37]/30">
+        <button type="button" id="btn-drive-confirm-cancel" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/50 cursor-pointer">
+          Batal
+        </button>
+        <button type="button" id="btn-drive-confirm-accept" class="px-4 py-2 text-xs font-bold rounded-xl bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] shadow-md cursor-pointer">
+          Ya, Lanjutkan
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========================================================= -->
   <!-- 2. LOGIKA UTAMA APLIKASI (VANILLA JAVASCRIPT)              -->
   <!-- ========================================================= -->
@@ -2684,9 +2912,15 @@
             isCustomPdf: isPdfFlag,
             pdfDataUrl: assetPayload.pdfDataUrl || prevRecord.pdfDataUrl || '',
             pdfUrl: meta.pdfUrl || assetPayload.pdfUrl || prevRecord.pdfUrl || '',
-            updatedAt: Date.now()
+            driveFileId: assetPayload.driveFileId || meta.driveFileId || prevRecord.driveFileId || '',
+            drivePdfFileId: assetPayload.drivePdfFileId || meta.drivePdfFileId || prevRecord.drivePdfFileId || '',
+            updatedAt: assetPayload.updatedAt || Date.now()
           };
           bookAssetsCache[bookId] = record;
+
+          if (!assetPayload._skipCloudSync && window.CloudDriveSyncEngine) {
+            window.CloudDriveSyncEngine.scheduleBookSync(bookId, record);
+          }
 
           const db = await this.openDB();
           if (!db) return false;
@@ -2702,9 +2936,14 @@
           });
         },
 
-        async deleteBookAsset(bookId) {
+        async deleteBookAsset(bookId, skipCloudDelete) {
           if (!bookId) return false;
+          const prevRec = bookAssetsCache[bookId];
+          const prevPageCount = (prevRec && prevRec.pageCount) || 25;
           delete bookAssetsCache[bookId];
+          if (!skipCloudDelete && window.CloudDriveSyncEngine) {
+            window.CloudDriveSyncEngine.deleteBookEverywhere(bookId, prevPageCount, prevRec);
+          }
           const db = await this.openDB();
           if (!db) return false;
           return new Promise((resolve) => {
@@ -2798,7 +3037,7 @@
           });
         },
 
-        saveCatalogMetadata(shelvesData, booksData) {
+        saveCatalogMetadata(shelvesData, booksData, skipCloudSync) {
           try {
             localStorage.setItem(STORAGE_SHELVES_KEY, JSON.stringify(shelvesData));
           } catch (e) {}
@@ -2813,6 +3052,9 @@
               }));
               localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(slimBooks));
             } catch (err) {}
+          }
+          if (!skipCloudSync && window.CloudDriveSyncEngine) {
+            window.CloudDriveSyncEngine.scheduleCatalogSync(shelvesData, booksData);
           }
         },
 
@@ -4942,8 +5184,8 @@
           renderDefaultMonographPages();
         } else {
           generateBookPagesForReader(book);
-          // Juga cek secara asinkron di IndexedDB bila cache belum terisi
-          StorageHandler.getBookAsset(book.id).then((dbAsset) => {
+          // Cek secara asinkron di IndexedDB, lalu tarik otomatis dari Cloud Firestore / Google Drive bila dibuka di akun/perangkat lain
+          StorageHandler.getBookAsset(book.id).then(async (dbAsset) => {
             if (dbAsset && activeBookId === book.id) {
               const srcPages =
                 (Array.isArray(dbAsset.originalPagesDataUrls) && dbAsset.originalPagesDataUrls.length > 0
@@ -4955,7 +5197,35 @@
                 document.getElementById('source-badge').textContent = 'Dokumen Orisinal Flipbook 3D';
                 renderStage('forward');
                 renderThumbnailsGrid();
+                return;
               }
+            }
+            if (window.CloudDriveSyncEngine) {
+              document.getElementById('source-badge').textContent = 'Memuat Halaman dari Cloud / Google Drive...';
+              const cloudPages = await window.CloudDriveSyncEngine.fetchBookPagesFromCloudOrDrive(book);
+              if (cloudPages && cloudPages.length > 0 && activeBookId === book.id) {
+                pagesDataUrls = cloudPages;
+                currentPage = 1;
+                document.getElementById('source-badge').textContent = 'Database Cloud & Google Drive';
+                renderStage('forward');
+                renderThumbnailsGrid();
+              }
+            }
+          });
+        }
+
+        // Jika buku merupakan unggahan PDF/kustom tetapi jumlah halaman lokal belum lengkap (misal baru dimuat metadata di akun lain), tarik halaman penuh dari Cloud / Google Drive
+        if (
+          window.CloudDriveSyncEngine &&
+          (book.isCustomPdf || book.hasStoredPages || String(book.id).startsWith('book-pdf-') || book.driveFileId) &&
+          (!cachedAsset || !cachedAsset.pagesDataUrls || cachedAsset.pagesDataUrls.length < (book.pageCount || 1))
+        ) {
+          window.CloudDriveSyncEngine.fetchBookPagesFromCloudOrDrive(book).then((cloudPages) => {
+            if (cloudPages && cloudPages.length > 0 && activeBookId === book.id) {
+              pagesDataUrls = cloudPages;
+              document.getElementById('source-badge').textContent = 'Database Cloud & Google Drive';
+              renderStage('forward');
+              renderThumbnailsGrid();
             }
           });
         }
@@ -5633,16 +5903,21 @@
         }
       }
 
-      // Konfigurasi Resmi Firebase Auth (Terintegrasi dengan Firebase Project)
-      const STORAGE_CUSTOM_FIREBASE_CONFIG_KEY = 'elibrary_custom_firebase_cfg_v1';
+      // Konfigurasi Resmi Firebase Auth & Cloud Firestore + Google Drive OAuth (Proyek gen-lang-client-0499979100)
+      const STORAGE_CUSTOM_FIREBASE_CONFIG_KEY = 'elibrary_custom_firebase_cfg_v2';
       const GOOGLE_OAUTH_BRIDGE_URL = 'https://ais-pre-abwyc5eykhvnhgizzcvufu-132982667263.asia-east1.run.app/?googleAuthBridge=1';
+      const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
+      let cachedDriveAccessToken = null; // Disimpan eksklusif di memori (in-memory only), tidak pernah di localStorage/sessionStorage
+
       const defaultFirebaseConfig = {
-        apiKey: "AIzaSyCBuOxKvnKKyciQPyE8Vb26v3oe9UpnDks",
-        authDomain: "basic-heaven-t01dl.firebaseapp.com",
-        projectId: "basic-heaven-t01dl",
-        storageBucket: "basic-heaven-t01dl.firebasestorage.app",
-        messagingSenderId: "807902406903",
-        appId: "1:807902406903:web:9ca51a0dd6f25c4b3f8bf2"
+        apiKey: "AIzaSyD10bfzaau3mEQND0-hqBSXyg2rRt1c0PM",
+        authDomain: "gen-lang-client-0499979100.firebaseapp.com",
+        projectId: "gen-lang-client-0499979100",
+        storageBucket: "gen-lang-client-0499979100.firebasestorage.app",
+        messagingSenderId: "523719575640",
+        appId: "1:523719575640:web:f0193f26ffa7c7696d222d",
+        firestoreDatabaseId: "ai-studio-folio3dinteracti-d1310053-6a1e-442b-9cfb-55b8d33ee397",
+        oAuthClientId: "523719575640-apageogk0bjoiomcbdrbic27bj7d9nio.apps.googleusercontent.com"
       };
 
       function getActiveFirebaseConfig() {
@@ -5667,6 +5942,24 @@
       let lastResetVerifiedEmail = '';
       let isUnauthorizedDomainDetected = false;
 
+      function extractAndCacheDriveTokenFromAuthResult(result) {
+        try {
+          if (!result) return null;
+          if (result.credential && result.credential.accessToken) {
+            cachedDriveAccessToken = result.credential.accessToken;
+          } else if (window.firebase && window.firebase.auth && window.firebase.auth.GoogleAuthProvider) {
+            const cred = window.firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+            if (cred && cred.accessToken) {
+              cachedDriveAccessToken = cred.accessToken;
+            }
+          }
+          if (cachedDriveAccessToken && window.CloudDriveSyncEngine) {
+            window.CloudDriveSyncEngine.updateDriveAuthUI();
+          }
+        } catch (e) {}
+        return cachedDriveAccessToken;
+      }
+
       function updateDomainFallbackHostLabels() {
         const currentHost = window.location.hostname || 'e-library-digital.vercel.app';
         const hostCode = document.getElementById('admin-current-hostname-code');
@@ -5688,6 +5981,7 @@
             }
             firebaseAuth = window.firebase.auth();
             googleProvider = new window.firebase.auth.GoogleAuthProvider();
+            SCOPES.forEach((scope) => googleProvider.addScope(scope));
             googleProvider.setCustomParameters({
               prompt: 'select_account',
               login_hint: ADMIN_WHITELIST_EMAIL
@@ -5696,6 +5990,7 @@
             // Tangani hasil signInWithRedirect jika pernah digunakan sebagai fallback popup
             firebaseAuth.getRedirectResult().then((result) => {
               if (result && result.user) {
+                extractAndCacheDriveTokenFromAuthResult(result);
                 if (isGoogleAuthBridgeMode()) {
                   sendBridgeCredentialToOpener(result);
                   return;
@@ -5808,6 +6103,10 @@
         const data = event && event.data;
         if (!data || data.type !== 'ELIBRARY_FIREBASE_GOOGLE_CREDENTIAL') return;
         const btnText = document.getElementById('btn-google-admin-login-text');
+        if (data.accessToken) {
+          cachedDriveAccessToken = data.accessToken;
+          if (window.CloudDriveSyncEngine) window.CloudDriveSyncEngine.updateDriveAuthUI();
+        }
         try {
           if (!firebaseAuth) initFirebaseAdminAuth();
           if (firebaseAuth && (data.idToken || data.accessToken) && window.firebase && window.firebase.auth) {
@@ -6214,6 +6513,7 @@
             if (btnText) btnText.textContent = 'Menghubungkan ke Google...';
             const result = await firebaseAuth.signInWithPopup(googleProvider);
             if (result && result.user) {
+              extractAndCacheDriveTokenFromAuthResult(result);
               if (isGoogleAuthBridgeMode()) {
                 sendBridgeCredentialToOpener(result);
                 return;
@@ -6290,6 +6590,7 @@
 
         const adminControlIds = [
           'header-music-settings-btn',
+          'header-cloud-drive-btn',
           'header-crud-etalase-btn',
           'header-admin-auth-btn',
           'header-admin-security-btn',
@@ -6333,12 +6634,16 @@
       function exitAdminMode() {
         isAdminMode = false;
         currentAdminUser = null;
+        cachedDriveAccessToken = null; // Clear OAuth access token from memory on sign-out
+        if (window.CloudDriveSyncEngine) {
+          window.CloudDriveSyncEngine.updateDriveAuthUI();
+        }
         if (firebaseAuth) {
           firebaseAuth.signOut().catch(() => {});
         }
         const sidebar = document.getElementById('admin-sidebar');
         if (sidebar) sidebar.classList.add('hidden');
-        ['modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings', 'modal-admin-security', 'modal-crud-etalase-book'].forEach((mid) => {
+        ['modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings', 'modal-admin-security', 'modal-crud-etalase-book', 'modal-cloud-drive-sync'].forEach((mid) => {
           const m = document.getElementById(mid);
           if (m) m.classList.add('hidden');
         });
@@ -7784,7 +8089,18 @@
           showToast('Minimal harus tersisa 1 buku di katalog perpustakaan.');
           return;
         }
-        if (!window.confirm('Hapus buku "' + target.title + '" secara permanen dari etalase?')) {
+        const confirmed = window.CloudDriveSyncEngine
+          ? await window.CloudDriveSyncEngine.requestConfirmation({
+              title: 'Hapus Buku dari Etalase & Cloud / Google Drive',
+              message: 'Apakah Anda yakin ingin menghapus buku ini secara permanen dari Etalase, Cloud Database, dan Google Drive?',
+              detailsHtml:
+                '<div><strong>Judul:</strong> ' + escapeHtml(target.title || '') + '</div>' +
+                '<div><strong>Penulis:</strong> ' + escapeHtml(target.author || '') + '</div>' +
+                '<div><strong>ID Buku:</strong> ' + escapeHtml(target.id || '') + '</div>',
+              acceptLabel: 'Ya, Hapus Permanen'
+            })
+          : true;
+        if (!confirmed) {
           return;
         }
         books = books.filter((b) => b.id !== bookId);
@@ -7801,7 +8117,7 @@
         } else {
           renderCrudBooksListSidebar();
         }
-        showToast('Buku "' + target.title + '" telah dihapus dari etalase.');
+        showToast('Buku "' + target.title + '" telah dihapus dari etalase & database.');
       }
 
       async function duplicateBookInEtalase(bookId) {
@@ -9001,10 +9317,1131 @@
             if (urlInp) urlInp.value = customMusicUrl;
           }
           updateAmbientButtonsUI();
+
+          // 3. Sinkronisasi Lintas-Akun Otomatis (Cloud Firestore + Google Drive Database)
+          // Memastikan buku & rak yang diunggah Admin terbaca di semua akun & perangkat lain!
+          if (window.CloudDriveSyncEngine) {
+            await window.CloudDriveSyncEngine.bootAndHydrateMultiAccount();
+          }
         } catch (err) {
           console.warn('Hydration storage warning:', err);
         }
       }
+
+      // =========================================================
+      // ENGINE PENYIMPANAN DATABASE GOOGLE DRIVE & CLOUD LINTAS AKUN
+      // Mengintegrasikan Google Drive API v3 (drive.file) + Cloud Firestore REST v1
+      // =========================================================
+      const CloudDriveSyncEngine = (function () {
+        const PROJECT_ID = 'gen-lang-client-0499979100';
+        const DATABASE_ID = 'ai-studio-folio3dinteracti-d1310053-6a1e-442b-9cfb-55b8d33ee397';
+        const FIRESTORE_BASE_URL =
+          'https://firestore.googleapis.com/v1/projects/' +
+          PROJECT_ID +
+          '/databases/' +
+          DATABASE_ID +
+          '/documents';
+        const DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';
+        const DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
+        const DRIVE_FOLDER_NAME = 'e-Library Digital Database';
+
+        let driveFolderId = '';
+        let driveCatalogFileId = '';
+        let catalogSyncTimer = null;
+        const bookSyncTimers = {};
+        let isSyncingAll = false;
+
+        // Error handler terstruktur sesuai pedoman Firebase Skill
+        function handleFirestoreError(error, operationType, path) {
+          const currentUser = firebaseAuth && firebaseAuth.currentUser ? firebaseAuth.currentUser : currentAdminUser;
+          const errInfo = {
+            error: error instanceof Error ? error.message : String(error),
+            authInfo: {
+              userId: currentUser ? currentUser.uid || '' : '',
+              email: currentUser ? currentUser.email || '' : '',
+              emailVerified: Boolean(currentUser && currentUser.emailVerified),
+              isAnonymous: Boolean(currentUser && currentUser.isAnonymous),
+              tenantId: currentUser ? currentUser.tenantId || null : null,
+              providerInfo:
+                currentUser && Array.isArray(currentUser.providerData)
+                  ? currentUser.providerData.map((provider) => ({
+                      providerId: provider.providerId || '',
+                      displayName: provider.displayName || '',
+                      email: provider.email || '',
+                      photoUrl: provider.photoURL || ''
+                    }))
+                  : []
+            },
+            operationType: operationType,
+            path: path
+          };
+          console.error('Firestore Error: ', JSON.stringify(errInfo));
+          return errInfo;
+        }
+
+        // Konversi nilai JS <-> Format Field Firestore REST API v1
+        function toFirestoreValue(val) {
+          if (val === null || val === undefined) return { nullValue: null };
+          if (typeof val === 'boolean') return { booleanValue: val };
+          if (typeof val === 'number') {
+            if (Number.isInteger(val)) return { integerValue: String(val) };
+            return { doubleValue: val };
+          }
+          return { stringValue: String(val) };
+        }
+
+        function fromFirestoreFields(fieldsObj) {
+          if (!fieldsObj) return {};
+          const out = {};
+          Object.keys(fieldsObj).forEach((k) => {
+            const v = fieldsObj[k];
+            if (!v) return;
+            if (v.stringValue !== undefined) out[k] = v.stringValue;
+            else if (v.integerValue !== undefined) out[k] = parseInt(v.integerValue, 10);
+            else if (v.doubleValue !== undefined) out[k] = Number(v.doubleValue);
+            else if (v.booleanValue !== undefined) out[k] = Boolean(v.booleanValue);
+            else out[k] = null;
+          });
+          return out;
+        }
+
+        // Kompresi otomatis gambar halaman/sampul jika > 680KB agar selalu di bawah batas 1MB dokumen Firestore
+        async function ensureCloudSafeImageDataUrl(dataUrl, maxChars) {
+          const limit = maxChars || 680000;
+          if (!dataUrl || typeof dataUrl !== 'string') return '';
+          if (dataUrl.length <= limit) return dataUrl;
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              try {
+                const maxDim = 1150;
+                let w = img.naturalWidth || img.width || 580;
+                let h = img.naturalHeight || img.height || 800;
+                if (w > maxDim || h > maxDim) {
+                  const ratio = Math.min(maxDim / w, maxDim / h);
+                  w = Math.round(w * ratio);
+                  h = Math.round(h * ratio);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+                let quality = 0.78;
+                let out = canvas.toDataURL('image/jpeg', quality);
+                while (out.length > limit && quality > 0.35) {
+                  quality -= 0.14;
+                  out = canvas.toDataURL('image/jpeg', quality);
+                }
+                resolve(out.length <= limit ? out : out.slice(0, limit));
+              } catch (e) {
+                resolve('');
+              }
+            };
+            img.onerror = () => resolve('');
+            img.src = dataUrl;
+          });
+        }
+
+        async function testFirestoreConnection() {
+          try {
+            const res = await fetch(FIRESTORE_BASE_URL + '/library_catalog/main', {
+              method: 'GET'
+            });
+            const pill = document.getElementById('cloud-firestore-status-pill');
+            if (res.ok || res.status === 404) {
+              if (pill) {
+                pill.textContent = 'TERHUBUNG';
+                pill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50';
+              }
+              return true;
+            }
+          } catch (err) {
+            handleFirestoreError(err, 'get', 'library_catalog/main');
+          }
+          return false;
+        }
+
+        async function putFirestoreDocument(collectionName, docId, dataObj) {
+          const safeId = encodeURIComponent(docId);
+          const url = FIRESTORE_BASE_URL + '/' + collectionName + '/' + safeId;
+          const fields = {};
+          Object.keys(dataObj).forEach((k) => {
+            fields[k] = toFirestoreValue(dataObj[k]);
+          });
+          try {
+            const res = await fetch(url, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fields: fields })
+            });
+            if (!res.ok) {
+              const errBody = await res.text();
+              handleFirestoreError(new Error(errBody || res.statusText), 'write', collectionName + '/' + docId);
+              return false;
+            }
+            return true;
+          } catch (err) {
+            handleFirestoreError(err, 'write', collectionName + '/' + docId);
+            return false;
+          }
+        }
+
+        async function getFirestoreDocument(collectionName, docId) {
+          const safeId = encodeURIComponent(docId);
+          const url = FIRESTORE_BASE_URL + '/' + collectionName + '/' + safeId;
+          try {
+            const res = await fetch(url, { method: 'GET' });
+            if (res.status === 404) return null;
+            if (!res.ok) return null;
+            const json = await res.json();
+            return fromFirestoreFields(json.fields);
+          } catch (err) {
+            handleFirestoreError(err, 'get', collectionName + '/' + docId);
+            return null;
+          }
+        }
+
+        async function listFirestoreDocuments(collectionName, pageSize) {
+          const url = FIRESTORE_BASE_URL + '/' + collectionName + '?pageSize=' + (pageSize || 100);
+          try {
+            const res = await fetch(url, { method: 'GET' });
+            if (!res.ok) return [];
+            const json = await res.json();
+            if (!Array.isArray(json.documents)) return [];
+            return json.documents.map((doc) => fromFirestoreFields(doc.fields));
+          } catch (err) {
+            handleFirestoreError(err, 'list', collectionName);
+            return [];
+          }
+        }
+
+        async function deleteFirestoreDocument(collectionName, docId) {
+          const safeId = encodeURIComponent(docId);
+          const url = FIRESTORE_BASE_URL + '/' + collectionName + '/' + safeId;
+          try {
+            await fetch(url, { method: 'DELETE' });
+            return true;
+          } catch (err) {
+            handleFirestoreError(err, 'delete', collectionName + '/' + docId);
+            return false;
+          }
+        }
+
+        // =========================================================
+        // INTEGRASI GOOGLE DRIVE API v3 (FOLDER & MULTIPART UPLOAD)
+        // =========================================================
+        function updateDriveAuthUI() {
+          const tokenPill = document.getElementById('google-drive-token-pill');
+          const connectBtnText = document.getElementById('btn-connect-google-drive-text');
+          const folderLink = document.getElementById('link-open-drive-folder');
+          if (cachedDriveAccessToken) {
+            if (tokenPill) {
+              tokenPill.textContent = 'TERHUBUNG KE DRIVE';
+              tokenPill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50';
+            }
+            if (connectBtnText) {
+              connectBtnText.textContent = 'Akun Google Drive Terhubung';
+            }
+            if (folderLink && driveFolderId) {
+              folderLink.href = 'https://drive.google.com/drive/folders/' + encodeURIComponent(driveFolderId);
+              folderLink.classList.remove('hidden');
+            }
+          } else {
+            if (tokenPill) {
+              tokenPill.textContent = 'SIAP OTORISASI';
+              tokenPill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-amber-950/90 text-[#F3E5AB] border border-[#D4AF37]/60';
+            }
+            if (connectBtnText) {
+              connectBtnText.textContent = 'Sign in with Google Drive';
+            }
+          }
+        }
+
+        async function connectGoogleDriveWithPopup() {
+          try {
+            if (!firebaseAuth || !googleProvider) initFirebaseAdminAuth();
+            if (firebaseAuth && googleProvider) {
+              const result = await firebaseAuth.signInWithPopup(googleProvider);
+              extractAndCacheDriveTokenFromAuthResult(result);
+              if (cachedDriveAccessToken) {
+                await ensureDriveDatabaseFolder();
+                updateDriveAuthUI();
+                showToast('Google Drive berhasil terhubung! Folder "' + DRIVE_FOLDER_NAME + '" siap digunakan.');
+                return cachedDriveAccessToken;
+              }
+            }
+          } catch (err) {
+            if (err && err.code === 'auth/unauthorized-domain') {
+              openGoogleAuthBridgePopup();
+              return null;
+            }
+            showToast('Otorisasi Google Drive memerlukan popup Google yang diizinkan.');
+          }
+          return null;
+        }
+
+        async function shareDriveFilePublicly(fileId) {
+          if (!cachedDriveAccessToken || !fileId) return;
+          try {
+            await fetch(DRIVE_FILES_URL + '/' + encodeURIComponent(fileId) + '/permissions', {
+              method: 'POST',
+              headers: {
+                Authorization: 'Bearer ' + cachedDriveAccessToken,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ role: 'reader', type: 'anyone' })
+            });
+          } catch (e) {}
+        }
+
+        async function ensureDriveDatabaseFolder() {
+          if (!cachedDriveAccessToken) return '';
+          if (driveFolderId) return driveFolderId;
+          try {
+            const q = "mimeType='application/vnd.google-apps.folder' and name='" + DRIVE_FOLDER_NAME + "' and trashed=false";
+            const searchRes = await fetch(
+              DRIVE_FILES_URL + '?q=' + encodeURIComponent(q) + '&fields=files(id,name,webViewLink)&pageSize=5',
+              {
+                headers: { Authorization: 'Bearer ' + cachedDriveAccessToken }
+              }
+            );
+            if (searchRes.status === 401) {
+              cachedDriveAccessToken = null;
+              updateDriveAuthUI();
+              return '';
+            }
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              if (Array.isArray(searchData.files) && searchData.files.length > 0) {
+                driveFolderId = searchData.files[0].id;
+                updateDriveAuthUI();
+                return driveFolderId;
+              }
+            }
+
+            // Buat folder baru di Google Drive jika belum ada
+            const createRes = await fetch(DRIVE_FILES_URL, {
+              method: 'POST',
+              headers: {
+                Authorization: 'Bearer ' + cachedDriveAccessToken,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                name: DRIVE_FOLDER_NAME,
+                mimeType: 'application/vnd.google-apps.folder'
+              })
+            });
+            if (createRes.ok) {
+              const created = await createRes.json();
+              if (created && created.id) {
+                driveFolderId = created.id;
+                await shareDriveFilePublicly(driveFolderId);
+                updateDriveAuthUI();
+                return driveFolderId;
+              }
+            }
+          } catch (e) {}
+          return '';
+        }
+
+        async function findDriveFileByName(fileName, parentFolderId) {
+          if (!cachedDriveAccessToken || !fileName) return '';
+          try {
+            const safeName = fileName.replace(/'/g, "\\'");
+            let q = "name='" + safeName + "' and trashed=false";
+            if (parentFolderId) {
+              q += " and '" + parentFolderId + "' in parents";
+            }
+            const res = await fetch(
+              DRIVE_FILES_URL + '?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=3',
+              {
+                headers: { Authorization: 'Bearer ' + cachedDriveAccessToken }
+              }
+            );
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data.files) && data.files.length > 0) {
+                return data.files[0].id;
+              }
+            }
+          } catch (e) {}
+          return '';
+        }
+
+        async function uploadOrUpdateDriveFile(fileName, mimeType, contentStringOrBlob, existingFileId, parentFolderId) {
+          if (!cachedDriveAccessToken) return '';
+          try {
+            let targetFileId = existingFileId || (await findDriveFileByName(fileName, parentFolderId));
+            const metadata = { name: fileName, mimeType: mimeType };
+            if (!targetFileId && parentFolderId) {
+              metadata.parents = [parentFolderId];
+            }
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            if (contentStringOrBlob instanceof Blob) {
+              form.append('file', contentStringOrBlob);
+            } else {
+              form.append('file', new Blob([String(contentStringOrBlob)], { type: mimeType }));
+            }
+
+            const endpoint = targetFileId
+              ? DRIVE_UPLOAD_URL + '/' + encodeURIComponent(targetFileId) + '?uploadType=multipart&fields=id,name,webViewLink'
+              : DRIVE_UPLOAD_URL + '?uploadType=multipart&fields=id,name,webViewLink';
+            const method = targetFileId ? 'PATCH' : 'POST';
+
+            const res = await fetch(endpoint, {
+              method: method,
+              headers: { Authorization: 'Bearer ' + cachedDriveAccessToken },
+              body: form
+            });
+            if (res.status === 401) {
+              cachedDriveAccessToken = null;
+              updateDriveAuthUI();
+              return '';
+            }
+            if (res.ok) {
+              const uploaded = await res.json();
+              if (uploaded && uploaded.id) {
+                if (!targetFileId) {
+                  await shareDriveFilePublicly(uploaded.id);
+                }
+                return uploaded.id;
+              }
+            }
+          } catch (e) {}
+          return '';
+        }
+
+        function dataUrlToBlob(dataUrl) {
+          try {
+            const parts = String(dataUrl).split(',');
+            if (parts.length < 2) return null;
+            const mimeMatch = parts[0].match(/:(.*?);/);
+            const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+            const bstr = atob(parts[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+          } catch (e) {
+            return null;
+          }
+        }
+
+        async function syncBookToGoogleDrive(bookId, record) {
+          if (!cachedDriveAccessToken || !bookId || !record) return { driveFileId: '', drivePdfFileId: '' };
+          const folderId = await ensureDriveDatabaseFolder();
+          if (!folderId) return { driveFileId: '', drivePdfFileId: '' };
+
+          const srcPages =
+            (Array.isArray(record.originalPagesDataUrls) && record.originalPagesDataUrls.length > 0
+              ? record.originalPagesDataUrls
+              : record.pagesDataUrls) || [];
+
+          const bookDbPayload = {
+            id: bookId,
+            title: record.title || '',
+            author: record.author || '',
+            description: record.description || '',
+            kicker: record.kicker || '',
+            shelfId: record.shelfId || 'rak-01',
+            accent: record.accent || '#0B3B2C',
+            spineColor: record.spineColor || '#0B3B2C',
+            pageCount: srcPages.length || record.pageCount || 1,
+            passwordProtected: Boolean(record.passwordProtected),
+            password: record.password || '',
+            hasCustomCoverImage: Boolean(record.hasCustomCoverImage),
+            isCustomPdf: Boolean(record.isCustomPdf),
+            coverUrl: record.coverUrl || '',
+            editablePages: record.editablePages || [],
+            pagesDataUrls: srcPages,
+            updatedAt: Date.now()
+          };
+
+          const jsonFileName = 'elibrary-book-' + bookId + '.json';
+          const driveFileId = await uploadOrUpdateDriveFile(
+            jsonFileName,
+            'application/json',
+            JSON.stringify(bookDbPayload),
+            record.driveFileId || '',
+            folderId
+          );
+
+          let drivePdfFileId = record.drivePdfFileId || '';
+          if (record.pdfDataUrl && String(record.pdfDataUrl).startsWith('data:application/pdf')) {
+            const pdfBlob = dataUrlToBlob(record.pdfDataUrl);
+            if (pdfBlob) {
+              const cleanTitle = String(record.title || bookId).replace(/[^a-zA-Z0-9_\-\s]/g, '').trim() || bookId;
+              const pdfFileName = cleanTitle + ' (' + bookId + ').pdf';
+              drivePdfFileId = await uploadOrUpdateDriveFile(
+                pdfFileName,
+                'application/pdf',
+                pdfBlob,
+                drivePdfFileId,
+                folderId
+              );
+            }
+          }
+
+          return { driveFileId: driveFileId, drivePdfFileId: drivePdfFileId };
+        }
+
+        async function syncMasterCatalogToGoogleDrive(shelvesList, booksList) {
+          if (!cachedDriveAccessToken) return '';
+          const folderId = await ensureDriveDatabaseFolder();
+          if (!folderId) return '';
+          const catalogPayload = {
+            version: 4,
+            updatedAt: Date.now(),
+            updatedBy: ADMIN_WHITELIST_EMAIL,
+            driveFolderId: folderId,
+            shelves: shelvesList,
+            books: booksList.map((b) => ({
+              id: b.id,
+              shelfId: b.shelfId,
+              title: b.title,
+              author: b.author,
+              description: b.description,
+              kicker: b.kicker || '',
+              pageCount: b.pageCount || 1,
+              accent: b.accent || '#0B3B2C',
+              spineColor: b.spineColor || '#0B3B2C',
+              passwordProtected: Boolean(b.passwordProtected),
+              password: b.password || '',
+              hasCustomCoverImage: Boolean(b.hasCustomCoverImage),
+              isCustomPdf: Boolean(b.isCustomPdf),
+              driveFileId: b.driveFileId || '',
+              drivePdfFileId: b.drivePdfFileId || ''
+            }))
+          };
+          driveCatalogFileId = await uploadOrUpdateDriveFile(
+            'elibrary-catalog-db.json',
+            'application/json',
+            JSON.stringify(catalogPayload, null, 2),
+            driveCatalogFileId,
+            folderId
+          );
+          return driveCatalogFileId;
+        }
+
+        // =========================================================
+        // SINKRONISASI CLOUD FIRESTORE LINTAS AKUN (KATALOG, BUKU, & HALAMAN)
+        // =========================================================
+        async function pushCatalogToCloud(shelvesList, booksList) {
+          const activeShelves = Array.isArray(shelvesList) ? shelvesList : shelves;
+          const activeBooks = Array.isArray(booksList) ? booksList : books;
+          if (cachedDriveAccessToken) {
+            await syncMasterCatalogToGoogleDrive(activeShelves, activeBooks);
+          }
+          const payload = {
+            id: 'main',
+            shelvesJson: JSON.stringify(activeShelves),
+            bookOrderJson: JSON.stringify(activeBooks.map((b) => b.id)),
+            driveFolderId: driveFolderId || '',
+            driveCatalogFileId: driveCatalogFileId || '',
+            updatedAt: Date.now(),
+            updatedBy: ADMIN_WHITELIST_EMAIL
+          };
+          return await putFirestoreDocument('library_catalog', 'main', payload);
+        }
+
+        async function pushBookAndPagesToCloud(bookId, record) {
+          if (!bookId || !record) return false;
+          // 1. Jika Google Drive terhubung, simpan juga ke Google Drive
+          if (cachedDriveAccessToken) {
+            const driveIds = await syncBookToGoogleDrive(bookId, record);
+            if (driveIds.driveFileId) record.driveFileId = driveIds.driveFileId;
+            if (driveIds.drivePdfFileId) record.drivePdfFileId = driveIds.drivePdfFileId;
+          }
+
+          const srcPages =
+            (Array.isArray(record.originalPagesDataUrls) && record.originalPagesDataUrls.length > 0
+              ? record.originalPagesDataUrls
+              : record.pagesDataUrls) || [];
+
+          const rawCover =
+            record.coverUrl ||
+            (srcPages[0] && srcPages[0].dataUrl ? srcPages[0].dataUrl : '') ||
+            '';
+          const safeCoverUrl = await ensureCloudSafeImageDataUrl(rawCover, 680000);
+
+          // Simpan editablePages tanpa customImageDataUrl raksasa di dokumen utama karena gambar penuh disimpan per halaman di library_pages
+          const slimEditablePages = Array.isArray(record.editablePages)
+            ? record.editablePages.map((p, idx) => ({
+                pageNumber: p.pageNumber || idx + 1,
+                kicker: p.kicker || '',
+                title: p.title || '',
+                subtitle: p.subtitle || '',
+                body: p.body || '',
+                isOriginalPdfPage: Boolean(p.isOriginalPdfPage || p.customImageDataUrl)
+              }))
+            : [];
+
+          const bookDoc = {
+            id: bookId,
+            shelfId: record.shelfId || 'rak-01',
+            title: String(record.title || 'Buku Tanpa Judul').slice(0, 480),
+            author: String(record.author || 'Anonim').slice(0, 280),
+            description: String(record.description || '').slice(0, 4500),
+            kicker: String(record.kicker || '').slice(0, 200),
+            accent: record.accent || '#0B3B2C',
+            spineColor: record.spineColor || record.accent || '#0B3B2C',
+            pageCount: srcPages.length || record.pageCount || 1,
+            passwordProtected: Boolean(record.passwordProtected),
+            password: String(record.password || '').slice(0, 180),
+            coverUrl: safeCoverUrl,
+            hasCustomCoverImage: Boolean(record.hasCustomCoverImage || record.isCustomPdf),
+            isCustomPdf: Boolean(record.isCustomPdf),
+            editablePagesJson: JSON.stringify(slimEditablePages).slice(0, 140000),
+            driveFileId: record.driveFileId || '',
+            drivePdfFileId: record.drivePdfFileId || '',
+            updatedAt: record.updatedAt || Date.now()
+          };
+
+          const okBook = await putFirestoreDocument('library_books', bookId, bookDoc);
+
+          // 2. Unggah setiap lembaran halaman ke koleksi library_pages/{bookId}_p{pageNumber} secara paralel (batch 4)
+          if (srcPages.length > 0) {
+            const batchSize = 4;
+            for (let i = 0; i < srcPages.length; i += batchSize) {
+              const slice = srcPages.slice(i, i + batchSize);
+              await Promise.all(
+                slice.map(async (pageObj, sIdx) => {
+                  const pageNumber = i + sIdx + 1;
+                  const rawPageUrl = pageObj && pageObj.dataUrl ? pageObj.dataUrl : (typeof pageObj === 'string' ? pageObj : '');
+                  if (!rawPageUrl) return;
+                  const safePageUrl = await ensureCloudSafeImageDataUrl(rawPageUrl, 740000);
+                  if (!safePageUrl) return;
+                  const pageDocId = bookId + '_p' + pageNumber;
+                  await putFirestoreDocument('library_pages', pageDocId, {
+                    bookId: bookId,
+                    pageNumber: pageNumber,
+                    dataUrl: safePageUrl,
+                    isOriginalPdfPage: Boolean(pageObj && pageObj.isOriginalPdfPage !== false),
+                    updatedAt: Date.now()
+                  });
+                })
+              );
+            }
+          }
+
+          renderCloudDriveBooksStatusList();
+          return okBook;
+        }
+
+        function scheduleCatalogSync(shelvesData, booksData) {
+          if (catalogSyncTimer) clearTimeout(catalogSyncTimer);
+          catalogSyncTimer = setTimeout(() => {
+            pushCatalogToCloud(shelvesData, booksData);
+          }, 450);
+        }
+
+        function scheduleBookSync(bookId, record) {
+          if (bookSyncTimers[bookId]) clearTimeout(bookSyncTimers[bookId]);
+          bookSyncTimers[bookId] = setTimeout(async () => {
+            await pushBookAndPagesToCloud(bookId, record);
+            await pushCatalogToCloud(shelves, books);
+          }, 350);
+        }
+
+        async function deleteBookEverywhere(bookId, pageCount, prevRec) {
+          await deleteFirestoreDocument('library_books', bookId);
+          const maxPages = Math.min(Math.max(pageCount || 15, 10), 80);
+          const batch = [];
+          for (let p = 1; p <= maxPages; p++) {
+            batch.push(deleteFirestoreDocument('library_pages', bookId + '_p' + p));
+          }
+          Promise.all(batch).catch(() => {});
+          if (cachedDriveAccessToken && prevRec) {
+            if (prevRec.driveFileId) {
+              fetch(DRIVE_FILES_URL + '/' + encodeURIComponent(prevRec.driveFileId), {
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + cachedDriveAccessToken }
+              }).catch(() => {});
+            }
+            if (prevRec.drivePdfFileId) {
+              fetch(DRIVE_FILES_URL + '/' + encodeURIComponent(prevRec.drivePdfFileId), {
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + cachedDriveAccessToken }
+              }).catch(() => {});
+            }
+          }
+          await pushCatalogToCloud(shelves, books);
+          renderCloudDriveBooksStatusList();
+        }
+
+        // Tarik lembaran halaman buku dari Cloud Firestore / Google Drive saat dibuka di akun lain
+        async function fetchBookPagesFromCloudOrDrive(book) {
+          if (!book || !book.id) return [];
+          const bookId = book.id;
+
+          // Coba unduh dari Cloud Firestore library_pages/{bookId}_p1..pN terlebih dahulu (paling cepat & publik)
+          const totalPages = Math.max(1, Math.min(book.pageCount || 12, 120));
+          const fetchedPages = [];
+          const batchSize = 6;
+          for (let i = 1; i <= totalPages; i += batchSize) {
+            const promises = [];
+            for (let p = i; p < i + batchSize && p <= totalPages; p++) {
+              promises.push(getFirestoreDocument('library_pages', bookId + '_p' + p));
+            }
+            const results = await Promise.all(promises);
+            results.forEach((doc) => {
+              if (doc && doc.dataUrl) {
+                fetchedPages.push({
+                  pageNumber: doc.pageNumber || fetchedPages.length + 1,
+                  dataUrl: doc.dataUrl,
+                  isOriginalPdfPage: Boolean(doc.isOriginalPdfPage !== false)
+                });
+              }
+            });
+          }
+
+          if (fetchedPages.length > 0) {
+            fetchedPages.sort((a, b) => (a.pageNumber || 0) - (b.pageNumber || 0));
+            const editablePages = fetchedPages.map((pg, idx) => ({
+              pageNumber: idx + 1,
+              kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
+              title: idx === 0 ? book.title : 'Halaman ' + (idx + 1),
+              subtitle: 'Konten Orisinal Flipbook 3D',
+              body: '',
+              customImageDataUrl: pg.dataUrl,
+              isOriginalPdfPage: true
+            }));
+            book.pageCount = fetchedPages.length;
+            book.coverUrl = fetchedPages[0].dataUrl || book.coverUrl;
+            book.editablePages = editablePages;
+            await StorageHandler.saveBookAsset(bookId, {
+              _skipCloudSync: true,
+              bookMeta: book,
+              coverUrl: book.coverUrl,
+              hasCustomCoverImage: true,
+              pagesDataUrls: fetchedPages,
+              originalPagesDataUrls: fetchedPages,
+              editablePages: editablePages,
+              isCustomPdf: Boolean(book.isCustomPdf),
+              driveFileId: book.driveFileId || '',
+              drivePdfFileId: book.drivePdfFileId || ''
+            });
+            return fetchedPages;
+          }
+
+          // Fallback: Jika buku memiliki driveFileId publik di Google Drive, unduh berkas JSON dari Google Drive
+          if (book.driveFileId) {
+            try {
+              const driveDownloadUrl =
+                'https://www.googleapis.com/drive/v3/files/' +
+                encodeURIComponent(book.driveFileId) +
+                '?alt=media&key=' +
+                encodeURIComponent(firebaseConfig.apiKey);
+              const res = await fetch(driveDownloadUrl);
+              if (res.ok) {
+                const driveJson = await res.json();
+                if (driveJson && Array.isArray(driveJson.pagesDataUrls) && driveJson.pagesDataUrls.length > 0) {
+                  await StorageHandler.saveBookAsset(bookId, {
+                    _skipCloudSync: true,
+                    bookMeta: book,
+                    coverUrl: driveJson.coverUrl || driveJson.pagesDataUrls[0].dataUrl,
+                    hasCustomCoverImage: true,
+                    pagesDataUrls: driveJson.pagesDataUrls,
+                    originalPagesDataUrls: driveJson.pagesDataUrls,
+                    editablePages: driveJson.editablePages || [],
+                    isCustomPdf: true,
+                    driveFileId: book.driveFileId
+                  });
+                  return driveJson.pagesDataUrls;
+                }
+              }
+            } catch (e) {}
+          }
+
+          return [];
+        }
+
+        // Tarik katalog rak & koleksi buku dari Cloud Firestore saat aplikasi dibuka di akun/perangkat mana pun
+        async function pullCatalogAndBooksFromCloud() {
+          await testFirestoreConnection();
+          const catalogDoc = await getFirestoreDocument('library_catalog', 'main');
+          const cloudBooksDocs = await listFirestoreDocuments('library_books', 100);
+
+          let hasRemoteData = false;
+          let bookOrderIds = [];
+
+          if (catalogDoc) {
+            if (catalogDoc.driveFolderId) driveFolderId = catalogDoc.driveFolderId;
+            if (catalogDoc.driveCatalogFileId) driveCatalogFileId = catalogDoc.driveCatalogFileId;
+            updateDriveAuthUI();
+
+            if (catalogDoc.shelvesJson) {
+              try {
+                const remoteShelves = JSON.parse(catalogDoc.shelvesJson);
+                if (Array.isArray(remoteShelves) && remoteShelves.length > 0) {
+                  // Gabungkan rak dari Cloud dengan rak lokal agar rak baru (seperti Motivasi) langsung muncul di semua akun
+                  const mergedShelves = [...remoteShelves];
+                  shelves.forEach((localShelf) => {
+                    if (!mergedShelves.some((rs) => rs.id === localShelf.id)) {
+                      mergedShelves.push(localShelf);
+                    }
+                  });
+                  shelves = mergedShelves;
+                  hasRemoteData = true;
+                }
+              } catch (e) {}
+            }
+            if (catalogDoc.bookOrderJson) {
+              try {
+                const parsedOrder = JSON.parse(catalogDoc.bookOrderJson);
+                if (Array.isArray(parsedOrder)) bookOrderIds = parsedOrder;
+              } catch (e) {}
+            }
+          }
+
+          if (Array.isArray(cloudBooksDocs) && cloudBooksDocs.length > 0) {
+            hasRemoteData = true;
+            for (let i = 0; i < cloudBooksDocs.length; i++) {
+              const cb = cloudBooksDocs[i];
+              if (!cb || !cb.id) continue;
+              let parsedEditablePages = [];
+              if (cb.editablePagesJson) {
+                try {
+                  parsedEditablePages = JSON.parse(cb.editablePagesJson);
+                } catch (e) {}
+              }
+
+              const remoteBookObj = {
+                id: cb.id,
+                shelfId: cb.shelfId || 'rak-01',
+                title: cb.title || 'Buku Koleksi',
+                author: cb.author || 'Anonim',
+                description: cb.description || '',
+                kicker: cb.kicker || '',
+                accent: cb.accent || '#0B3B2C',
+                spineColor: cb.spineColor || cb.accent || '#0B3B2C',
+                pageCount: cb.pageCount || 1,
+                passwordProtected: Boolean(cb.passwordProtected),
+                password: cb.password || '',
+                coverUrl: cb.coverUrl || '',
+                hasCustomCoverImage: Boolean(cb.hasCustomCoverImage || cb.isCustomPdf),
+                isCustomPdf: Boolean(cb.isCustomPdf),
+                hasStoredPages: Boolean(cb.isCustomPdf || cb.hasCustomCoverImage),
+                driveFileId: cb.driveFileId || '',
+                drivePdfFileId: cb.drivePdfFileId || '',
+                updatedAt: cb.updatedAt || 0
+              };
+
+              const existingIdx = books.findIndex((b) => b.id === cb.id);
+              if (existingIdx >= 0) {
+                const localBook = books[existingIdx];
+                // Pertahankan lembaran halaman lokal jika sudah terunduh di IndexedDB
+                books[existingIdx] = Object.assign({}, localBook, remoteBookObj, {
+                  coverUrl: remoteBookObj.coverUrl || localBook.coverUrl,
+                  editablePages:
+                    Array.isArray(localBook.editablePages) && localBook.editablePages.some((p) => p.customImageDataUrl)
+                      ? localBook.editablePages
+                      : parsedEditablePages.length > 0
+                      ? parsedEditablePages
+                      : localBook.editablePages
+                });
+              } else {
+                if (parsedEditablePages.length > 0) {
+                  remoteBookObj.editablePages = parsedEditablePages;
+                }
+                books.unshift(remoteBookObj);
+              }
+            }
+
+            if (bookOrderIds.length > 0) {
+              books.sort((a, b) => {
+                const idxA = bookOrderIds.indexOf(a.id);
+                const idxB = bookOrderIds.indexOf(b.id);
+                if (idxA === -1 && idxB === -1) return 0;
+                if (idxA === -1) return -1;
+                if (idxB === -1) return 1;
+                return idxA - idxB;
+              });
+            }
+          }
+
+          if (hasRemoteData) {
+            StorageHandler.saveCatalogMetadata(shelves, books, true);
+            populateShelfSelectors();
+            populateCrudShelfSelectors();
+            renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+            if (currentView === 'shelf') {
+              renderShelfBooksGrid((document.getElementById('shelf-search-input') && document.getElementById('shelf-search-input').value) || '');
+            }
+            const syncBadgeText = document.getElementById('header-cloud-sync-badge-text');
+            if (syncBadgeText) {
+              syncBadgeText.textContent = 'Cloud DB (' + books.length + ' Buku)';
+            }
+          }
+
+          return { hasRemoteData: hasRemoteData, cloudBooksDocs: cloudBooksDocs || [] };
+        }
+
+        // Saat aplikasi dijalankan pertama kali:
+        // 1) Tarik data terbaru dari Cloud Firestore (agar pengunjung di akun lain langsung melihat semua buku Admin)
+        // 2) Jika browser ini memiliki buku unggahan lokal (misal di browser Admin) yang belum ada di Cloud, unggah otomatis ke Cloud!
+        async function bootAndHydrateMultiAccount() {
+          try {
+            const pullResult = await pullCatalogAndBooksFromCloud();
+            const cloudIds = new Set((pullResult.cloudBooksDocs || []).map((d) => d && d.id));
+
+            // Periksa apakah ada buku di IndexedDB lokal atau rak kustom yang belum tersinkron ke Cloud Database
+            const localAssets = await StorageHandler.getAllBookAssets();
+            const unsyncedAssets = localAssets.filter((a) => a && a.id && !cloudIds.has(a.id));
+
+            const hasCustomLocalShelf = shelves.some(
+              (s) => !DEFAULT_SHELVES.some((ds) => ds.id === s.id && ds.name === s.name)
+            );
+
+            if (!pullResult.hasRemoteData || unsyncedAssets.length > 0 || hasCustomLocalShelf) {
+              await pushCatalogToCloud(shelves, books);
+              for (let i = 0; i < unsyncedAssets.length; i++) {
+                await pushBookAndPagesToCloud(unsyncedAssets[i].id, unsyncedAssets[i]);
+              }
+            }
+            renderCloudDriveBooksStatusList();
+          } catch (e) {
+            console.warn('CloudDriveSyncEngine boot warning:', e);
+          }
+        }
+
+        // Sinkronisasi penuh seluruh buku & rak ke Google Drive + Cloud Database (dipicu Admin)
+        async function syncAllBooksToCloudAndDriveInteractive() {
+          if (isSyncingAll) return;
+          const feedbackText = document.getElementById('cloud-drive-sync-feedback-text');
+          const btnText = document.getElementById('btn-sync-all-cloud-drive-text');
+          const lastSyncEl = document.getElementById('cloud-drive-last-sync-time');
+
+          // Jika Google Drive sudah terhubung, minta konfirmasi eksplisit sebelum menulis/memperbarui berkas di Google Drive
+          if (cachedDriveAccessToken) {
+            const ok = await requestConfirmation({
+              title: 'Konfirmasi Penyimpanan ke Google Drive & Cloud Database',
+              message:
+                'Sistem akan menyimpan/memperbarui katalog rak serta seluruh buku ke folder "' +
+                DRIVE_FOLDER_NAME +
+                '" di Google Drive Anda dan menyinkronkannya ke Cloud Database agar terbaca di semua akun lain.',
+              detailsHtml:
+                '<div><strong>Folder Tujuan:</strong> ' + DRIVE_FOLDER_NAME + '</div>' +
+                '<div><strong>Total Rak & Buku:</strong> ' + shelves.length + ' Rak · ' + books.length + ' Buku</div>' +
+                '<div><strong>Akses Baca:</strong> Publik Lintas Akun (Reader)</div>',
+              acceptLabel: 'Ya, Simpan ke Google Drive & Cloud'
+            });
+            if (!ok) return;
+          }
+
+          isSyncingAll = true;
+          try {
+            if (btnText) btnText.textContent = 'Menyinkronkan ke Google Drive & Cloud...';
+            if (feedbackText) feedbackText.textContent = 'Menyimpan katalog rak & daftar buku ke Cloud Database...';
+
+            await pushCatalogToCloud(shelves, books);
+
+            for (let i = 0; i < books.length; i++) {
+              const b = books[i];
+              if (!b || !b.id) continue;
+              if (feedbackText) {
+                feedbackText.textContent =
+                  'Menyinkronkan buku (' + (i + 1) + '/' + books.length + '): "' + (b.title || b.id) + '"...';
+              }
+              let asset = await StorageHandler.getBookAsset(b.id);
+              if (!asset) {
+                const ep = buildEditablePagesForBook(b);
+                const rendered = renderEditablePagesToDataUrls(b, ep);
+                asset = {
+                  id: b.id,
+                  bookMeta: b,
+                  title: b.title,
+                  author: b.author,
+                  description: b.description,
+                  kicker: b.kicker || '',
+                  shelfId: b.shelfId || 'rak-01',
+                  accent: b.accent || '#0B3B2C',
+                  spineColor: b.spineColor || '#0B3B2C',
+                  pageCount: rendered.length,
+                  passwordProtected: Boolean(b.passwordProtected),
+                  password: b.password || '',
+                  coverUrl: b.coverUrl || (rendered[0] ? rendered[0].dataUrl : ''),
+                  hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
+                  isCustomPdf: Boolean(b.isCustomPdf),
+                  pagesDataUrls: rendered,
+                  originalPagesDataUrls: b.isCustomPdf ? rendered : [],
+                  editablePages: ep
+                };
+              }
+              await pushBookAndPagesToCloud(b.id, asset);
+            }
+
+            const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            if (lastSyncEl) lastSyncEl.textContent = 'Tersinkron ' + nowStr;
+            if (feedbackText) {
+              feedbackText.textContent =
+                'Berhasil! Seluruh ' +
+                books.length +
+                ' buku & ' +
+                shelves.length +
+                ' rak telah tersimpan di Cloud Database' +
+                (cachedDriveAccessToken ? ' dan folder Google Drive "' + DRIVE_FOLDER_NAME + '"' : '') +
+                ' serta siap dibaca di akun lain.';
+            }
+            const syncBadgeText = document.getElementById('header-cloud-sync-badge-text');
+            if (syncBadgeText) {
+              syncBadgeText.textContent = 'Cloud DB (' + books.length + ' Buku)';
+            }
+            renderCloudDriveBooksStatusList();
+            showToast('Seluruh koleksi buku berhasil disinkronkan ke Cloud Database & Google Drive!');
+          } catch (err) {
+            if (feedbackText) {
+              feedbackText.textContent = 'Terjadi kendala saat menyinkronkan sebagian berkas. Silakan coba kembali.';
+            }
+          } finally {
+            isSyncingAll = false;
+            if (btnText) btnText.textContent = 'Sinkronkan Seluruh Buku ke Google Drive & Cloud Database';
+          }
+        }
+
+        function renderCloudDriveBooksStatusList() {
+          const listEl = document.getElementById('cloud-drive-books-status-list');
+          const countEl = document.getElementById('cloud-drive-books-summary-count');
+          if (countEl) countEl.textContent = books.length + ' Buku Terdaftar';
+          if (!listEl) return;
+          listEl.innerHTML = '';
+
+          books.forEach((b) => {
+            const cached = bookAssetsCache[b.id] || {};
+            const hasDriveFile = Boolean(b.driveFileId || cached.driveFileId);
+            const isPdf = Boolean(b.isCustomPdf || cached.isCustomPdf || String(b.id).startsWith('book-pdf-'));
+            const row = document.createElement('div');
+            row.className = 'p-2.5 sm:px-3.5 flex items-center justify-between gap-2 text-xs hover:bg-[#0B3B2C]/60 transition-colors';
+            row.innerHTML =
+              '<div class="min-w-0 flex items-center gap-2.5">' +
+                '<span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0" title="Tersedia Lintas Akun"></span>' +
+                '<div class="min-w-0">' +
+                  '<p class="font-bold text-[#F3E5AB] truncate">' + escapeHtml(b.title || b.id) + '</p>' +
+                  '<p class="text-[10px] text-[#E6E1D6]/75 truncate">' +
+                    escapeHtml(b.author || 'Anonim') + ' · ' + (b.pageCount || 1) + ' Halaman' + (isPdf ? ' · PDF Orisinal' : '') +
+                  '</p>' +
+                '</div>' +
+              '</div>' +
+              '<div class="flex items-center gap-1.5 shrink-0">' +
+                '<span class="px-2 py-0.5 text-[10px] font-mono-tabular rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40">Cloud Aktif</span>' +
+                (hasDriveFile
+                  ? '<span class="px-2 py-0.5 text-[10px] font-mono-tabular rounded bg-[#0B3B2C] text-[#FEF08A] border border-[#D4AF37]/60">Drive OK</span>'
+                  : '') +
+              '</div>';
+            listEl.appendChild(row);
+          });
+        }
+
+        // Dialog Konfirmasi Eksplisit untuk Operasi Penting/Mutasi Google Drive
+        function requestConfirmation(opts) {
+          return new Promise((resolve) => {
+            const modal = document.getElementById('modal-drive-confirm-dialog');
+            const titleEl = document.getElementById('drive-confirm-title');
+            const msgEl = document.getElementById('drive-confirm-message');
+            const detailsEl = document.getElementById('drive-confirm-details');
+            const btnCancel = document.getElementById('btn-drive-confirm-cancel');
+            const btnAccept = document.getElementById('btn-drive-confirm-accept');
+
+            if (!modal || !btnCancel || !btnAccept) {
+              resolve(true);
+              return;
+            }
+
+            if (titleEl) titleEl.textContent = (opts && opts.title) || 'Konfirmasi Tindakan Database';
+            if (msgEl) msgEl.textContent = (opts && opts.message) || 'Apakah Anda yakin ingin melanjutkan tindakan ini?';
+            if (detailsEl) detailsEl.innerHTML = (opts && opts.detailsHtml) || '';
+            if (btnAccept) btnAccept.textContent = (opts && opts.acceptLabel) || 'Ya, Lanjutkan';
+
+            modal.classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons();
+
+            const cleanup = (result) => {
+              modal.classList.add('hidden');
+              btnCancel.onclick = null;
+              btnAccept.onclick = null;
+              resolve(result);
+            };
+
+            btnCancel.onclick = () => cleanup(false);
+            btnAccept.onclick = () => cleanup(true);
+          });
+        }
+
+        function openCloudDriveModal() {
+          const modal = document.getElementById('modal-cloud-drive-sync');
+          if (!modal) return;
+          modal.classList.remove('hidden');
+          updateDriveAuthUI();
+          renderCloudDriveBooksStatusList();
+          testFirestoreConnection();
+          if (window.lucide) window.lucide.createIcons();
+        }
+
+        function closeCloudDriveModal() {
+          const modal = document.getElementById('modal-cloud-drive-sync');
+          if (modal) modal.classList.add('hidden');
+        }
+
+        // Pasang event listener tombol Header & Modal Google Drive Database
+        const headerBtn = document.getElementById('header-cloud-drive-btn');
+        if (headerBtn) {
+          headerBtn.addEventListener('click', () => {
+            requireAdminAuth(() => openCloudDriveModal());
+          });
+        }
+        const closeBtn = document.getElementById('btn-close-cloud-drive-modal');
+        if (closeBtn) closeBtn.addEventListener('click', closeCloudDriveModal);
+        const closeFooterBtn = document.getElementById('btn-close-cloud-drive-footer');
+        if (closeFooterBtn) closeFooterBtn.addEventListener('click', closeCloudDriveModal);
+
+        const connectDriveBtn = document.getElementById('btn-connect-google-drive-oauth');
+        if (connectDriveBtn) {
+          connectDriveBtn.addEventListener('click', () => {
+            connectGoogleDriveWithPopup();
+          });
+        }
+
+        const syncAllBtn = document.getElementById('btn-sync-all-cloud-drive');
+        if (syncAllBtn) {
+          syncAllBtn.addEventListener('click', () => {
+            syncAllBooksToCloudAndDriveInteractive();
+          });
+        }
+
+        const pullBtn = document.getElementById('btn-pull-from-cloud-drive');
+        if (pullBtn) {
+          pullBtn.addEventListener('click', async () => {
+            const feedbackText = document.getElementById('cloud-drive-sync-feedback-text');
+            if (feedbackText) feedbackText.textContent = 'Memuat ulang katalog rak & buku dari Cloud Database...';
+            await pullCatalogAndBooksFromCloud();
+            renderCloudDriveBooksStatusList();
+            if (feedbackText) feedbackText.textContent = 'Katalog berhasil diperbarui dari Cloud Database (' + books.length + ' buku).';
+            showToast('Katalog perpustakaan berhasil dimuat ulang dari Cloud Database.');
+          });
+        }
+
+        return {
+          bootAndHydrateMultiAccount: bootAndHydrateMultiAccount,
+          pullCatalogAndBooksFromCloud: pullCatalogAndBooksFromCloud,
+          pushCatalogToCloud: pushCatalogToCloud,
+          pushBookAndPagesToCloud: pushBookAndPagesToCloud,
+          scheduleCatalogSync: scheduleCatalogSync,
+          scheduleBookSync: scheduleBookSync,
+          deleteBookEverywhere: deleteBookEverywhere,
+          fetchBookPagesFromCloudOrDrive: fetchBookPagesFromCloudOrDrive,
+          updateDriveAuthUI: updateDriveAuthUI,
+          openCloudDriveModal: openCloudDriveModal,
+          requestConfirmation: requestConfirmation
+        };
+      })();
+      window.CloudDriveSyncEngine = CloudDriveSyncEngine;
 
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');
