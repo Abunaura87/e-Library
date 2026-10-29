@@ -14,6 +14,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
+  <!-- Firebase App & Firebase Auth SDK (CDN Publik Resmi) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -472,26 +475,67 @@
       filter: brightness(1.04);
     }
 
-    /* Mode Tampilan Halaman Penuh / Full Height */
+    /* Mode Tampilan Halaman Penuh / Ultra-Clean Distraction-Free Reader */
     .full-page-fit #pages-spread-Mount img {
-      height: 68vh !important;
-      max-height: 680px !important;
+      height: 78vh !important;
+      max-height: 820px !important;
     }
     @media (min-width: 640px) {
       .full-page-fit #pages-spread-Mount img {
-        height: 75vh !important;
-        max-height: 750px !important;
+        height: 84vh !important;
+        max-height: 900px !important;
       }
     }
     @media (min-width: 1024px) {
       .full-page-fit #pages-spread-Mount img {
-        height: 80vh !important;
-        max-height: 820px !important;
+        height: 88vh !important;
+        max-height: 940px !important;
       }
     }
-    .cubby-interactive:hover .shelf-book-item {
-      transform: translateY(-5px) scale(1.03);
-      filter: brightness(1.05);
+    /* Saat Bar Atas & Bar Bawah Disembunyikan Manual, Maksimalkan Area Baca 100% Bersih */
+    #reader-stage.top-bar-collapsed.bottom-bar-collapsed #pages-spread-Mount img {
+      height: 85vh !important;
+      max-height: 92vh !important;
+    }
+    @media (min-width: 1024px) {
+      #reader-stage.top-bar-collapsed.bottom-bar-collapsed #pages-spread-Mount img {
+        height: 90vh !important;
+        max-height: 94vh !important;
+      }
+    }
+
+    /* Transisi Halus Bar Navigasi Atas & Bawah Ruang Baca (Manual Toggle Only) */
+    #reader-top-strip {
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    }
+    #reader-top-strip.bar-hidden {
+      display: none !important;
+    }
+    #reader-floating-dock {
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    }
+    #reader-floating-dock.bar-hidden {
+      opacity: 0 !important;
+      transform: translateY(130%) !important;
+      pointer-events: none !important;
+    }
+
+    /* Tombol Pemicu Melayang Minimalis (Manual Chevron Up / Down Toggles) */
+    .reader-edge-chevron-btn {
+      background: rgba(7, 42, 32, 0.82);
+      border: 1.2px solid rgba(212, 175, 55, 0.78);
+      color: #F3E5AB;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 6px 18px rgba(7, 42, 32, 0.45);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reader-edge-chevron-btn:hover {
+      background: #0B3B2C;
+      border-color: #FEF08A;
+      color: #FFFFFF;
+      transform: translateX(-50%) scale(1.06);
+      box-shadow: 0 8px 22px rgba(7, 42, 32, 0.65), 0 0 14px rgba(212, 175, 55, 0.45);
     }
 
     /* Lantai Kayu Perspektif di Bawah Rak Buku */
@@ -1253,6 +1297,18 @@
 
       <!-- B. KANVAS PEMBACA 3D FLIPBOOK VIEWER -->
       <section id="reader-stage" aria-label="Kanvas Pembaca 3D Flipbook" class="relative flex-1 flex flex-col justify-between overflow-hidden select-none wall-plank-backdrop text-[#072A20] transition-colors duration-200">
+        <!-- Tombol Pemicu Manual Pembuka Bar Atas (Tampil di Tepi Atas Saat Top Bar Disembunyikan) -->
+        <button
+          type="button"
+          id="btn-show-top-bar"
+          title="Tampilkan Navigasi Atas"
+          aria-label="Tampilkan Navigasi Atas"
+          class="no-print hidden absolute top-2.5 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1 rounded-full reader-edge-chevron-btn flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+        >
+          <i data-lucide="chevron-down" class="w-4 h-4 text-[#D4AF37]"></i>
+          <span class="hidden sm:inline text-[10px] tracking-wide">Menu Atas</span>
+        </button>
+
         <!-- Bar Informasi Atas Pembaca dengan Kontrol Mode Tampilan 1 Hal / 2 Hal / Full Hal -->
         <div id="reader-top-strip" class="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 px-3 sm:px-5 py-2 sm:py-3 border-b border-[#D4AF37]/60 bg-[#FBF9F5]/95 z-20">
           <div class="min-w-0 flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
@@ -1283,7 +1339,7 @@
               <button type="button" id="btn-reader-mode-2p" title="Tampilkan 2 Halaman Berdampingan (Spread)" class="px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB] hover:text-white transition-all whitespace-nowrap">
                 2 Halaman
               </button>
-              <button type="button" id="btn-reader-mode-full" title="Tampilkan Full Halaman / Fit Layar" class="px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB] hover:text-white transition-all flex items-center gap-1 whitespace-nowrap">
+              <button type="button" id="btn-reader-mode-full" title="Tampilkan Full Halaman Bebas Distraksi (Otomatis Sembunyikan Bar Atas & Bawah)" class="px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB] hover:text-white transition-all flex items-center gap-1 whitespace-nowrap">
                 <i data-lucide="maximize" class="w-3 h-3 text-[#D4AF37]"></i>
                 <span class="hidden xs:inline">Full Halaman</span>
                 <span class="xs:hidden">Full</span>
@@ -1296,6 +1352,15 @@
               </button>
               <button type="button" id="btn-stage-theme" title="Ubah Tema Warna Pembaca" class="px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#D4AF37] bg-[#FBF9F5] text-[#072A20] hover:bg-[#F3E5AB]/40">
                 Tema
+              </button>
+              <button
+                type="button"
+                id="btn-hide-top-bar"
+                title="Sembunyikan Bar Navigasi Atas"
+                aria-label="Sembunyikan Bar Navigasi Atas"
+                class="p-1.5 rounded-lg border border-[#D4AF37] bg-[#072A20] text-[#F3E5AB] hover:bg-[#0B3B2C] hover:text-white transition-colors"
+              >
+                <i data-lucide="chevron-up" class="w-4 h-4 text-[#D4AF37]"></i>
               </button>
             </div>
           </div>
@@ -1339,7 +1404,7 @@
             <i data-lucide="chevron-left" class="w-6 h-6 text-[#D4AF37]"></i>
           </button>
 
-          <div id="book-3d-object" class="book-3d-shell relative flex items-center justify-center cursor-grab active:cursor-grabbing max-h-[88vh]">
+          <div id="book-3d-object" class="book-3d-shell relative flex items-center justify-center cursor-grab active:cursor-grabbing max-h-[92vh]">
             <!-- Clean immersive book pages mount: bebas bingkai kaku tebal, halaman dominan dan megah -->
             <div class="relative flex items-center justify-center shadow-[0_24px_60px_-10px_rgba(7,42,32,0.45)] rounded-sm">
               <div id="left-paper-stack" class="hidden sm:block w-1.5 self-stretch bg-gradient-to-r from-[#D4AF37]/80 via-[#FBF9F5] to-[#E5DFD3] border-r border-[#D4AF37]/40 rounded-l-xs"></div>
@@ -1354,17 +1419,38 @@
           </button>
         </div>
 
-        <!-- Area Pemicu Kursor Bawah (Bottom Hover Zone) untuk Auto-Show Kontrol Minimalis -->
-        <div id="bottom-hover-trigger" class="no-print absolute bottom-0 inset-x-0 h-16 sm:h-20 z-25 pointer-events-auto"></div>
+        <!-- Tombol Pemicu Manual Pembuka Bar Bawah (Tampil di Tepi Bawah Saat Down Bar Disembunyikan) -->
+        <button
+          type="button"
+          id="btn-show-bottom-bar"
+          title="Tampilkan Kontrol Navigasi Bawah"
+          aria-label="Tampilkan Kontrol Navigasi Bawah"
+          class="no-print hidden absolute bottom-9 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1 rounded-full reader-edge-chevron-btn flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+        >
+          <i data-lucide="chevron-up" class="w-4 h-4 text-[#D4AF37]"></i>
+          <span class="hidden sm:inline text-[10px] tracking-wide">Kontrol Baca</span>
+        </button>
 
-        <!-- Floating Minimalist Dock Pembaca 3D dengan Sistem Auto-Hide Bebas Distraksi -->
-        <div id="reader-floating-dock" class="no-print absolute bottom-4 inset-x-0 mx-auto w-[94%] max-w-3xl z-30 transition-all duration-300 transform opacity-100 translate-y-0 pointer-events-auto">
+        <!-- Floating Minimalist Dock Pembaca 3D dengan Sistem Toggle Manual (Tanpa Auto-Show Kursor) -->
+        <div id="reader-floating-dock" class="no-print absolute bottom-8 inset-x-0 mx-auto w-[94%] max-w-3xl z-30 transition-all duration-300 transform opacity-100 translate-y-0 pointer-events-auto">
           <div class="rounded-2xl border-2 border-[#D4AF37] bg-[#072A20] text-[#FBF9F5] px-3.5 sm:px-4 py-2 shadow-[0_20px_40px_rgba(7,42,32,0.85)] flex flex-col gap-1.5">
-            <!-- Mini Slider Bar Halaman -->
-            <div id="slider-bar-container" class="w-full flex items-center gap-2.5 px-1 py-0.5 text-[#F3E5AB] text-xs">
-              <span id="slider-page-label" class="font-mono-tabular text-[11px] font-bold text-[#F3E5AB] whitespace-nowrap">Halaman 1 dari 8</span>
-              <input id="page-range-slider" type="range" min="1" max="8" value="1" class="flex-1 h-2 accent-[#D4AF37] cursor-pointer" />
-              <span id="slider-percent-label" class="font-mono-tabular text-[11px] font-bold text-[#D4AF37] whitespace-nowrap">0%</span>
+            <!-- Mini Slider Bar Halaman + Tombol Sembunyikan Manual (Chevron Down) -->
+            <div class="w-full flex items-center justify-between gap-2 px-1 py-0.5 text-[#F3E5AB] text-xs">
+              <div id="slider-bar-container" class="flex-1 flex items-center gap-2.5">
+                <span id="slider-page-label" class="font-mono-tabular text-[11px] font-bold text-[#F3E5AB] whitespace-nowrap">Halaman 1 dari 8</span>
+                <input id="page-range-slider" type="range" min="1" max="8" value="1" class="flex-1 h-2 accent-[#D4AF37] cursor-pointer" />
+                <span id="slider-percent-label" class="font-mono-tabular text-[11px] font-bold text-[#D4AF37] whitespace-nowrap">0%</span>
+              </div>
+              <button
+                type="button"
+                id="btn-hide-bottom-bar"
+                title="Sembunyikan Kontrol Bawah"
+                aria-label="Sembunyikan Kontrol Bawah"
+                class="px-2 py-0.5 rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/60 flex items-center gap-1 text-[10px] font-semibold shrink-0 transition-colors"
+              >
+                <span class="hidden sm:inline">Tutup</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+              </button>
             </div>
 
             <!-- Toolbar Aksi Minimalis & Padat -->
@@ -1653,7 +1739,7 @@
     </div>
   </div>
 
-  <!-- Modal Otentikasi Administrator Perpustakaan (PIN Login Modal) -->
+  <!-- Modal Otentikasi Administrator Eksklusif via Google Firebase -->
   <div id="modal-admin-login" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-[#072A20]/85 backdrop-blur-xs">
     <div class="w-full max-w-md bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl p-6 text-[#FBF9F5] shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
@@ -1662,8 +1748,8 @@
             <i data-lucide="shield-check" class="w-5 h-5 text-[#D4AF37]"></i>
           </div>
           <div>
-            <h3 class="text-base sm:text-lg font-bold font-serif-editorial text-[#F3E5AB]">Akses Administrator</h3>
-            <p class="text-[11px] text-[#F3E5AB]/75">Otentikasi Pengelola Perpustakaan</p>
+            <h3 class="text-base sm:text-lg font-bold font-serif-editorial text-[#F3E5AB]">Otentikasi Administrator Resmi</h3>
+            <p class="text-[11px] text-[#F3E5AB]/75">Proteksi Identitas Google Firebase Auth</p>
           </div>
         </div>
         <button type="button" id="btn-close-admin-login-modal" class="text-[#F3E5AB] hover:text-white p-1 rounded-lg hover:bg-[#072A20]">
@@ -1671,29 +1757,42 @@
         </button>
       </div>
 
-      <p class="text-xs text-[#E6E1D6]/85 leading-relaxed">
-        Masukkan PIN keamanan resmi administrator untuk mengelola rak klasikal, mengunggah dan menerbitkan buku baru, atau membuka panel konfigurasi.
-      </p>
-
-      <form id="form-admin-login" class="space-y-3">
-        <div>
-          <label for="admin-pin-input" class="block text-xs font-medium text-[#F3E5AB] mb-1">PIN Keamanan Admin</label>
-          <input id="admin-pin-input" type="password" required autocomplete="current-password" placeholder="Ketik PIN Admin (bawaan: admin2026)" class="w-full px-3.5 py-2 text-xs bg-[#072A20] border border-[#D4AF37] rounded-lg text-white tracking-widest placeholder:tracking-normal placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#D4AF37]" />
-          <p id="admin-login-error" class="hidden text-xs text-amber-300 font-medium mt-1.5 flex items-center gap-1">
-            <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-300"></i>
-            <span>PIN tidak sesuai. Silakan periksa kembali.</span>
-          </p>
+      <div class="p-3.5 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-1.5">
+        <div class="flex items-center gap-2 text-xs font-bold text-[#F3E5AB]">
+          <i data-lucide="lock" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+          <span>Akses Terbatas (Single Email Whitelist)</span>
         </div>
+        <p class="text-[11px] text-[#E6E1D6]/85 leading-relaxed">
+          Hak akses pengelolaan rak, pengunggahan buku PDF, dan pengaturan musik hanya diizinkan secara eksklusif bagi akun Google Administrator resmi yang terdaftar.
+        </p>
+      </div>
 
-        <div class="flex items-center justify-between pt-2">
-          <button type="button" id="btn-cancel-admin-login" class="px-3.5 py-2 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">
-            Batal
-          </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg shadow-md transition-all active:scale-95">
-            Masuk Mode Admin
+      <div id="admin-login-error" role="alert" class="hidden p-3 rounded-xl bg-red-950/90 border border-red-400/70 text-red-100 text-xs leading-relaxed flex items-start gap-2">
+        <i data-lucide="shield-alert" class="w-4 h-4 text-red-300 shrink-0 mt-0.5"></i>
+        <span id="admin-login-error-text">Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator</span>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <button
+          type="button"
+          id="btn-google-admin-login"
+          class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-[#FBF9F5] text-[#072A20] font-bold text-xs sm:text-sm border-2 border-[#D4AF37] shadow-lg flex items-center justify-center gap-3 transition-all active:scale-98 cursor-pointer"
+        >
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.24 0-5.98-2.18-6.96-5.11H1.04v3.14C3.05 21.13 7.21 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.04 14.04c-.25-.72-.39-1.5-.39-2.3s.14-1.58.39-2.3V6.3H1.04C.38 7.61 0 9.1 0 11.74s.38 4.13 1.04 5.44l4-3.14z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.21 0 3.05 2.87 1.04 6.86l4 3.14c.98-2.93 3.72-5.25 6.96-5.25z"/>
+          </svg>
+          <span id="btn-google-admin-login-text">Login Admin via Google</span>
+        </button>
+
+        <div class="flex items-center justify-end pt-1">
+          <button type="button" id="btn-cancel-admin-login" class="px-3.5 py-1.5 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">
+            Tutup & Kembali ke Mode Publik
           </button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
@@ -1709,6 +1808,225 @@
 
       const STORAGE_SHELVES_KEY = 'elibrary_cubby_shelves_v4';
       const STORAGE_BOOKS_KEY = 'elibrary_cubby_books_v4';
+      const STORAGE_MUSIC_PLAYING_KEY = 'elibrary_music_playing_v2';
+      const STORAGE_CUSTOM_FILENAME_KEY = 'elibrary_custom_music_filename_v2';
+
+      // =========================================================
+      // MODUL HELPER PENYIMPANAN PERMANEN (INDEXEDDB + LOCALSTORAGE)
+      // Menyimpan PDF Biner/Halaman, Cover, & File Audio secara Permanen
+      // =========================================================
+      const IDB_NAME = 'eLibraryPermanentDB';
+      const IDB_VERSION = 1;
+      const STORE_BOOKS = 'books_assets';
+      const STORE_AUDIO = 'audio_assets';
+      const bookAssetsCache = {}; // Memori cache cepat hasil hidrasi IndexedDB
+
+      const StorageHandler = {
+        _dbPromise: null,
+
+        openDB() {
+          if (this._dbPromise) return this._dbPromise;
+          this._dbPromise = new Promise((resolve, reject) => {
+            if (!window.indexedDB) {
+              resolve(null);
+              return;
+            }
+            const req = window.indexedDB.open(IDB_NAME, IDB_VERSION);
+            req.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains(STORE_BOOKS)) {
+                db.createObjectStore(STORE_BOOKS, { keyPath: 'id' });
+              }
+              if (!db.objectStoreNames.contains(STORE_AUDIO)) {
+                db.createObjectStore(STORE_AUDIO, { keyPath: 'id' });
+              }
+            };
+            req.onsuccess = (e) => resolve(e.target.result);
+            req.onerror = () => resolve(null);
+          });
+          return this._dbPromise;
+        },
+
+        async saveBookAsset(bookId, assetPayload) {
+          if (!bookId) return false;
+          const meta = assetPayload.bookMeta || assetPayload || {};
+          const record = {
+            id: bookId,
+            bookMeta: meta,
+            title: meta.title || assetPayload.title || '',
+            author: meta.author || assetPayload.author || '',
+            description: meta.description || assetPayload.description || '',
+            shelfId: meta.shelfId || assetPayload.shelfId || 'rak-01',
+            pageCount: (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls.length) || meta.pageCount || assetPayload.pageCount || 1,
+            passwordProtected: Boolean(meta.passwordProtected !== undefined ? meta.passwordProtected : assetPayload.passwordProtected),
+            password: meta.password || assetPayload.password || '',
+            coverUrl: assetPayload.coverUrl || meta.coverUrl || (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls[0] ? assetPayload.pagesDataUrls[0].dataUrl : ''),
+            pagesDataUrls: assetPayload.pagesDataUrls || [],
+            pdfDataUrl: assetPayload.pdfDataUrl || '',
+            pdfUrl: meta.pdfUrl || assetPayload.pdfUrl || '',
+            updatedAt: Date.now()
+          };
+          bookAssetsCache[bookId] = record;
+
+          const db = await this.openDB();
+          if (!db) return false;
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_BOOKS], 'readwrite');
+              tx.objectStore(STORE_BOOKS).put(record);
+              tx.oncomplete = () => resolve(true);
+              tx.onerror = () => resolve(false);
+            } catch (e) {
+              resolve(false);
+            }
+          });
+        },
+
+        async deleteBookAsset(bookId) {
+          if (!bookId) return false;
+          delete bookAssetsCache[bookId];
+          const db = await this.openDB();
+          if (!db) return false;
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_BOOKS], 'readwrite');
+              tx.objectStore(STORE_BOOKS).delete(bookId);
+              tx.oncomplete = () => resolve(true);
+              tx.onerror = () => resolve(false);
+            } catch (e) {
+              resolve(false);
+            }
+          });
+        },
+
+        async getBookAsset(bookId) {
+          if (bookAssetsCache[bookId]) return bookAssetsCache[bookId];
+          const db = await this.openDB();
+          if (!db) return null;
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_BOOKS], 'readonly');
+              const req = tx.objectStore(STORE_BOOKS).get(bookId);
+              req.onsuccess = () => {
+                if (req.result) bookAssetsCache[bookId] = req.result;
+                resolve(req.result || null);
+              };
+              req.onerror = () => resolve(null);
+            } catch (e) {
+              resolve(null);
+            }
+          });
+        },
+
+        async getAllBookAssets() {
+          const db = await this.openDB();
+          if (!db) return [];
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_BOOKS], 'readonly');
+              const req = tx.objectStore(STORE_BOOKS).getAll();
+              req.onsuccess = () => {
+                const list = req.result || [];
+                list.forEach((item) => {
+                  if (item && item.id) bookAssetsCache[item.id] = item;
+                });
+                resolve(list);
+              };
+              req.onerror = () => resolve([]);
+            } catch (e) {
+              resolve([]);
+            }
+          });
+        },
+
+        async saveCustomAudio(audioDataUrl, fileName, mimeType) {
+          const db = await this.openDB();
+          try {
+            if (fileName) localStorage.setItem(STORAGE_CUSTOM_FILENAME_KEY, fileName);
+          } catch (e) {}
+          if (!db) return false;
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_AUDIO], 'readwrite');
+              tx.objectStore(STORE_AUDIO).put({
+                id: 'custom_bg_music',
+                audioDataUrl: audioDataUrl,
+                fileName: fileName || 'Musik Kustom',
+                mimeType: mimeType || 'audio/mpeg',
+                updatedAt: Date.now()
+              });
+              tx.oncomplete = () => resolve(true);
+              tx.onerror = () => resolve(false);
+            } catch (e) {
+              resolve(false);
+            }
+          });
+        },
+
+        async getCustomAudio() {
+          const db = await this.openDB();
+          if (!db) return null;
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_AUDIO], 'readonly');
+              const req = tx.objectStore(STORE_AUDIO).get('custom_bg_music');
+              req.onsuccess = () => resolve(req.result || null);
+              req.onerror = () => resolve(null);
+            } catch (e) {
+              resolve(null);
+            }
+          });
+        },
+
+        saveCatalogMetadata(shelvesData, booksData) {
+          try {
+            localStorage.setItem(STORAGE_SHELVES_KEY, JSON.stringify(shelvesData));
+          } catch (e) {}
+          try {
+            localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(booksData));
+          } catch (e) {
+            // Jika kuota localStorage penuh karena coverUrl besar, simpan versi ringkas karena coverUrl penuh sudah ada di IndexedDB
+            try {
+              const slimBooks = booksData.map((b) => ({
+                ...b,
+                coverUrl: bookAssetsCache[b.id] ? '' : b.coverUrl
+              }));
+              localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(slimBooks));
+            } catch (err) {}
+          }
+        },
+
+        saveMusicPreferences(prefs) {
+          try {
+            if (prefs.theme !== undefined) localStorage.setItem(STORAGE_MUSIC_THEME_KEY, prefs.theme);
+            if (prefs.volume !== undefined) localStorage.setItem(STORAGE_MUSIC_VOL_KEY, String(prefs.volume));
+            if (prefs.customUrl !== undefined && !String(prefs.customUrl).startsWith('blob:') && !String(prefs.customUrl).startsWith('data:')) {
+              localStorage.setItem(STORAGE_CUSTOM_URL_KEY, prefs.customUrl);
+            }
+            if (prefs.fileName !== undefined) localStorage.setItem(STORAGE_CUSTOM_FILENAME_KEY, prefs.fileName);
+            if (prefs.isPlaying !== undefined) localStorage.setItem(STORAGE_MUSIC_PLAYING_KEY, prefs.isPlaying ? 'true' : 'false');
+          } catch (e) {}
+        },
+
+        saveMusicConfig(prefs) {
+          return this.saveMusicPreferences(prefs);
+        },
+
+        loadMusicConfig() {
+          try {
+            return {
+              theme: localStorage.getItem(STORAGE_MUSIC_THEME_KEY) || 'classical',
+              volume: parseFloat(localStorage.getItem(STORAGE_MUSIC_VOL_KEY) || '0.45'),
+              customUrl: localStorage.getItem(STORAGE_CUSTOM_URL_KEY) || '',
+              fileName: localStorage.getItem(STORAGE_CUSTOM_FILENAME_KEY) || '',
+              isPlaying: localStorage.getItem(STORAGE_MUSIC_PLAYING_KEY) === 'true'
+            };
+          } catch (e) {
+            return null;
+          }
+        }
+      };
+      window.StorageHandler = StorageHandler;
 
       // 8 Kotak Rak Klasikal Utama (Nuansa Hijau Zamrud & Emas Klasik)
       const DEFAULT_SHELVES = [
@@ -2126,6 +2444,12 @@
         }
 
         isAmbientPlaying = true;
+        StorageHandler.saveMusicPreferences({
+          theme: currentMusicTheme,
+          volume: musicVolume,
+          customUrl: customMusicUrl,
+          isPlaying: true
+        });
         updateAmbientButtonsUI();
       }
 
@@ -2545,6 +2869,12 @@
 
       function stopLibraryAmbience() {
         isAmbientPlaying = false;
+        StorageHandler.saveMusicPreferences({
+          theme: currentMusicTheme,
+          volume: musicVolume,
+          customUrl: customMusicUrl,
+          isPlaying: false
+        });
         if (!ambientMasterGain || !audioCtx) {
           stopLibraryAmbienceNodes();
           updateAmbientButtonsUI();
@@ -2583,9 +2913,12 @@
       function setMusicTheme(themeId) {
         if (!MUSIC_THEMES[themeId]) return;
         currentMusicTheme = themeId;
-        try {
-          localStorage.setItem(STORAGE_MUSIC_THEME_KEY, currentMusicTheme);
-        } catch(e) {}
+        StorageHandler.saveMusicPreferences({
+          theme: currentMusicTheme,
+          volume: musicVolume,
+          customUrl: customMusicUrl,
+          isPlaying: isAmbientPlaying
+        });
 
         if (isAmbientPlaying) {
           stopLibraryAmbienceNodes();
@@ -2600,9 +2933,12 @@
       function setMusicVolume(valPercent) {
         const pct = Math.max(0, Math.min(100, parseInt(valPercent, 10) || 0));
         musicVolume = pct / 100;
-        try {
-          localStorage.setItem(STORAGE_MUSIC_VOL_KEY, musicVolume.toString());
-        } catch(e) {}
+        StorageHandler.saveMusicPreferences({
+          theme: currentMusicTheme,
+          volume: musicVolume,
+          customUrl: customMusicUrl,
+          isPlaying: isAmbientPlaying
+        });
 
         if (ambientMasterGain && audioCtx) {
           try {
@@ -3076,11 +3412,11 @@
       }
 
       function saveShelvesToStorage() {
-        try { localStorage.setItem(STORAGE_SHELVES_KEY, JSON.stringify(shelves)); } catch (e) {}
+        StorageHandler.saveCatalogMetadata(shelves, books);
       }
 
       function saveBooksToStorage() {
-        try { localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(books)); } catch (e) {}
+        StorageHandler.saveCatalogMetadata(shelves, books);
       }
 
       function populateShelfDropdown() {
@@ -3393,6 +3729,7 @@
         config.shelfId = book.shelfId;
         config.passwordProtected = Boolean(book.passwordProtected);
         config.password = book.password || '';
+        config.pdfUrl = book.pdfUrl || '';
 
         inpTitle.value = config.title;
         inpAuthor.value = config.author;
@@ -3408,10 +3745,29 @@
           isLocked = false;
         }
 
-        if (book.id === 'book-arch') {
+        // Periksa apakah buku ini memiliki lembaran PDF/halaman tersimpan di IndexedDB (StorageHandler)
+        const cachedAsset = bookAssetsCache[book.id];
+        if (cachedAsset && cachedAsset.pagesDataUrls && cachedAsset.pagesDataUrls.length > 0) {
+          pagesDataUrls = cachedAsset.pagesDataUrls;
+          rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
+          currentPage = 1;
+          document.getElementById('source-badge').textContent = 'Tersimpan di IndexedDB';
+          renderStage('forward');
+          renderThumbnailsGrid();
+        } else if (book.id === 'book-arch') {
           renderDefaultMonographPages();
         } else {
           generateBookPagesForReader(book);
+          // Juga cek secara asinkron di IndexedDB bila cache belum terisi
+          StorageHandler.getBookAsset(book.id).then((dbAsset) => {
+            if (dbAsset && dbAsset.pagesDataUrls && dbAsset.pagesDataUrls.length > 0 && activeBookId === book.id) {
+              pagesDataUrls = dbAsset.pagesDataUrls;
+              rawPdfBlobUrl = dbAsset.pdfDataUrl || null;
+              document.getElementById('source-badge').textContent = 'Tersimpan di IndexedDB';
+              renderStage('forward');
+              renderThumbnailsGrid();
+            }
+          });
         }
 
         switchViewTo('reader');
@@ -3465,8 +3821,11 @@
 
       // =========================================================
       // MESIN RENDER PDF.JS (RETINA DPI / DEVICEPIXELRATIO)
+      // + OTOMATIS DISIMPAN KE INDEXEDDB & LOCALSTORAGE
       // =========================================================
-      async function loadPdfDocument(sourceObj, labelName) {
+      let lastUploadedPdfDataUrl = '';
+
+      async function loadPdfDocument(sourceObj, labelName, pdfDataUrlForIdb) {
         const overlay = document.getElementById('loading-overlay');
         const bar = document.getElementById('loading-bar');
         const progText = document.getElementById('loading-progress-text');
@@ -3500,16 +3859,58 @@
             rendered.push({
               pageNumber: i,
               title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
-              dataUrl: canvas.toDataURL('image/jpeg', 0.92)
+              dataUrl: canvas.toDataURL('image/jpeg', 0.90)
             });
           }
 
           pagesDataUrls = rendered;
           currentPage = 1;
+          if (pdfDataUrlForIdb) {
+            lastUploadedPdfDataUrl = pdfDataUrlForIdb;
+          }
           document.getElementById('source-badge').textContent = labelName;
+
+          // Otomatis simpan buku PDF yang baru diunggah ke IndexedDB & Katalog Rak agar tahan Refresh!
+          const targetShelfId = document.getElementById('select-shelf-target').value || config.shelfId || activeShelfId || 'rak-01';
+          const autoBookId = (activeBookId && String(activeBookId).startsWith('book-pdf-'))
+            ? activeBookId
+            : 'book-pdf-' + Date.now();
+          activeBookId = autoBookId;
+
+          const coverDataUrl = rendered.length > 0 ? rendered[0].dataUrl : '';
+          const autoBookRecord = {
+            id: autoBookId,
+            shelfId: targetShelfId,
+            title: config.title || 'Dokumen PDF Baru',
+            author: config.author || 'Koleksi PDF Perpustakaan',
+            description: config.description || 'Dokumen PDF terpublikasi dengan resolusi tinggi Retina DPI.',
+            pageCount: rendered.length,
+            passwordProtected: Boolean(config.passwordProtected),
+            password: config.password || '',
+            coverUrl: coverDataUrl,
+            pdfUrl: config.pdfUrl || '',
+            hasStoredPages: true,
+            accent: '#0B3B2C',
+            spineColor: '#0B3B2C'
+          };
+
+          const existingIdx = books.findIndex((b) => b.id === autoBookId);
+          if (existingIdx >= 0) {
+            books[existingIdx] = autoBookRecord;
+          } else {
+            books.unshift(autoBookRecord);
+          }
+          saveBooksToStorage();
+
+          await StorageHandler.saveBookAsset(autoBookId, {
+            ...autoBookRecord,
+            pagesDataUrls: rendered,
+            pdfDataUrl: lastUploadedPdfDataUrl || ''
+          });
+
           renderStage('forward');
           renderThumbnailsGrid();
-          showToast('Berhasil merender ' + total + ' halaman PDF resolusi tinggi.');
+          showToast('Berhasil merender & menyimpan permanen ' + total + ' halaman PDF ke IndexedDB.');
         } catch (err) {
           errBox.textContent = 'Gagal memuat berkas PDF: Pastikan berkas PDF valid dan URL publik mengizinkan CORS.';
           errBox.classList.remove('hidden');
@@ -3909,7 +4310,7 @@
           renderShelfBooksGrid(document.getElementById('shelf-search-input').value);
         } else if (view === 'reader') {
           renderStage('forward');
-          showFloatingDock();
+          syncReaderBarsUI();
         }
 
         const hashViewName = view === 'lobby' ? 'catalog' : view;
@@ -3935,19 +4336,127 @@
       }
 
       // =========================================================
-      // SISTEM OTENTIKASI & ISOLASI TOTAL MODE ADMINISTRATOR
+      // SISTEM AUTENTIKASI ADMIN EKSKLUSIF VIA GOOGLE FIREBASE
+      // Whitelist Email Tunggal: marhaniza05@gmail.com
       // =========================================================
-      let isAdminMode = false; // Selalu terkunci (Mode Publik) saat aplikasi pertama kali dimuat/direfresh
-      const ADMIN_PIN_DEFAULT = 'admin2026';
-      const STORAGE_ADMIN_SESSION = 'elibrary_admin_session_auth_v2';
-      try {
-        sessionStorage.removeItem(STORAGE_ADMIN_SESSION);
-      } catch (e) {}
-
+      const ADMIN_WHITELIST_EMAIL = 'marhaniza05@gmail.com';
+      let isAdminMode = false; // Hanya bernilai true apabila terautentikasi sebagai marhaniza05@gmail.com
+      let currentAdminUser = null;
       let pendingAdminAction = null;
 
+      // Konfigurasi Resmi Firebase Auth (Terintegrasi dengan Firebase Project)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCBuOxKvnKKyciQPyE8Vb26v3oe9UpnDks",
+        authDomain: "basic-heaven-t01dl.firebaseapp.com",
+        projectId: "basic-heaven-t01dl",
+        storageBucket: "basic-heaven-t01dl.firebasestorage.app",
+        messagingSenderId: "807902406903",
+        appId: "1:807902406903:web:9ca51a0dd6f25c4b3f8bf2"
+      };
+
+      let firebaseAuth = null;
+      let googleProvider = null;
+
+      function initFirebaseAdminAuth() {
+        try {
+          if (window.firebase && window.firebase.initializeApp) {
+            if (!window.firebase.apps || window.firebase.apps.length === 0) {
+              window.firebase.initializeApp(firebaseConfig);
+            }
+            firebaseAuth = window.firebase.auth();
+            googleProvider = new window.firebase.auth.GoogleAuthProvider();
+            googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+            firebaseAuth.onAuthStateChanged((user) => {
+              verifyAndApplyAdminUser(user, false);
+            });
+          }
+        } catch (err) {
+          console.error('Firebase Auth Init Error:', err);
+        }
+      }
+
+      function verifyAndApplyAdminUser(user, isInteractiveAttempt) {
+        const errBox = document.getElementById('admin-login-error');
+        const errText = document.getElementById('admin-login-error-text');
+
+        if (!user) {
+          currentAdminUser = null;
+          isAdminMode = false;
+          updateAdminModeUI();
+          return;
+        }
+
+        const userEmail = (user.email || '').trim().toLowerCase();
+        if (userEmail === ADMIN_WHITELIST_EMAIL) {
+          currentAdminUser = user;
+          isAdminMode = true;
+          if (errBox) errBox.classList.add('hidden');
+          const modal = document.getElementById('modal-admin-login');
+          if (modal) modal.classList.add('hidden');
+          updateAdminModeUI();
+          if (isInteractiveAttempt) {
+            showToast('Otentikasi Google berhasil! Selamat datang Administrator (' + user.email + ').');
+          }
+          if (typeof pendingAdminAction === 'function') {
+            const action = pendingAdminAction;
+            pendingAdminAction = null;
+            action();
+          }
+        } else {
+          // Whitelist Ditolak: Bukan marhaniza05@gmail.com -> Tolak & Paksa SignOut Otomatis
+          currentAdminUser = null;
+          isAdminMode = false;
+          updateAdminModeUI();
+          const denialMsg = 'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator';
+          if (errText) errText.textContent = denialMsg;
+          if (errBox) errBox.classList.remove('hidden');
+          showToast(denialMsg);
+          if (firebaseAuth) {
+            firebaseAuth.signOut().catch(() => {});
+          }
+        }
+      }
+
+      async function signInWithGoogleAdmin() {
+        const btnText = document.getElementById('btn-google-admin-login-text');
+        const errBox = document.getElementById('admin-login-error');
+        if (errBox) errBox.classList.add('hidden');
+
+        if (!firebaseAuth || !googleProvider) {
+          initFirebaseAdminAuth();
+        }
+        if (!firebaseAuth || !googleProvider) {
+          showToast('Layanan autentikasi Firebase sedang memuat, silakan coba sesaat lagi.');
+          return;
+        }
+
+        try {
+          if (btnText) btnText.textContent = 'Memverifikasi Akun Google...';
+          const result = await firebaseAuth.signInWithPopup(googleProvider);
+          verifyAndApplyAdminUser(result ? result.user : null, true);
+        } catch (err) {
+          const errText = document.getElementById('admin-login-error-text');
+          if (err && err.code === 'auth/popup-closed-by-user') {
+            showToast('Jendela login Google ditutup.');
+          } else {
+            if (errText) {
+              errText.textContent = 'Gagal masuk dengan Google (' + (err.code || 'Popup Diblokir') + '). Pastikan popup diizinkan.';
+            }
+            if (errBox) errBox.classList.remove('hidden');
+          }
+        } finally {
+          if (btnText) btnText.textContent = 'Login Admin via Google';
+        }
+      }
+
       function updateAdminModeUI() {
-        document.body.classList.toggle('admin-authenticated', Boolean(isAdminMode));
+        const isAuthorized = Boolean(
+          isAdminMode &&
+          currentAdminUser &&
+          (currentAdminUser.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL
+        );
+        document.body.classList.toggle('admin-authenticated', isAuthorized);
 
         const adminControlIds = [
           'header-music-settings-btn',
@@ -3962,12 +4471,17 @@
         adminControlIds.forEach((id) => {
           const el = document.getElementById(id);
           if (el) {
-            el.classList.toggle('hidden', !isAdminMode);
+            el.classList.toggle('hidden', !isAuthorized);
           }
         });
 
+        const headerAdminText = document.getElementById('header-admin-text');
+        if (headerAdminText && isAuthorized && currentAdminUser) {
+          headerAdminText.textContent = 'Studio Admin';
+        }
+
         const sidebar = document.getElementById('admin-sidebar');
-        if (!isAdminMode && sidebar) {
+        if (!isAuthorized && sidebar) {
           sidebar.classList.add('hidden');
         }
 
@@ -3979,7 +4493,10 @@
 
       function exitAdminMode() {
         isAdminMode = false;
-        try { sessionStorage.removeItem(STORAGE_ADMIN_SESSION); } catch(e) {}
+        currentAdminUser = null;
+        if (firebaseAuth) {
+          firebaseAuth.signOut().catch(() => {});
+        }
         const sidebar = document.getElementById('admin-sidebar');
         if (sidebar) sidebar.classList.add('hidden');
         ['modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings'].forEach((mid) => {
@@ -3991,102 +4508,95 @@
       }
 
       function requireAdminAuth(onSuccess) {
-        if (isAdminMode) {
+        if (
+          isAdminMode &&
+          currentAdminUser &&
+          (currentAdminUser.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL
+        ) {
           if (typeof onSuccess === 'function') onSuccess();
           return;
         }
         pendingAdminAction = onSuccess || null;
         const modal = document.getElementById('modal-admin-login');
-        const pinInput = document.getElementById('admin-pin-input');
         const err = document.getElementById('admin-login-error');
         if (err) err.classList.add('hidden');
-        if (pinInput) pinInput.value = '';
-        modal.classList.remove('hidden');
-        setTimeout(() => { if (pinInput) pinInput.focus(); }, 100);
+        if (modal) modal.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
       }
 
       // =========================================================
-      // SISTEM AUTO-HIDE KONTROL PEMBACA 3D (CLEAN IMMERSIVE)
+      // RUANG BACA ULTRA-BERSIH: KONTROL TOGGLE MANUAL (CHEVRON UP/DOWN)
+      // Tanpa Auto-Show Gerakan Kursor (Zero Mouse-Move Distraction)
       // =========================================================
-      let dockHideTimer = null;
-      let isUserInteractingWithDock = false;
+      let isTopBarVisible = true;
+      let isBottomBarVisible = true;
 
-      function showFloatingDock() {
-        const dock = document.getElementById('reader-floating-dock');
-        if (!dock) return;
-        dock.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
-        dock.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
-        resetDockHideTimer();
+      function syncReaderBarsUI() {
+        const topStrip = document.getElementById('reader-top-strip');
+        const bottomDock = document.getElementById('reader-floating-dock');
+        const btnShowTop = document.getElementById('btn-show-top-bar');
+        const btnShowBottom = document.getElementById('btn-show-bottom-bar');
+        const stage = document.getElementById('reader-stage');
+
+        if (topStrip) {
+          topStrip.classList.toggle('bar-hidden', !isTopBarVisible);
+        }
+        if (btnShowTop) {
+          btnShowTop.classList.toggle('hidden', isTopBarVisible);
+        }
+        if (bottomDock) {
+          bottomDock.classList.toggle('bar-hidden', !isBottomBarVisible);
+        }
+        if (btnShowBottom) {
+          btnShowBottom.classList.toggle('hidden', isBottomBarVisible);
+        }
+        if (stage) {
+          stage.classList.toggle('top-bar-collapsed', !isTopBarVisible);
+          stage.classList.toggle('bottom-bar-collapsed', !isBottomBarVisible);
+        }
+        if (window.lucide) window.lucide.createIcons();
       }
 
-      function hideFloatingDock() {
-        if (isUserInteractingWithDock) return;
-        const dock = document.getElementById('reader-floating-dock');
-        if (!dock) return;
-        dock.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
-        dock.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
-      }
-
-      function resetDockHideTimer() {
-        clearTimeout(dockHideTimer);
-        if (currentView !== 'reader') return;
-        dockHideTimer = setTimeout(() => {
-          hideFloatingDock();
-        }, 2800);
+      function setReaderBarsVisibility(topVisible, bottomVisible) {
+        isTopBarVisible = Boolean(topVisible);
+        isBottomBarVisible = Boolean(bottomVisible);
+        syncReaderBarsUI();
       }
 
       // =========================================================
       // EVENT LISTENERS & ELEMEN INTERAKTIF
       // =========================================================
       initShelvesAndBooks();
+      initFirebaseAdminAuth();
       updateAdminModeUI();
+      syncReaderBarsUI();
 
-      // Listeners Auto-Hide pada Ruang Baca
-      const readerStageContainer = document.getElementById('reader-stage');
-      if (readerStageContainer) {
-        readerStageContainer.addEventListener('mousemove', () => {
-          if (currentView === 'reader') {
-            showFloatingDock();
-          }
-        });
-        readerStageContainer.addEventListener('mouseleave', () => {
-          if (currentView === 'reader' && !isUserInteractingWithDock) {
-            clearTimeout(dockHideTimer);
-            dockHideTimer = setTimeout(() => hideFloatingDock(), 400);
-          }
-        });
+      // Tombol Toggle Manual Bar Atas (Chevron Up untuk Sembunyikan, Chevron Down untuk Buka)
+      const btnHideTopBar = document.getElementById('btn-hide-top-bar');
+      if (btnHideTopBar) {
+        btnHideTopBar.onclick = () => {
+          setReaderBarsVisibility(false, isBottomBarVisible);
+        };
+      }
+      const btnShowTopBar = document.getElementById('btn-show-top-bar');
+      if (btnShowTopBar) {
+        btnShowTopBar.onclick = () => {
+          setReaderBarsVisibility(true, isBottomBarVisible);
+        };
       }
 
-      const readerFloatingDock = document.getElementById('reader-floating-dock');
-      if (readerFloatingDock) {
-        readerFloatingDock.addEventListener('mouseenter', () => {
-          isUserInteractingWithDock = true;
-          showFloatingDock();
-          clearTimeout(dockHideTimer);
-        });
-        readerFloatingDock.addEventListener('mouseleave', () => {
-          isUserInteractingWithDock = false;
-          resetDockHideTimer();
-        });
-        readerFloatingDock.addEventListener('focusin', () => {
-          isUserInteractingWithDock = true;
-          showFloatingDock();
-          clearTimeout(dockHideTimer);
-        });
-        readerFloatingDock.addEventListener('focusout', () => {
-          isUserInteractingWithDock = false;
-          resetDockHideTimer();
-        });
+      // Tombol Toggle Manual Bar Bawah (Chevron Down untuk Sembunyikan, Chevron Up untuk Buka)
+      const btnHideBottomBar = document.getElementById('btn-hide-bottom-bar');
+      if (btnHideBottomBar) {
+        btnHideBottomBar.onclick = () => {
+          setReaderBarsVisibility(isTopBarVisible, false);
+        };
       }
-
-      const bottomHoverTrigger = document.getElementById('bottom-hover-trigger');
-      if (bottomHoverTrigger) {
-        bottomHoverTrigger.addEventListener('mouseenter', () => {
-          showFloatingDock();
-        });
-        bottomHoverTrigger.addEventListener('mousemove', () => {
-          showFloatingDock();
-        });
+      const btnShowBottomBar = document.getElementById('btn-show-bottom-bar');
+      if (btnShowBottomBar) {
+        btnShowBottomBar.onclick = () => {
+          setReaderBarsVisibility(isTopBarVisible, true);
+        };
       }
 
       // =========================================================
@@ -4255,26 +4765,14 @@
         });
       });
 
-      // Otentikasi Admin Form & Tombol
-      document.getElementById('form-admin-login').onsubmit = (e) => {
-        e.preventDefault();
-        const pin = document.getElementById('admin-pin-input').value.trim();
-        if (pin === ADMIN_PIN_DEFAULT || pin === 'admin' || pin === '2026') {
-          isAdminMode = true;
-          try { sessionStorage.setItem(STORAGE_ADMIN_SESSION, 'true'); } catch(e) {}
-          document.getElementById('modal-admin-login').classList.add('hidden');
-          updateAdminModeUI();
-          showToast('Otentikasi berhasil. Selamat datang di Mode Administrator!');
-          if (typeof pendingAdminAction === 'function') {
-            const action = pendingAdminAction;
-            pendingAdminAction = null;
-            action();
-          }
-        } else {
-          const err = document.getElementById('admin-login-error');
-          if (err) err.classList.remove('hidden');
-        }
-      };
+      // Otentikasi Admin via Google Firebase Auth
+      const btnGoogleAdminLogin = document.getElementById('btn-google-admin-login');
+      if (btnGoogleAdminLogin) {
+        btnGoogleAdminLogin.onclick = (e) => {
+          e.preventDefault();
+          signInWithGoogleAdmin();
+        };
+      }
 
       document.getElementById('btn-close-admin-login-modal').onclick = () => {
         document.getElementById('modal-admin-login').classList.add('hidden');
@@ -4355,7 +4853,7 @@
         });
       };
 
-      document.getElementById('btn-save-to-shelf').onclick = () => {
+      document.getElementById('btn-save-to-shelf').onclick = async () => {
         const targetShelfId = document.getElementById('select-shelf-target').value;
         config.shelfId = targetShelfId;
         config.title = inpTitle.value.trim() || 'Publikasi Tanpa Judul';
@@ -4366,8 +4864,12 @@
           ? pagesDataUrls[0].dataUrl
           : generateCanvasPageDataUrl(config.title, config.description, 'BUKU PERPUSTAKAAN', config.author, config.description, true, 4, 0, '#0B3B2C');
 
-        const newBook = {
-          id: 'book-' + Date.now(),
+        const existingIdx = config.activeBookId ? books.findIndex((b) => b.id === config.activeBookId) : -1;
+        const bookId = existingIdx >= 0 ? config.activeBookId : ('book-' + Date.now());
+        config.activeBookId = bookId;
+
+        const savedBook = {
+          id: bookId,
           shelfId: targetShelfId,
           title: config.title,
           author: config.author,
@@ -4375,16 +4877,31 @@
           pageCount: pagesDataUrls.length || 1,
           passwordProtected: config.passwordProtected,
           password: config.password,
+          pdfUrl: config.pdfUrl || '',
           coverUrl: coverDataUrl,
           accent: '#0B3B2C',
           spineColor: '#0B3B2C'
         };
 
-        books.unshift(newBook);
+        if (existingIdx >= 0) {
+          books[existingIdx] = Object.assign({}, books[existingIdx], savedBook);
+        } else {
+          books.unshift(savedBook);
+        }
         saveBooksToStorage();
 
+        await StorageHandler.saveBookAsset(bookId, {
+          bookMeta: savedBook,
+          coverUrl: coverDataUrl,
+          pagesDataUrls: pagesDataUrls.slice(),
+          pdfDataUrl: currentUploadedPdfDataUrl || null
+        });
+
+        renderLobbyView(document.getElementById('lobby-search-input').value || '');
+        if (currentView === 'shelf') renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+
         const targetShelf = shelves.find((s) => s.id === targetShelfId);
-        showToast('Buku "' + config.title + '" berhasil disimpan ke ' + (targetShelf ? targetShelf.name : 'rak'));
+        showToast('Buku "' + config.title + '" berhasil disimpan permanen ke ' + (targetShelf ? targetShelf.name : 'rak'));
       };
 
       // =========================================================
@@ -4649,17 +5166,27 @@
         }
       };
 
-      // Unggah File PDF Lokal
+      // Unggah File PDF Lokal (disimpan permanen ke IndexedDB + Katalog)
       document.getElementById('pdf-file-input').onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         document.getElementById('file-name-label').textContent = 'Aktif: ' + file.name;
         config.title = file.name.replace(/\.pdf$/i, '');
+        config.activeBookId = 'book-' + Date.now();
         inpTitle.value = config.title;
-        if (rawPdfBlobUrl) URL.revokeObjectURL(rawPdfBlobUrl);
+        if (rawPdfBlobUrl && rawPdfBlobUrl.startsWith('blob:')) URL.revokeObjectURL(rawPdfBlobUrl);
         rawPdfBlobUrl = URL.createObjectURL(file);
+
+        const pdfDataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result || null);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        });
+        currentUploadedPdfDataUrl = pdfDataUrl;
+
         const buf = await file.arrayBuffer();
-        loadPdfDocument({ data: new Uint8Array(buf) }, 'PDF Lokal');
+        await loadPdfDocument({ data: new Uint8Array(buf) }, 'PDF Lokal', pdfDataUrl);
       };
 
       // Muat Direct URL PDF
@@ -4668,6 +5195,7 @@
         const url = document.getElementById('pdf-url-input').value.trim();
         if (!url) return;
         config.pdfUrl = url;
+        config.activeBookId = 'book-' + Date.now();
         loadPdfDocument({ url }, 'URL Eksternal');
       };
 
@@ -4798,7 +5326,7 @@
         adminVolSlider.oninput = (e) => setMusicVolume(e.target.value);
       }
 
-      // Custom Music URL & File
+      // Custom Music URL & File (Persisten ke IndexedDB & localStorage)
       const btnLoadCustomUrl = document.getElementById('btn-load-custom-music-url');
       if (btnLoadCustomUrl) {
         btnLoadCustomUrl.onclick = () => {
@@ -4807,8 +5335,14 @@
           if (val) {
             customMusicUrl = val;
             try { localStorage.setItem(STORAGE_CUSTOM_URL_KEY, customMusicUrl); } catch(e) {}
+            StorageHandler.saveMusicConfig({
+              theme: 'custom',
+              volume: musicVolume,
+              customUrl: customMusicUrl,
+              isPlaying: isAmbientPlaying
+            });
             setMusicTheme('custom');
-            showToast('Tautan musik kustom diterapkan.');
+            showToast('Tautan musik kustom disimpan permanen & diterapkan.');
           } else {
             showToast('Masukkan URL audio terlebih dahulu.');
           }
@@ -4823,6 +5357,12 @@
             const inp = document.getElementById('music-custom-url-input');
             if (inp) inp.value = url;
             try { localStorage.setItem(STORAGE_CUSTOM_URL_KEY, customMusicUrl); } catch(e) {}
+            StorageHandler.saveMusicConfig({
+              theme: 'custom',
+              volume: musicVolume,
+              customUrl: customMusicUrl,
+              isPlaying: isAmbientPlaying
+            });
             setMusicTheme('custom');
           }
         };
@@ -4833,12 +5373,26 @@
         fileInputCustom.onchange = (e) => {
           const file = e.target.files && e.target.files[0];
           if (file) {
-            const blobUrl = URL.createObjectURL(file);
-            customMusicUrl = blobUrl;
-            const nameEl = document.getElementById('music-custom-file-name');
-            if (nameEl) nameEl.textContent = 'File aktif: ' + file.name;
-            setMusicTheme('custom');
-            showToast('Memutar file musik: ' + file.name);
+            const reader = new FileReader();
+            reader.onload = async () => {
+              const audioDataUrl = reader.result;
+              if (audioDataUrl) {
+                customMusicUrl = audioDataUrl;
+                await StorageHandler.saveCustomAudio(audioDataUrl, file.name, file.type);
+                StorageHandler.saveMusicConfig({
+                  theme: 'custom',
+                  volume: musicVolume,
+                  customUrl: '',
+                  fileName: file.name,
+                  isPlaying: isAmbientPlaying
+                });
+                const nameEl = document.getElementById('music-custom-file-name');
+                if (nameEl) nameEl.textContent = 'File tersimpan permanen: ' + file.name;
+                setMusicTheme('custom');
+                showToast('File musik "' + file.name + '" berhasil disimpan permanen & diputar.');
+              }
+            };
+            reader.readAsDataURL(file);
           }
         };
       }
@@ -4856,8 +5410,14 @@
 
       document.getElementById('toolbar-fullscreen-btn').onclick = () => {
         const stage = document.getElementById('reader-stage');
-        if (!document.fullscreenElement) stage.requestFullscreen().catch(() => {});
-        else document.exitFullscreen().catch(() => {});
+        if (!document.fullscreenElement) {
+          stage.requestFullscreen().catch(() => {});
+          isFullPageFit = true;
+          setReaderBarsVisibility(false, false);
+          renderStage('forward');
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
       };
 
       document.getElementById('btn-toggle-admin-drawer').onclick = () => {
@@ -4870,7 +5430,7 @@
         document.getElementById('admin-sidebar').classList.add('hidden');
       };
 
-      // Kontrol Mode Tampilan Pembaca: 1 Halaman, 2 Halaman, Full Halaman
+      // Kontrol Mode Tampilan Pembaca: 1 Halaman, 2 Halaman, Full Halaman (Ultra-Clean)
       document.getElementById('btn-reader-mode-1p').onclick = () => {
         readerPageMode = '1p';
         renderStage('forward');
@@ -4883,8 +5443,16 @@
       };
       document.getElementById('btn-reader-mode-full').onclick = () => {
         isFullPageFit = !isFullPageFit;
+        if (isFullPageFit) {
+          // Sembunyikan Top Bar & Down Bar secara otomatis untuk tampilan kanvas penuh bebas distraksi
+          setReaderBarsVisibility(false, false);
+        } else {
+          setReaderBarsVisibility(true, true);
+        }
         renderStage('forward');
-        showToast(isFullPageFit ? 'Tampilan Full Halaman Aktif' : 'Tampilan Halaman Normal');
+        showToast(isFullPageFit
+          ? 'Mode Baca Penuh Aktif — Gunakan panah tepi atas/bawah untuk membuka kontrol'
+          : 'Tampilan Halaman Normal Aktif');
       };
 
       function toggleTheme() {
@@ -4943,11 +5511,12 @@
             if (bookTarget) {
               const b = books.find((item) => item.id === bookTarget);
               if (b) {
-                openBookInReader(b);
-                if (page && page > 1) {
-                  currentPage = Math.min(page, pagesDataUrls.length || 1);
-                  renderStage('forward');
-                }
+                openBookInReader(b).then(() => {
+                  if (page && page > 1) {
+                    currentPage = Math.min(page, pagesDataUrls.length || 1);
+                    renderStage('forward');
+                  }
+                });
                 return;
               }
             }
@@ -4959,10 +5528,78 @@
         switchViewTo('lobby');
       }
 
+      // =========================================================
+      // HYDRATION DARI PENYIMPANAN PERMANEN (INDEXEDDB + LOCALSTORAGE)
+      // =========================================================
+      async function hydrateFromPermanentStorage() {
+        try {
+          // 1. Hydrate seluruh koleksi buku & cover dari IndexedDB
+          const storedAssets = await StorageHandler.getAllBookAssets();
+          if (Array.isArray(storedAssets) && storedAssets.length > 0) {
+            let catalogChanged = false;
+            storedAssets.forEach((asset) => {
+              if (!asset || !asset.id) return;
+              const existingBook = books.find((b) => b.id === asset.id);
+              if (existingBook) {
+                if (asset.coverUrl) existingBook.coverUrl = asset.coverUrl;
+                if (asset.pagesDataUrls && asset.pagesDataUrls.length > 0) {
+                  existingBook.pageCount = asset.pagesDataUrls.length;
+                }
+              } else if (asset.bookMeta) {
+                const hydratedBook = Object.assign({}, asset.bookMeta);
+                if (asset.coverUrl) hydratedBook.coverUrl = asset.coverUrl;
+                if (asset.pagesDataUrls && asset.pagesDataUrls.length > 0) {
+                  hydratedBook.pageCount = asset.pagesDataUrls.length;
+                }
+                books.unshift(hydratedBook);
+                catalogChanged = true;
+              }
+            });
+            if (catalogChanged) {
+              saveBooksToStorage();
+            }
+            renderLobbyView(document.getElementById('lobby-search-input').value || '');
+            if (currentView === 'shelf') {
+              renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+            }
+            // Jika buku aktif saat ini memiliki data tersimpan di IndexedDB, muat langsung
+            if (config.activeBookId) {
+              const activeAsset = storedAssets.find((a) => a && a.id === config.activeBookId);
+              if (activeAsset && Array.isArray(activeAsset.pagesDataUrls) && activeAsset.pagesDataUrls.length > 0) {
+                pagesDataUrls = activeAsset.pagesDataUrls;
+                rawPdfBlobUrl = activeAsset.pdfDataUrl || null;
+                currentUploadedPdfDataUrl = activeAsset.pdfDataUrl || null;
+                renderThumbnails();
+                renderStage('forward');
+              }
+            }
+          }
+
+          // 2. Hydrate file audio kustom & preferensi musik dari IndexedDB + localStorage
+          const savedMusicCfg = StorageHandler.loadMusicConfig();
+          const savedCustomAudio = await StorageHandler.getCustomAudio();
+          if (savedCustomAudio && savedCustomAudio.audioDataUrl) {
+            customMusicUrl = savedCustomAudio.audioDataUrl;
+            const nameEl = document.getElementById('music-custom-file-name');
+            if (nameEl && savedCustomAudio.fileName) {
+              nameEl.textContent = 'File tersimpan permanen: ' + savedCustomAudio.fileName;
+            }
+          } else if (savedMusicCfg && savedMusicCfg.customUrl) {
+            customMusicUrl = savedMusicCfg.customUrl;
+            const urlInp = document.getElementById('music-custom-url-input');
+            if (urlInp) urlInp.value = customMusicUrl;
+          }
+          updateAmbientButtonsUI();
+        } catch (err) {
+          console.warn('Hydration storage warning:', err);
+        }
+      }
+
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');
       renderDefaultMonographPages();
       handleInitialRouting();
+      hydrateFromPermanentStorage();
 
       if (window.lucide) window.lucide.createIcons();
     })();
