@@ -16,6 +16,9 @@ import {
   validateAdminPasswordChange,
   validateAdminPasswordResetEmail,
   validateVerifiedPasswordResetSubmission,
+  buildDefaultEditablePagesForBook,
+  applyPageCrudAction,
+  applyEtalaseBookCrudAction,
 } from './flipbookLogic';
 
 test('calculateSpreadState handles desktop 2-page spread transitions accurately', () => {
@@ -238,5 +241,138 @@ test('validateVerifiedPasswordResetSubmission enforces whitelist and updates pas
   assert.equal(validReset.valid, true);
   assert.equal(validReset.newHash, computeAdminPasswordHash('SandiResetBaru#2026'));
 });
+
+test('applyPageCrudAction supports add, update, move, sync-cover, and delete for book content pages', () => {
+  const initialPages = buildDefaultEditablePagesForBook({
+    title: '200 Motivasi Nabi & Kisah Inspiratif Pembangun Jiwa',
+    author: 'AS-SAMARQANDI',
+    description: 'Kumpulan hadits motivasi dan hikmah klasik pembangun jiwa.',
+    kicker: 'KLASIKAL 000',
+    pageCount: 3,
+  });
+
+  assert.equal(initialPages.length, 3);
+  assert.equal(initialPages[0].title, '200 Motivasi Nabi & Kisah Inspiratif Pembangun Jiwa');
+  assert.equal(initialPages[0].pageNumber, 1);
+
+  // Add a page after page 1 (at index 1)
+  const afterAdd = applyPageCrudAction(initialPages, {
+    type: 'add',
+    afterIndex: 0,
+    kicker: 'BAB KHUSUS',
+    title: 'Kisah Keteladanan Sahabat',
+    subtitle: 'Renungan Kejujuran dan Amanah',
+    body: 'Isi motivasi dan keteladanan generasi awal.',
+  });
+  assert.equal(afterAdd.length, 4);
+  assert.equal(afterAdd[1].title, 'Kisah Keteladanan Sahabat');
+  assert.deepEqual(
+    afterAdd.map((p) => p.pageNumber),
+    [1, 2, 3, 4]
+  );
+
+  // Update page 2
+  const afterUpdate = applyPageCrudAction(afterAdd, {
+    type: 'update',
+    index: 1,
+    patch: { title: 'Kisah Keteladanan & Hikmah Utama' },
+  });
+  assert.equal(afterUpdate[1].title, 'Kisah Keteladanan & Hikmah Utama');
+
+  // Move page 2 down to page 3
+  const afterMoveDown = applyPageCrudAction(afterUpdate, {
+    type: 'move-down',
+    index: 1,
+  });
+  assert.equal(afterMoveDown[2].title, 'Kisah Keteladanan & Hikmah Utama');
+  assert.equal(afterMoveDown[2].pageNumber, 3);
+
+  // Sync cover when book title changes
+  const afterSyncCover = applyPageCrudAction(afterMoveDown, {
+    type: 'sync-cover',
+    bookTitle: '200 Motivasi Nabi (Edisi Revisi Lengkap)',
+    bookAuthor: 'Imam As-Samarqandi',
+    bookDescription: 'Edisi tahqiq lengkap motivasi pembangun jiwa.',
+    bookKicker: 'KHAZANAH HADITS',
+  });
+  assert.equal(afterSyncCover[0].title, '200 Motivasi Nabi (Edisi Revisi Lengkap)');
+  assert.equal(afterSyncCover[0].kicker, 'KHAZANAH HADITS');
+
+  // Delete page 3
+  const afterDelete = applyPageCrudAction(afterSyncCover, {
+    type: 'delete',
+    index: 2,
+  });
+  assert.equal(afterDelete.length, 3);
+  assert.deepEqual(
+    afterDelete.map((p) => p.pageNumber),
+    [1, 2, 3]
+  );
+});
+
+test('applyEtalaseBookCrudAction supports create, update, duplicate, reorder, and delete', () => {
+  const initialBooks = [
+    {
+      id: 'b-1',
+      shelfId: 'rak-01',
+      title: 'Buku Pertama',
+      author: 'Penulis A',
+      description: 'Deskripsi A',
+      pageCount: 4,
+      passwordProtected: false,
+      accent: '#0B3B2C',
+      spineColor: '#0B3B2C',
+    },
+  ];
+
+  const withCreated = applyEtalaseBookCrudAction(initialBooks, {
+    type: 'create',
+    book: {
+      id: 'b-2',
+      shelfId: 'rak-01',
+      title: '200 Motivasi Nabi',
+      author: 'AS-SAMARQANDI',
+      description: 'Hikmah pembangun jiwa',
+      pageCount: 6,
+      passwordProtected: false,
+      accent: '#1E3A8A',
+      spineColor: '#1E3A8A',
+    },
+  });
+  assert.equal(withCreated.length, 2);
+  assert.equal(withCreated[0].id, 'b-2');
+
+  const withUpdated = applyEtalaseBookCrudAction(withCreated, {
+    type: 'update',
+    id: 'b-2',
+    patch: { title: '200 Motivasi Nabi & Kisah Inspiratif', pageCount: 8 },
+  });
+  assert.equal(withUpdated[0].title, '200 Motivasi Nabi & Kisah Inspiratif');
+  assert.equal(withUpdated[0].pageCount, 8);
+
+  const withDuplicated = applyEtalaseBookCrudAction(withUpdated, {
+    type: 'duplicate',
+    id: 'b-2',
+    newId: 'b-2-copy',
+  });
+  assert.equal(withDuplicated.length, 3);
+  assert.equal(withDuplicated[1].id, 'b-2-copy');
+  assert.ok(withDuplicated[1].title.includes('(Salinan)'));
+
+  const withReordered = applyEtalaseBookCrudAction(withDuplicated, {
+    type: 'reorder',
+    id: 'b-2',
+    direction: 'down',
+  });
+  assert.equal(withReordered[0].id, 'b-2-copy');
+  assert.equal(withReordered[1].id, 'b-2');
+
+  const withDeleted = applyEtalaseBookCrudAction(withReordered, {
+    type: 'delete',
+    id: 'b-2-copy',
+  });
+  assert.equal(withDeleted.length, 2);
+});
+
 
 

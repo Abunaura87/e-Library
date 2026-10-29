@@ -793,9 +793,9 @@
   <!-- ========================================================= -->
   <!-- 1. HEADER REBRANDING & NAVIGASI BREADCRUMB / TAB          -->
   <!-- ========================================================= -->
-  <header class="no-print shrink-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 sm:px-6 py-2 sm:py-2.5 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5] z-20 shadow-xs relative">
-    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
-      <a href="#view=catalog" id="brand-home" class="flex items-center gap-2 sm:gap-3 text-[#072A20] group whitespace-nowrap shrink-0">
+  <header class="no-print shrink-0 flex flex-wrap lg:flex-nowrap items-center justify-between gap-x-2 gap-y-2 px-3 sm:px-5 py-2 border-b-2 border-[#D4AF37]/60 bg-[#FBF9F5] z-20 shadow-xs relative">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+      <a href="#view=catalog" id="brand-home" class="flex items-center gap-2 sm:gap-2.5 text-[#072A20] group whitespace-nowrap shrink-0">
         <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg btn-emerald-gold flex items-center justify-center shadow-sm">
           <i data-lucide="book-open" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#D4AF37]"></i>
         </div>
@@ -809,64 +809,68 @@
         </div>
       </a>
 
-      <!-- Breadcrumb Lintas Tahap (Tampil di layar Desktop Lebar 2XL agar satu baris dengan tombol Admin di 1440px) -->
-      <nav aria-label="Breadcrumb Perpustakaan" class="hidden 2xl:flex items-center gap-2 text-xs font-medium text-[#12543F] border-l border-[#D4AF37]/50 pl-4 py-0.5">
+      <!-- Breadcrumb Lintas Tahap (Tampil di layar Desktop Lebar 2XL) -->
+      <nav aria-label="Breadcrumb Perpustakaan" class="hidden 2xl:flex items-center gap-2 text-xs font-medium text-[#12543F] border-l border-[#D4AF37]/50 pl-3 py-0.5">
         <button type="button" id="bc-lobby-btn" class="hover:text-[#072A20] transition-colors flex items-center gap-1.5">
           <i data-lucide="library" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
           <span class="font-serif-editorial text-sm font-semibold">Lobi Rak</span>
         </button>
         <span class="text-[#D4AF37]">/</span>
-        <button type="button" id="bc-shelf-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[180px] font-serif-editorial text-sm font-semibold">
+        <button type="button" id="bc-shelf-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[160px] font-serif-editorial text-sm font-semibold">
           Etalase
         </button>
         <span id="bc-sep-reader" class="text-[#D4AF37] hidden">/</span>
-        <button type="button" id="bc-reader-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[180px] text-[#072A20] font-serif-editorial text-sm font-bold hidden">
+        <button type="button" id="bc-reader-btn" class="hover:text-[#072A20] transition-colors truncate max-w-[160px] text-[#072A20] font-serif-editorial text-sm font-bold hidden">
           Ruang Baca 3D
         </button>
       </nav>
     </div>
 
     <!-- Tab Navigasi 3 Tahap (Kompak & Rapi di Tablet dan Mobile) -->
-    <nav aria-label="Navigasi Utama" class="flex items-center gap-1 sm:gap-1.5 text-xs font-medium shrink-0">
-      <button type="button" id="tab-lobby-btn" class="px-2.5 sm:px-3 py-1.5 rounded-lg btn-emerald-gold font-semibold transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shadow-xs">
+    <nav aria-label="Navigasi Utama" class="flex items-center gap-1 text-xs font-medium shrink-0">
+      <button type="button" id="tab-lobby-btn" class="px-2.5 py-1.5 rounded-lg btn-emerald-gold font-semibold transition-all flex items-center gap-1 whitespace-nowrap shadow-xs">
         <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="text-[11px] sm:text-xs">Rak 3D</span>
       </button>
-      <button type="button" id="tab-shelf-btn" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+      <button type="button" id="tab-shelf-btn" class="px-2.5 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 whitespace-nowrap">
         <i data-lucide="layers" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
         <span id="tab-shelf-label" class="text-[11px] sm:text-xs">Etalase</span>
       </button>
-      <button type="button" id="tab-reader-btn" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+      <button type="button" id="tab-reader-btn" class="px-2.5 py-1.5 rounded-lg text-[#0B3B2C] hover:bg-[#0B3B2C]/10 border border-transparent hover:border-[#D4AF37]/50 transition-all flex items-center gap-1 whitespace-nowrap">
         <i data-lucide="book-marked" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>
         <span class="text-[11px] sm:text-xs">Ruang Baca</span>
       </button>
     </nav>
 
     <!-- Tombol Aksi Header (Tombol Admin & Atur Musik Tersembunyi Total bagi Pengunjung Publik) -->
-    <div class="flex items-center gap-1.5 shrink-0">
-      <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
+    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+      <button type="button" id="header-ambient-btn" title="Aktifkan Suara Suasana Perpustakaan Tenang" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
         <i data-lucide="headphones" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Suasana Hening</span>
       </button>
-      <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
+      <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
         <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Atur Musik</span>
       </button>
-      <button type="button" id="header-share-btn" title="Salin Tautan Publik Bersih" class="inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
+      <button type="button" id="header-share-btn" title="Salin Tautan Publik Bersih" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
         <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
         <span class="hidden md:inline">Salin Tautan</span>
       </button>
-      <button type="button" id="header-admin-auth-btn" title="Buka atau Sembunyikan Panel Studio Admin" class="admin-only-control hidden inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg border border-emerald-400 bg-[#0B3B2C] text-emerald-200 transition-all whitespace-nowrap shadow-xs">
+      <button type="button" id="header-crud-etalase-btn" title="Menu Edit CRUD Etalase & Konten Buku (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 text-[11px] font-semibold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#F3E5AB] transition-all whitespace-nowrap shadow-sm cursor-pointer">
+        <i data-lucide="file-pen-line" class="w-3.5 h-3.5 text-[#072A20]"></i>
+        <span class="hidden md:inline font-bold">CRUD Etalase &amp; Buku</span>
+      </button>
+      <button type="button" id="header-admin-auth-btn" title="Buka atau Sembunyikan Panel Studio Admin" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg border border-emerald-400 bg-[#0B3B2C] text-emerald-200 transition-all whitespace-nowrap shadow-xs">
         <i id="header-admin-icon" data-lucide="shield-check" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span id="header-admin-text" class="hidden lg:inline">Studio Admin</span>
+        <span id="header-admin-text" class="hidden xl:inline">Studio Admin</span>
       </button>
-      <button type="button" id="header-admin-security-btn" title="Pengaturan Kata Sandi & Keamanan Admin" class="admin-only-control hidden inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
+      <button type="button" id="header-admin-security-btn" title="Pengaturan Kata Sandi & Keamanan Admin" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg btn-emerald-gold whitespace-nowrap transition-all shadow-xs">
         <i data-lucide="key-round" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-        <span class="hidden lg:inline">Sandi Admin</span>
+        <span class="hidden xl:inline">Sandi</span>
       </button>
-      <button type="button" id="header-admin-logout-btn" title="Keluar dari Mode Admin (Kembali ke Tampilan Publik)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg border border-red-400/60 bg-red-950/80 text-red-200 hover:bg-red-900 transition-all whitespace-nowrap shadow-xs">
+      <button type="button" id="header-admin-logout-btn" title="Keluar dari Mode Admin (Kembali ke Tampilan Publik)" class="admin-only-control hidden inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 text-[11px] font-semibold rounded-lg border border-red-400/60 bg-red-950/80 text-red-200 hover:bg-red-900 transition-all whitespace-nowrap shadow-xs">
         <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-300"></i>
-        <span class="hidden lg:inline">Keluar Admin</span>
+        <span class="hidden xl:inline">Keluar</span>
       </button>
     </div>
   </header>
@@ -1089,14 +1093,26 @@
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
-            <div class="relative w-full sm:w-60">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
+            <div class="relative w-full sm:w-56">
               <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
               <input id="shelf-search-input" type="text" placeholder="Cari judul atau penulis..." class="w-full pl-8 pr-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C]" />
             </div>
-            <button type="button" id="btn-upload-to-shelf" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs">
-              <i data-lucide="plus-circle" class="w-4 h-4 text-[#D4AF37]"></i>
-              <span>+ Unggah PDF Baru</span>
+            <button type="button" id="btn-open-crud-etalase-modal" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#072A20]/20 whitespace-nowrap shadow-sm cursor-pointer transition-all">
+              <i data-lucide="file-pen-line" class="w-4 h-4 text-[#072A20]"></i>
+              <span>Menu Edit CRUD Etalase &amp; Konten</span>
+            </button>
+            <button type="button" id="btn-add-book-etalase" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer">
+              <i data-lucide="book-plus" class="w-4 h-4 text-[#D4AF37]"></i>
+              <span>+ Buku Baru</span>
+            </button>
+            <button type="button" id="btn-edit-active-shelf-etalase" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer" title="Ubah Nama &amp; Deskripsi Rak Etalase Ini">
+              <i data-lucide="folder-pen" class="w-4 h-4 text-[#D4AF37]"></i>
+              <span class="hidden sm:inline">Edit Rak</span>
+            </button>
+            <button type="button" id="btn-upload-to-shelf" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer">
+              <i data-lucide="upload" class="w-4 h-4 text-[#D4AF37]"></i>
+              <span>+ Unggah PDF</span>
             </button>
           </div>
         </div>
@@ -1200,11 +1216,17 @@
             <textarea id="inp-desc" rows="2" class="w-full px-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37]/70 rounded-lg text-[#072A20] leading-relaxed"></textarea>
           </div>
 
-          <!-- Tombol Simpan ke Rak Perpustakaan -->
-          <button type="button" id="btn-save-to-shelf" class="w-full py-2.5 px-4 text-xs font-semibold btn-emerald-gold rounded-lg flex items-center justify-center gap-2">
-            <i data-lucide="bookmark-plus" class="w-4 h-4 text-[#D4AF37]"></i>
-            <span>Simpan Buku ke Rak Perpustakaan</span>
-          </button>
+          <!-- Tombol Simpan ke Rak Perpustakaan & Pintasan Menu CRUD Konten -->
+          <div class="space-y-2 pt-1">
+            <button type="button" id="btn-save-to-shelf" class="w-full py-2.5 px-4 text-xs font-semibold btn-emerald-gold rounded-lg flex items-center justify-center gap-2 cursor-pointer">
+              <i data-lucide="bookmark-plus" class="w-4 h-4 text-[#D4AF37]"></i>
+              <span>Simpan Buku &amp; Perbarui Sampul 3D</span>
+            </button>
+            <button type="button" id="btn-open-crud-from-sidebar" class="w-full py-2.5 px-4 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#072A20]/20 rounded-lg flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors">
+              <i data-lucide="file-pen-line" class="w-4 h-4 text-[#072A20]"></i>
+              <span>Menu Edit CRUD Etalase &amp; Konten Halaman</span>
+            </button>
+          </div>
         </section>
 
         <!-- 3. Panel Kontrol Hak Akses & Fitur Pembaca -->
@@ -1625,6 +1647,358 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL STUDIO ADMIN: MENU EDIT CRUD ETALASE & KONTEN BUKU   -->
+  <!-- ========================================================= -->
+  <div id="modal-crud-etalase-book" class="hidden fixed inset-0 z-[75] flex items-center justify-center p-2 sm:p-4 bg-[#072A20]/85 backdrop-blur-xs">
+    <div class="w-full max-w-6xl bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl text-[#FBF9F5] shadow-2xl flex flex-col max-h-[94vh] overflow-hidden">
+      <!-- Header Studio CRUD -->
+      <div class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-b border-[#D4AF37]/40 bg-[#072A20] shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-[#0B3B2C] border border-[#D4AF37] flex items-center justify-center shrink-0">
+            <i data-lucide="file-pen-line" class="w-5 h-5 text-[#D4AF37]"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-classical-label uppercase tracking-widest text-[#D4AF37] font-bold">STUDIO KURATORIAL ADMIN</span>
+              <span id="crud-active-mode-badge" class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/60 text-[#F3E5AB]">MODE EDIT BUKU</span>
+            </div>
+            <h3 class="text-base sm:text-xl font-bold font-serif-editorial text-[#F3E5AB] leading-tight">
+              Menu Edit CRUD Etalase &amp; Konten Buku 3D
+            </h3>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-crud-open-shelves-manager" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 flex items-center gap-1.5 cursor-pointer transition-colors">
+            <i data-lucide="folders" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+            <span class="hidden sm:inline">Kelola Kategori Rak</span>
+          </button>
+          <button type="button" id="btn-close-crud-etalase-modal" aria-label="Tutup Menu CRUD Etalase" class="text-[#F3E5AB] hover:text-white p-1.5 rounded-lg hover:bg-[#0B3B2C] cursor-pointer">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body Studio CRUD: 2 Kolom (Kiri: Daftar Buku Etalase, Kanan: Editor Identitas & Konten Halaman) -->
+      <div class="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+        <!-- KOLOM KIRI: DAFTAR KOLEKSI BUKU DI ETALASE (CREATE, FILTER, SELECT, REORDER, DELETE) -->
+        <aside class="w-full lg:w-80 xl:w-88 border-b lg:border-b-0 lg:border-r border-[#D4AF37]/40 bg-[#072A20]/90 flex flex-col shrink-0 max-h-56 lg:max-h-none">
+          <div class="p-3 sm:p-4 space-y-2.5 border-b border-[#D4AF37]/30 shrink-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold font-serif-editorial text-[#F3E5AB]">Daftar Buku Etalase</span>
+              <button type="button" id="btn-crud-create-new-book" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] flex items-center gap-1 shadow-xs cursor-pointer transition-colors">
+                <i data-lucide="plus" class="w-3.5 h-3.5 text-[#072A20]"></i>
+                <span>+ Buku Baru</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+              <select id="crud-filter-shelf-select" aria-label="Filter Rak Etalase" class="w-full px-2.5 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/60 rounded-lg text-[#F3E5AB] focus:outline-none focus:border-[#D4AF37]">
+                <option value="ALL">Semua Rak Etalase</option>
+              </select>
+              <div class="relative">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-[#D4AF37] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input id="crud-search-book-input" type="text" placeholder="Cari buku di etalase..." class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/60 rounded-lg text-white placeholder:text-[#F3E5AB]/45 focus:outline-none focus:border-[#D4AF37]" />
+              </div>
+            </div>
+          </div>
+
+          <div id="crud-books-list-container" class="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2">
+            <!-- Dirender secara dinamis oleh JS -->
+          </div>
+        </aside>
+
+        <!-- KOLOM KANAN: WORKSPACE EDITOR BUKU (TAB 1: METADATA & SAMPUL ETALASE, TAB 2: KONTEN PER HALAMAN) -->
+        <div class="flex-1 min-h-0 flex flex-col overflow-hidden bg-[#0B3B2C]">
+          <!-- Tab Bar Switcher -->
+          <div class="px-4 sm:px-6 pt-3 pb-0 border-b border-[#D4AF37]/40 bg-[#072A20]/50 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="tab-btn-crud-metadata" class="px-3.5 py-2 text-xs font-bold rounded-t-xl border-t-2 border-x-2 border-[#D4AF37] bg-[#0B3B2C] text-[#F3E5AB] flex items-center gap-1.5 cursor-pointer transition-all">
+                <i data-lucide="book-marked" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span>01. Edit Etalase &amp; Sampul Buku</span>
+              </button>
+              <button type="button" id="tab-btn-crud-pages" class="px-3.5 py-2 text-xs font-semibold rounded-t-xl border-t border-x border-transparent bg-[#072A20]/60 text-[#F3E5AB]/75 hover:text-white flex items-center gap-1.5 cursor-pointer transition-all">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span>02. Edit Konten Halaman Buku</span>
+                <span id="crud-tab-pages-count" class="px-1.5 py-0.2 text-[10px] font-mono-tabular rounded bg-[#D4AF37] text-[#072A20] font-bold">6 Hal</span>
+              </button>
+            </div>
+
+            <div class="pb-2 hidden sm:flex items-center gap-2 text-[11px] text-[#F3E5AB]/80">
+              <span>ID:</span>
+              <code id="crud-current-book-id-label" class="font-mono-tabular text-[#D4AF37] bg-[#072A20] px-2 py-0.5 rounded border border-[#D4AF37]/40">book-kurikulum</code>
+            </div>
+          </div>
+
+          <!-- PANEL TAB 1: EDIT ETALASE & SAMPUL BUKU (METADATA 3D) -->
+          <div id="crud-panel-metadata" class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <!-- Form Input Metadata Etalase (8 Kolom) -->
+              <div class="lg:col-span-8 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div class="sm:col-span-2">
+                    <label for="crud-inp-title" class="block text-xs font-semibold text-[#F3E5AB] mb-1">
+                      Judul Buku di Etalase &amp; Sampul 3D <span class="text-[#D4AF37]">*</span>
+                    </label>
+                    <input id="crud-inp-title" type="text" required placeholder="Masukkan judul lengkap buku..." class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]" />
+                  </div>
+
+                  <div>
+                    <label for="crud-inp-author" class="block text-xs font-semibold text-[#F3E5AB] mb-1">
+                      Penulis / Tokoh / Penerbit <span class="text-[#D4AF37]">*</span>
+                    </label>
+                    <input id="crud-inp-author" type="text" required placeholder="cth: AS-SAMARQANDI" class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]" />
+                  </div>
+
+                  <div>
+                    <label for="crud-inp-shelf" class="block text-xs font-semibold text-[#F3E5AB] mb-1">
+                      Kotak Rak Klasifikasi (Etalase)
+                    </label>
+                    <select id="crud-inp-shelf" class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"></select>
+                  </div>
+
+                  <div>
+                    <label for="crud-inp-kicker" class="block text-xs font-semibold text-[#F3E5AB] mb-1">
+                      Label Kicker Atas Sampul
+                    </label>
+                    <input id="crud-inp-kicker" type="text" placeholder="cth: KHAZANAH ISLAM · EDISI 3D" class="w-full px-3.5 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]" />
+                  </div>
+
+                  <div>
+                    <label for="crud-inp-accent" class="block text-xs font-semibold text-[#F3E5AB] mb-1">
+                      Warna Aksen &amp; Punggung Buku 3D
+                    </label>
+                    <div class="flex items-center gap-2">
+                      <input id="crud-inp-accent" type="color" value="#0B3B2C" class="w-9 h-9 rounded-lg border border-[#D4AF37] bg-[#072A20] cursor-pointer p-0.5 shrink-0" />
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <button type="button" class="crud-color-preset w-6 h-6 rounded-full border border-[#F3E5AB]/70 bg-[#0B3B2C]" data-color="#0B3B2C" title="Zamrud Klasik"></button>
+                        <button type="button" class="crud-color-preset w-6 h-6 rounded-full border border-[#F3E5AB]/70 bg-[#1E3A8A]" data-color="#1E3A8A" title="Biru Safir"></button>
+                        <button type="button" class="crud-color-preset w-6 h-6 rounded-full border border-[#F3E5AB]/70 bg-[#B45309]" data-color="#B45309" title="Amber Emas"></button>
+                        <button type="button" class="crud-color-preset w-6 h-6 rounded-full border border-[#F3E5AB]/70 bg-[#78350F]" data-color="#78350F" title="Kayu Mahoni"></button>
+                        <button type="button" class="crud-color-preset w-6 h-6 rounded-full border border-[#F3E5AB]/70 bg-[#9A3412]" data-color="#9A3412" title="Terakota Klasik"></button>
+                        <button type="button" class="crud-color-preset w-6 h-6 rounded-full border border-[#F3E5AB]/70 bg-[#4C1D95]" data-color="#4C1D95" title="Ungu Kerajaan"></button>
+                        <button type="button" class="crud-color-preset w-6 h-6 rounded-full border border-[#F3E5AB]/70 bg-[#831843]" data-color="#831843" title="Merah Marun"></button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label for="crud-inp-desc" class="block text-xs font-semibold text-[#F3E5AB] mb-1">
+                      Deskripsi Singkat / Sinopsis Buku di Etalase
+                    </label>
+                    <textarea id="crud-inp-desc" rows="3" placeholder="Ringkasan isi buku yang ditampilkan pada kartu etalase dan sampul..." class="w-full px-3.5 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"></textarea>
+                  </div>
+                </div>
+
+                <!-- Pengaturan Proteksi Sandi & Sumber Sampul/PDF -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-[#D4AF37]/30">
+                  <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-2">
+                    <label class="flex items-center justify-between gap-2 cursor-pointer">
+                      <span class="text-xs font-bold text-[#F3E5AB] flex items-center gap-1.5">
+                        <i data-lucide="lock" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                        <span>Kunci Buku dengan Sandi</span>
+                      </span>
+                      <input id="crud-chk-password" type="checkbox" class="w-4 h-4 accent-[#D4AF37]" />
+                    </label>
+                    <input id="crud-inp-password" type="text" placeholder="Ketik kata sandi buku (opsional)..." class="w-full px-3 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/60 rounded-lg text-white font-mono-tabular" />
+                  </div>
+
+                  <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-2">
+                    <span class="block text-xs font-bold text-[#F3E5AB]">Ganti Sampul atau Muat Dokumen PDF:</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <label for="crud-cover-image-input" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer inline-flex items-center gap-1.5">
+                        <i data-lucide="image" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                        <span>Unggah Gambar Sampul</span>
+                        <input id="crud-cover-image-input" type="file" accept="image/*" class="sr-only" />
+                      </label>
+                      <label for="crud-pdf-file-input" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer inline-flex items-center gap-1.5">
+                        <i data-lucide="file-up" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                        <span>Impor Isi dari PDF</span>
+                        <input id="crud-pdf-file-input" type="file" accept="application/pdf,.pdf" class="sr-only" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pratinjau Kartu Buku 3D Etalase Langsung (4 Kolom) -->
+              <div class="lg:col-span-4 p-4 rounded-2xl bg-[#FBF9F5] text-[#072A20] border-2 border-[#D4AF37] shadow-xl flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between text-[10px] font-classical-label uppercase tracking-wider text-[#9E7B1C] font-bold mb-2">
+                    <span>PRATINJAU KARTU ETALASE 3D</span>
+                    <button type="button" id="btn-crud-regen-cover" class="px-2 py-0.5 rounded bg-[#0B3B2C] text-[#F3E5AB] hover:bg-[#12543F] text-[10px] font-sans font-semibold flex items-center gap-1 cursor-pointer" title="Render ulang gambar sampul 3D sesuai judul &amp; penulis di samping">
+                      <i data-lucide="refresh-cw" class="w-2.5 h-2.5 text-[#D4AF37]"></i>
+                      <span>Sinkron Sampul</span>
+                    </button>
+                  </div>
+
+                  <div class="relative mx-auto w-36 sm:w-40 aspect-[3/4] mb-2.5 pt-1">
+                    <div class="book-3d-showcase-card relative w-full h-full rounded-r-sm bg-[#072A20] shadow-xl border border-[#D4AF37]/60">
+                      <img id="crud-preview-cover-img" src="" alt="Pratinjau Sampul 3D" class="w-full h-full object-cover rounded-r-sm" />
+                      <div class="book-3d-spine-highlight"></div>
+                      <div class="book-3d-pages-edge"></div>
+                    </div>
+                  </div>
+                  <div class="wood-shelf-ledge h-2.5 w-full rounded-sm mb-3"></div>
+
+                  <div class="flex items-center justify-between text-[10px] font-display-classical font-bold text-[#9E7B1C] mb-1">
+                    <span id="crud-preview-page-count">6 HALAMAN</span>
+                    <span class="px-1.5 py-0.5 rounded bg-[#0B3B2C]/10 text-[#0B3B2C] border border-[#D4AF37]/40">EDISI 3D</span>
+                  </div>
+                  <h4 id="crud-preview-title" class="text-sm font-bold font-serif-editorial text-[#072A20] line-clamp-2 leading-snug">
+                    Judul Buku Pratinjau
+                  </h4>
+                  <p id="crud-preview-author" class="text-xs font-semibold text-[#9E7B1C] mt-0.5 truncate">
+                    Nama Penulis
+                  </p>
+                  <p id="crud-preview-desc" class="text-[11px] text-[#0B3B2C]/80 mt-1 line-clamp-2 leading-relaxed">
+                    Deskripsi singkat buku di etalase.
+                  </p>
+                </div>
+
+                <button type="button" id="btn-crud-goto-pages-tab" class="mt-3 w-full py-2 px-3 rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37] text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                  <span>Lanjut Edit Isi Konten Halaman &rarr;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL TAB 2: EDIT KONTEN HALAMAN BUKU (CRUD PER HALAMAN) -->
+          <div id="crud-panel-pages" class="hidden flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            <!-- Bar Aksi Halaman Atas -->
+            <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50">
+              <div class="flex items-center gap-2.5">
+                <span id="crud-pages-count-badge" class="px-2.5 py-1 rounded-lg bg-[#0B3B2C] border border-[#D4AF37] text-xs font-mono-tabular font-bold text-[#F3E5AB]">
+                  Total: 6 Halaman
+                </span>
+                <span class="text-xs text-[#E6E1D6]/80 hidden md:inline">
+                  Klik nomor halaman di daftar kiri untuk menyunting teks bab, subjudul, atau mengunggah ilustrasi halaman.
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button type="button" id="btn-crud-sync-cover-page" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 flex items-center gap-1.5 cursor-pointer transition-colors" title="Samakan Halaman 1 (Sampul) dengan Judul &amp; Penulis Buku">
+                  <i data-lucide="wand-sparkles" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                  <span>Sinkronkan Sampul (Hal 1)</span>
+                </button>
+                <button type="button" id="btn-crud-add-page" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-[#072A20]"></i>
+                  <span>+ Tambah Halaman Baru</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Grid 3 Bagian: Daftar Halaman (3 Kol) | Form Editor Halaman (5 Kol) | Pratinjau Kanvas Halaman (4 Kol) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+              <!-- 1. Daftar Urutan Halaman -->
+              <div class="lg:col-span-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 p-2.5 space-y-1.5 max-h-[420px] overflow-y-auto" id="crud-pages-list">
+                <!-- Dirender oleh JS -->
+              </div>
+
+              <!-- 2. Form Editor Teks & Gambar Halaman Aktif -->
+              <div class="lg:col-span-5 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-[#D4AF37]/30 pb-2">
+                  <span id="crud-active-page-heading" class="text-xs font-bold font-serif-editorial text-[#F3E5AB]">
+                    Sunting Halaman 1 (Sampul Depan)
+                  </span>
+                  <div class="flex items-center gap-1">
+                    <button type="button" id="btn-crud-page-move-up" class="p-1 rounded bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/50 text-xs cursor-pointer" title="Geser Halaman ke Atas">
+                      <i data-lucide="arrow-up" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                    </button>
+                    <button type="button" id="btn-crud-page-move-down" class="p-1 rounded bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/50 text-xs cursor-pointer" title="Geser Halaman ke Bawah">
+                      <i data-lucide="arrow-down" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                    </button>
+                    <button type="button" id="btn-crud-page-delete" class="px-2 py-1 rounded bg-red-950/70 hover:bg-red-900 text-red-200 border border-red-400/50 text-[11px] font-semibold flex items-center gap-1 cursor-pointer" title="Hapus Halaman Ini">
+                      <i data-lucide="trash-2" class="w-3 h-3 text-red-300"></i>
+                      <span>Hapus</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label for="crud-page-inp-kicker" class="block text-[11px] font-semibold text-[#F3E5AB] mb-1">
+                    Label Atas / Kicker Halaman (cth: SAMPUL DEPAN / BAB 01)
+                  </label>
+                  <input id="crud-page-inp-kicker" type="text" class="w-full px-3 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]" />
+                </div>
+
+                <div>
+                  <label for="crud-page-inp-title" class="block text-[11px] font-semibold text-[#F3E5AB] mb-1">
+                    Judul Halaman / Judul Bab
+                  </label>
+                  <input id="crud-page-inp-title" type="text" class="w-full px-3 py-1.5 text-xs sm:text-sm font-semibold bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]" />
+                </div>
+
+                <div>
+                  <label for="crud-page-inp-subtitle" class="block text-[11px] font-semibold text-[#F3E5AB] mb-1">
+                    Subjudul / Kutipan Pengantar Halaman
+                  </label>
+                  <input id="crud-page-inp-subtitle" type="text" class="w-full px-3 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]" />
+                </div>
+
+                <div>
+                  <label for="crud-page-inp-body" class="block text-[11px] font-semibold text-[#F3E5AB] mb-1">
+                    Isi Konten / Naskah Halaman Buku
+                  </label>
+                  <textarea id="crud-page-inp-body" rows="6" placeholder="Ketik isi materi, hadits, motivasi, atau narasi bab untuk halaman ini..." class="w-full px-3 py-2 text-xs bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white leading-relaxed focus:outline-none focus:border-[#D4AF37]"></textarea>
+                </div>
+
+                <div class="pt-2 border-t border-[#D4AF37]/30 flex flex-wrap items-center justify-between gap-2">
+                  <label for="crud-page-image-input" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer inline-flex items-center gap-1.5">
+                    <i data-lucide="image-plus" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                    <span>Gunakan Gambar Halaman Penuh</span>
+                    <input id="crud-page-image-input" type="file" accept="image/*" class="sr-only" />
+                  </label>
+                  <button type="button" id="btn-crud-clear-page-image" class="hidden px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-red-950/60 hover:bg-red-900 text-red-200 border border-red-400/50 cursor-pointer">
+                    Reset ke Mode Teks Kanvas
+                  </button>
+                </div>
+              </div>
+
+              <!-- 3. Pratinjau Kanvas Halaman Aktif -->
+              <div class="lg:col-span-4 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 p-3 flex flex-col items-center">
+                <div class="w-full flex items-center justify-between text-[10px] font-classical-label uppercase tracking-wider text-[#D4AF37] mb-2">
+                  <span>PRATINJAU LEMBARAN BUKU</span>
+                  <span id="crud-page-preview-folio-label" class="font-mono-tabular">HALAMAN 1</span>
+                </div>
+                <div class="w-48 sm:w-56 aspect-[580/800] rounded shadow-2xl border border-[#D4AF37]/60 overflow-hidden bg-[#FBF9F5]">
+                  <img id="crud-page-live-preview-img" src="" alt="Pratinjau Halaman Buku" class="w-full h-full object-contain" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer Aksi Simpan / Hapus / Duplikat / Buka Ruang Baca -->
+          <div class="px-4 sm:px-6 py-3 border-t border-[#D4AF37]/40 bg-[#072A20] flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+            <div class="flex items-center gap-2">
+              <button type="button" id="btn-crud-delete-current-book" class="px-3 py-2 text-xs font-semibold rounded-xl bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-400/60 flex items-center gap-1.5 cursor-pointer transition-colors">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-300"></i>
+                <span>Hapus Buku</span>
+              </button>
+              <button type="button" id="btn-crud-duplicate-current-book" class="px-3 py-2 text-xs font-semibold rounded-xl bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 flex items-center gap-1.5 cursor-pointer transition-colors">
+                <i data-lucide="copy" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span>Duplikat</span>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" id="btn-crud-open-in-reader" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37] flex items-center gap-1.5 cursor-pointer transition-colors">
+                <i data-lucide="book-open" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span>Simpan &amp; Buka Flipbook 3D</span>
+              </button>
+              <button type="button" id="btn-crud-save-all" class="px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#F3E5AB] shadow-lg flex items-center gap-2 cursor-pointer transition-all">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-[#072A20]"></i>
+                <span>Simpan Permanen ke Etalase</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2192,12 +2566,17 @@
             title: meta.title || assetPayload.title || '',
             author: meta.author || assetPayload.author || '',
             description: meta.description || assetPayload.description || '',
+            kicker: meta.kicker || assetPayload.kicker || '',
+            accent: meta.accent || assetPayload.accent || '#0B3B2C',
+            spineColor: meta.spineColor || assetPayload.spineColor || meta.accent || '#0B3B2C',
             shelfId: meta.shelfId || assetPayload.shelfId || 'rak-01',
             pageCount: (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls.length) || meta.pageCount || assetPayload.pageCount || 1,
             passwordProtected: Boolean(meta.passwordProtected !== undefined ? meta.passwordProtected : assetPayload.passwordProtected),
             password: meta.password || assetPayload.password || '',
             coverUrl: assetPayload.coverUrl || meta.coverUrl || (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls[0] ? assetPayload.pagesDataUrls[0].dataUrl : ''),
             pagesDataUrls: assetPayload.pagesDataUrls || [],
+            editablePages: assetPayload.editablePages || meta.editablePages || [],
+            isCustomPdf: Boolean(meta.isCustomPdf || assetPayload.isCustomPdf),
             pdfDataUrl: assetPayload.pdfDataUrl || '',
             pdfUrl: meta.pdfUrl || assetPayload.pdfUrl || '',
             updatedAt: Date.now()
@@ -3507,7 +3886,7 @@
         return y;
       }
 
-      // Generator Halaman & Sampul Buku Kanvas Retina DPI (Nuansa Hijau Zamrud & Gold Elegan)
+      // Generator Halaman & Sampul Buku Kanvas Retina DPI (Nuansa Hijau Zamrud & Gold Elegan + Dukungan Aksen Kustom)
       function generateCanvasPageDataUrl(title, subtitle, kicker, author, body, isCover, totalPages, pageIdx, accentHex) {
         const dpr = Math.min(window.devicePixelRatio || 2, 2.5);
         const w = 580, h = 800;
@@ -3517,11 +3896,13 @@
         const ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
 
+        const safeAccent = accentHex && /^#[0-9A-Fa-f]{6}$/.test(accentHex) ? accentHex : '#0B3B2C';
+
         if (isCover) {
-          // Latar Sampul Buku: Gradasi Hijau Zamrud Kerajaan & Bingkai Gold Kembar
+          // Latar Sampul Buku: Gradasi Hijau Zamrud Kerajaan dipadukan dengan Rona Aksen Buku & Bingkai Gold Kembar
           const grad = ctx.createLinearGradient(0, 0, w, h);
           grad.addColorStop(0, '#0F4C3A');
-          grad.addColorStop(0.55, '#0B3B2C');
+          grad.addColorStop(0.5, safeAccent === '#0B3B2C' ? '#0B3B2C' : safeAccent);
           grad.addColorStop(1, '#072A20');
           ctx.fillStyle = grad;
           ctx.fillRect(0, 0, w, h);
@@ -3545,49 +3926,153 @@
         // Kicker Klasikal
         ctx.fillStyle = isCover ? '#F3E5AB' : '#9E7B1C';
         ctx.font = '600 11px "Cinzel", Georgia, serif';
-        ctx.fillText((kicker || 'KOLEKSI PUSTAKA').toUpperCase(), 60, 78);
+        ctx.fillText((kicker || 'KOLEKSI PUSTAKA 3D').toUpperCase().slice(0, 48), 60, 76);
 
         // Garis Aksen Gold
         ctx.fillStyle = '#D4AF37';
-        ctx.fillRect(60, 92, 76, 2.5);
+        ctx.fillRect(60, 90, 84, 2.5);
 
-        // Judul Buku dengan Pembungkus Baris (Anti-Tabrakan)
+        // Judul Buku / Bab dengan Pembungkus Baris hingga 3 baris (Anti-Terpotong)
         ctx.fillStyle = isCover ? '#FFFFFF' : '#072A20';
-        ctx.font = '700 26px "Cormorant Garamond", Georgia, serif';
-        const afterTitleY = drawWrappedCanvasText(ctx, title, 60, 132, w - 120, 32, 2);
+        const cleanTitleStr = String(title || 'Publikasi e-Library').trim();
+        ctx.font = cleanTitleStr.length > 42
+          ? '700 22px "Cormorant Garamond", Georgia, serif'
+          : '700 26px "Cormorant Garamond", Georgia, serif';
+        const lineH = cleanTitleStr.length > 42 ? 27 : 31;
+        const afterTitleY = drawWrappedCanvasText(ctx, cleanTitleStr, 60, 126, w - 120, lineH, 3);
 
         // Subjudul
         ctx.fillStyle = isCover ? '#F3E5AB' : '#12543F';
-        ctx.font = 'italic 600 15px "Cormorant Garamond", Georgia, serif';
-        drawWrappedCanvasText(ctx, subtitle, 60, afterTitleY + 6, w - 120, 20, 2);
+        ctx.font = 'italic 600 14.5px "Cormorant Garamond", Georgia, serif';
+        drawWrappedCanvasText(ctx, subtitle || '', 60, afterTitleY + 4, w - 120, 19, 2);
 
         // Ornamen Medali Arsitektural Emas di Tengah
-        ctx.fillStyle = isCover ? 'rgba(212, 175, 55, 0.08)' : '#F4F1EA';
-        ctx.fillRect(60, 225, w - 120, 210);
+        ctx.fillStyle = isCover ? 'rgba(212, 175, 55, 0.09)' : '#F4F1EA';
+        ctx.fillRect(60, 236, w - 120, 195);
         ctx.strokeStyle = '#D4AF37';
         ctx.lineWidth = 1.8;
-        ctx.strokeRect(60, 225, w - 120, 210);
+        ctx.strokeRect(60, 236, w - 120, 195);
 
         ctx.beginPath();
-        ctx.arc(w / 2, 330, 62, 0, Math.PI * 2);
+        ctx.arc(w / 2, 333, 58, 0, Math.PI * 2);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(w / 2, 330, 46, 0, Math.PI * 2);
+        ctx.arc(w / 2, 333, 42, 0, Math.PI * 2);
         ctx.strokeStyle = isCover ? 'rgba(243, 229, 171, 0.5)' : 'rgba(11, 59, 44, 0.35)';
         ctx.stroke();
 
-        // Paragraf Deskripsi
+        // Nama Penulis di Dalam Pita Medali Sampul agar Tampil Jelas di Etalase
+        if (isCover && author) {
+          ctx.fillStyle = '#F3E5AB';
+          ctx.font = '600 11px "Cinzel", Georgia, serif';
+          const authorLabel = ('OLEH: ' + String(author).toUpperCase()).slice(0, 42);
+          const m = ctx.measureText(authorLabel);
+          ctx.fillText(authorLabel, Math.max(70, (w - m.width) / 2), 416);
+        }
+
+        // Paragraf Deskripsi / Naskah Halaman
         ctx.fillStyle = isCover ? '#F5F2EB' : '#0B3B2C';
         ctx.font = '400 14px "Plus Jakarta Sans", sans-serif';
-        drawWrappedCanvasText(ctx, body, 60, 480, w - 120, 23, 8);
+        const paragraphs = String(body || '').split(/\n+/).filter(Boolean);
+        let curBodyY = 472;
+        const maxBodyY = h - 88;
+        if (paragraphs.length === 0) {
+          drawWrappedCanvasText(ctx, '', 60, curBodyY, w - 120, 22, 9);
+        } else {
+          for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+            if (curBodyY > maxBodyY) break;
+            const remainingLines = Math.max(1, Math.floor((maxBodyY - curBodyY) / 22));
+            curBodyY = drawWrappedCanvasText(ctx, paragraphs[pIdx], 60, curBodyY, w - 120, 22, remainingLines) + 8;
+          }
+        }
 
         // Kolofon Bawah
         ctx.fillStyle = isCover ? '#D4AF37' : '#9E7B1C';
         ctx.font = '600 11px "JetBrains Mono", monospace';
-        ctx.fillText('FOLIO 0' + (pageIdx + 1) + ' / 0' + totalPages + '  ·  ' + (author || '').slice(0, 34), 60, h - 56);
+        ctx.fillText(
+          'FOLIO ' + String(pageIdx + 1).padStart(2, '0') + ' / ' + String(totalPages).padStart(2, '0') + '  ·  ' + String(author || '').slice(0, 34),
+          60,
+          h - 52
+        );
 
         return canvas.toDataURL('image/jpeg', 0.92);
+      }
+
+      // Helper Membangun Struktur Halaman Editable Default untuk Buku
+      function buildEditablePagesForBook(book) {
+        if (book && Array.isArray(book.editablePages) && book.editablePages.length > 0) {
+          return book.editablePages.map((p, idx) => ({
+            pageNumber: idx + 1,
+            kicker: p.kicker || (idx === 0 ? (book.kicker || 'SAMPUL DEPAN') : 'BAGIAN ' + String(idx).padStart(2, '0')),
+            title: p.title || (idx === 0 ? book.title : 'Bab ' + idx + ': Pembahasan & Analisis'),
+            subtitle: p.subtitle || (idx === 0 ? (book.description || '').slice(0, 68) : 'Eksplorasi literatur dan kajian utama'),
+            body: p.body || book.description || '',
+            customImageDataUrl: p.customImageDataUrl || ''
+          }));
+        }
+
+        if (book && book.id === 'book-arch') {
+          return SAMPLE_CHAPTERS_ARCH.map((ch, idx) => ({
+            pageNumber: idx + 1,
+            kicker: ch.kicker,
+            title: idx === 0 ? book.title : ch.title,
+            subtitle: ch.subtitle,
+            body: idx === 0 ? book.description : ch.body,
+            customImageDataUrl: ''
+          }));
+        }
+
+        const total = Math.max(2, Math.min(50, parseInt(book && book.pageCount, 10) || 6));
+        const shelfObj = shelves.find((s) => s.id === (book && book.shelfId));
+        const defaultKicker = (book && book.kicker) || (shelfObj ? shelfObj.code : 'KOLEKSI PUSTAKA 3D');
+        const list = [];
+        for (let i = 0; i < total; i++) {
+          const isCover = i === 0;
+          list.push({
+            pageNumber: i + 1,
+            kicker: isCover ? defaultKicker : 'BAGIAN ' + String(i).padStart(2, '0'),
+            title: isCover ? (book.title || 'Publikasi Baru') : 'Bab ' + i + ': Kajian & Pembahasan ' + (book.title || '').slice(0, 28),
+            subtitle: isCover
+              ? ((book.description || 'Edisi koleksi perpustakaan digital 3D interaktif.').slice(0, 68))
+              : 'Uraian materi bagian ' + i + ' oleh ' + (book.author || 'Tim Penyusun'),
+            body: isCover
+              ? (book.description || 'Koleksi pustaka digital interaktif dengan efek lembaran 3D.')
+              : ((book.description || '') + '\n\nBagian ke-' + i + ' dari "' + (book.title || 'buku ini') + '" menguraikan pokok-pokok bahasan, keteladanan, serta intisari keilmuan secara sistematis. Anda dapat menyunting teks halaman ini kapan saja melalui Menu Edit CRUD Konten Buku.'),
+            customImageDataUrl: ''
+          });
+        }
+        return list;
+      }
+
+      // Render Array editablePages Menjadi Array pagesDataUrls Kanvas Resolusi Tinggi
+      function renderEditablePagesToDataUrls(book, editablePagesInput) {
+        const pagesList = Array.isArray(editablePagesInput) && editablePagesInput.length > 0
+          ? editablePagesInput
+          : buildEditablePagesForBook(book);
+        const total = pagesList.length;
+        const accent = (book && (book.accent || book.spineColor)) || '#0B3B2C';
+        return pagesList.map((p, idx) => {
+          const isCover = idx === 0;
+          const dataUrl = p.customImageDataUrl
+            ? p.customImageDataUrl
+            : generateCanvasPageDataUrl(
+                p.title || (isCover ? book.title : 'Halaman ' + (idx + 1)),
+                p.subtitle || '',
+                p.kicker || (isCover ? 'SAMPUL DEPAN' : 'BAGIAN ' + String(idx).padStart(2, '0')),
+                book.author || '',
+                p.body || '',
+                isCover,
+                total,
+                idx,
+                accent
+              );
+          return {
+            pageNumber: idx + 1,
+            title: p.title || (isCover ? book.title : 'Halaman ' + (idx + 1)),
+            dataUrl
+          };
+        });
       }
 
       function initShelvesAndBooks() {
@@ -3741,6 +4226,42 @@
               coverUrl: generateCanvasPageDataUrl('Rekayasa Energi Terbarukan', 'Rancang Bangun Mikrohidro & Fotovoltaik', 'KLASIKAL 600', 'Tim Riset Politeknik', 'Spesifikasi teknis dan panduan instalasi pembangkit listrik ramah lingkungan.', true, 6, 0, '#0F766E')
             }
           ];
+          saveBooksToStorage();
+        }
+
+        // Pastikan setiap buku non-PDF memiliki editablePages dan coverUrl yang selaras dengan judul bukunya sendiri
+        let booksFixed = false;
+        books.forEach((b) => {
+          if (!Array.isArray(b.editablePages) || b.editablePages.length === 0) {
+            b.editablePages = buildEditablePagesForBook(b);
+            booksFixed = true;
+          }
+          const isPdfBook = Boolean(b.isCustomPdf || String(b.id || '').startsWith('book-pdf-'));
+          if (!isPdfBook && !b.hasCustomCoverImage) {
+            const firstPage = b.editablePages[0];
+            if (firstPage && firstPage.title !== b.title) {
+              firstPage.title = b.title;
+              firstPage.subtitle = (b.description || '').slice(0, 68) || firstPage.subtitle;
+              firstPage.body = b.description || firstPage.body;
+            }
+            const freshCover = generateCanvasPageDataUrl(
+              b.title,
+              (firstPage && firstPage.subtitle) || (b.description || '').slice(0, 68),
+              (b.kicker || (firstPage && firstPage.kicker) || 'KOLEKSI PUSTAKA 3D'),
+              b.author,
+              (firstPage && firstPage.body) || b.description || '',
+              true,
+              b.editablePages.length || b.pageCount || 6,
+              0,
+              b.accent || b.spineColor || '#0B3B2C'
+            );
+            if (b.coverUrl !== freshCover) {
+              b.coverUrl = freshCover;
+              booksFixed = true;
+            }
+          }
+        });
+        if (booksFixed) {
           saveBooksToStorage();
         }
 
@@ -3982,30 +4503,84 @@
 
       function renderShelfBooksGrid(searchQuery) {
         const grid = document.getElementById('shelf-books-grid');
+        if (!grid) return;
         grid.innerHTML = '';
         const q = (searchQuery || '').toLowerCase().trim();
 
         const shelfBooks = books.filter((b) => {
           if (b.shelfId !== activeShelfId) return false;
           if (!q) return true;
-          return b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || b.description.toLowerCase().includes(q);
+          return (
+            (b.title || '').toLowerCase().includes(q) ||
+            (b.author || '').toLowerCase().includes(q) ||
+            (b.description || '').toLowerCase().includes(q)
+          );
         });
 
+        const countBadge = document.getElementById('active-shelf-count-badge');
+        if (countBadge) {
+          countBadge.textContent = books.filter((b) => b.shelfId === activeShelfId).length + ' Koleksi Buku 3D';
+        }
+
         if (shelfBooks.length === 0) {
+          const addBtnHtml = isAdminMode
+            ? '<div class="mt-4 flex items-center justify-center gap-2">' +
+                '<button type="button" id="btn-empty-shelf-add-book" class="px-4 py-2 rounded-xl bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm">' +
+                  '<i data-lucide="book-plus" class="w-4 h-4 text-[#D4AF37]"></i>' +
+                  '<span>+ Buat Buku Baru di Rak Ini</span>' +
+                '</button>' +
+              '</div>'
+            : '';
           grid.innerHTML =
             '<div class="col-span-full py-16 text-center text-[#0B3B2C] text-xs bg-[#FBF9F5] rounded-2xl border-2 border-[#D4AF37]/40">' +
               '<i data-lucide="book-dashed" class="w-8 h-8 mx-auto text-[#9E7B1C] mb-2"></i>' +
               '<p class="font-bold font-serif-editorial text-[#072A20] text-lg">Belum ada buku dalam kotak rak ini atau pencarian tidak ditemukan.</p>' +
-              '<p class="mt-1 text-[#0B3B2C]/75">Gunakan tombol "+ Unggah PDF Baru ke Rak Ini" di kanan atas untuk menambahkan buku.</p>' +
+              '<p class="mt-1 text-[#0B3B2C]/75">Gunakan tombol "+ Buku Baru" atau "Menu Edit CRUD Etalase & Konten" di atas untuk menambahkan koleksi.</p>' +
+              addBtnHtml +
             '</div>';
+          const btnEmptyAdd = document.getElementById('btn-empty-shelf-add-book');
+          if (btnEmptyAdd) {
+            btnEmptyAdd.onclick = () => {
+              requireAdminAuth(() => openCrudEtalaseModal(null, 'metadata', activeShelfId));
+            };
+          }
           if (window.lucide) window.lucide.createIcons();
           return;
         }
 
         shelfBooks.forEach((book) => {
           const card = document.createElement('article');
-          card.className = 'group rounded-2xl bg-[#FBF9F5] border-2 border-[#D4AF37]/45 hover:border-[#0B3B2C] p-5 flex flex-col justify-between transition-all duration-300 shadow-[0_14px_30px_-10px_rgba(11,59,44,0.14)] hover:shadow-[0_24px_48px_-12px_rgba(11,59,44,0.28)] cursor-pointer select-none';
+          card.className = 'group rounded-2xl bg-[#FBF9F5] border-2 border-[#D4AF37]/45 hover:border-[#0B3B2C] p-5 flex flex-col justify-between transition-all duration-300 shadow-[0_14px_30px_-10px_rgba(11,59,44,0.14)] hover:shadow-[0_24px_48px_-12px_rgba(11,59,44,0.28)] cursor-pointer select-none relative';
           card.onclick = () => openBookInReader(book);
+
+          const adminCardToolbarHtml = isAdminMode
+            ? '<div class="admin-only-control mt-3 pt-2.5 border-t border-dashed border-[#D4AF37]/60 space-y-1.5" onclick="event.stopPropagation()">' +
+                '<div class="flex items-center justify-between text-[10px] font-classical-label uppercase tracking-wider text-[#9E7B1C] font-bold">' +
+                  '<span>KONTROL CRUD ADMIN</span>' +
+                  '<span class="font-mono-tabular text-[#0B3B2C]">' + (book.pageCount || 1) + ' HAL</span>' +
+                '</div>' +
+                '<div class="grid grid-cols-2 gap-1.5">' +
+                  '<button type="button" class="btn-card-crud-meta px-2.5 py-1.5 rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition-colors" data-book-id="' + book.id + '" title="Edit Judul, Penulis, Rak & Sampul Etalase">' +
+                    '<i data-lucide="edit-3" class="w-3 h-3 text-[#D4AF37]"></i>' +
+                    '<span>Edit Etalase</span>' +
+                  '</button>' +
+                  '<button type="button" class="btn-card-crud-pages px-2.5 py-1.5 rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#072A20]/20 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors" data-book-id="' + book.id + '" title="Edit Isi Konten Buku Halaman demi Halaman">' +
+                    '<i data-lucide="layers" class="w-3 h-3 text-[#072A20]"></i>' +
+                    '<span>Edit Konten</span>' +
+                  '</button>' +
+                '</div>' +
+                '<div class="flex items-center justify-between gap-1.5 pt-0.5">' +
+                  '<button type="button" class="btn-card-crud-dup flex-1 px-2 py-1 rounded-md bg-[#0B3B2C]/10 hover:bg-[#0B3B2C]/20 text-[#072A20] border border-[#D4AF37]/50 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition-colors" data-book-id="' + book.id + '" title="Duplikat Buku Ini">' +
+                    '<i data-lucide="copy" class="w-2.5 h-2.5 text-[#9E7B1C]"></i>' +
+                    '<span>Duplikat</span>' +
+                  '</button>' +
+                  '<button type="button" class="btn-card-crud-del flex-1 px-2 py-1 rounded-md bg-red-950/10 hover:bg-red-900 hover:text-white text-red-900 border border-red-800/30 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition-colors" data-book-id="' + book.id + '" title="Hapus Buku dari Etalase">' +
+                    '<i data-lucide="trash-2" class="w-2.5 h-2.5"></i>' +
+                    '<span>Hapus</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>'
+            : '';
 
           card.innerHTML =
             '<div>' +
@@ -4038,17 +4613,52 @@
               '</p>' +
             '</div>' +
 
-            '<div class="mt-4 pt-3 border-t border-[#D4AF37]/40 flex items-center justify-between">' +
-              '<span class="text-xs font-bold text-[#0B3B2C] group-hover:text-[#9E7B1C] transition-colors flex items-center gap-1.5">' +
-                '<i data-lucide="book-open" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>' +
-                '<span>Buka Ruang Baca 3D</span>' +
-              '</span>' +
-              '<span class="w-7 h-7 rounded-full bg-[#0B3B2C] text-[#F3E5AB] border border-[#D4AF37] flex items-center justify-center group-hover:translate-x-1 transition-transform">' +
-                '<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>' +
-              '</span>' +
+            '<div>' +
+              '<div class="mt-4 pt-3 border-t border-[#D4AF37]/40 flex items-center justify-between">' +
+                '<span class="text-xs font-bold text-[#0B3B2C] group-hover:text-[#9E7B1C] transition-colors flex items-center gap-1.5">' +
+                  '<i data-lucide="book-open" class="w-3.5 h-3.5 text-[#9E7B1C]"></i>' +
+                  '<span>Buka Ruang Baca 3D</span>' +
+                '</span>' +
+                '<span class="w-7 h-7 rounded-full bg-[#0B3B2C] text-[#F3E5AB] border border-[#D4AF37] flex items-center justify-center group-hover:translate-x-1 transition-transform">' +
+                  '<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>' +
+                '</span>' +
+              '</div>' +
+              adminCardToolbarHtml +
             '</div>';
 
           grid.appendChild(card);
+        });
+
+        grid.querySelectorAll('.btn-card-crud-meta').forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const bid = btn.getAttribute('data-book-id');
+            requireAdminAuth(() => openCrudEtalaseModal(bid, 'metadata'));
+          };
+        });
+
+        grid.querySelectorAll('.btn-card-crud-pages').forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const bid = btn.getAttribute('data-book-id');
+            requireAdminAuth(() => openCrudEtalaseModal(bid, 'pages'));
+          };
+        });
+
+        grid.querySelectorAll('.btn-card-crud-dup').forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const bid = btn.getAttribute('data-book-id');
+            requireAdminAuth(() => duplicateBookInEtalase(bid));
+          };
+        });
+
+        grid.querySelectorAll('.btn-card-crud-del').forEach((btn) => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const bid = btn.getAttribute('data-book-id');
+            requireAdminAuth(() => deleteBookFromEtalase(bid));
+          };
         });
 
         if (window.lucide) window.lucide.createIcons();
@@ -4059,6 +4669,7 @@
       // =========================================================
       function openBookInReader(book) {
         activeBookId = book.id;
+        config.activeBookId = book.id;
         config.title = book.title;
         config.author = book.author;
         config.description = book.description;
@@ -4083,11 +4694,25 @@
 
         // Periksa apakah buku ini memiliki lembaran PDF/halaman tersimpan di IndexedDB (StorageHandler)
         const cachedAsset = bookAssetsCache[book.id];
-        if (cachedAsset && cachedAsset.pagesDataUrls && cachedAsset.pagesDataUrls.length > 0) {
+        if (cachedAsset && Array.isArray(cachedAsset.editablePages) && cachedAsset.editablePages.length > 0 && !cachedAsset.isCustomPdf) {
+          book.editablePages = cachedAsset.editablePages;
+          pagesDataUrls = renderEditablePagesToDataUrls(book, cachedAsset.editablePages);
+          rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
+          currentPage = 1;
+          document.getElementById('source-badge').textContent = 'Konten Halaman Kustom';
+          renderStage('forward');
+          renderThumbnailsGrid();
+        } else if (cachedAsset && cachedAsset.pagesDataUrls && cachedAsset.pagesDataUrls.length > 0) {
           pagesDataUrls = cachedAsset.pagesDataUrls;
           rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
           currentPage = 1;
           document.getElementById('source-badge').textContent = 'Tersimpan di IndexedDB';
+          renderStage('forward');
+          renderThumbnailsGrid();
+        } else if (Array.isArray(book.editablePages) && book.editablePages.length > 0) {
+          pagesDataUrls = renderEditablePagesToDataUrls(book, book.editablePages);
+          currentPage = 1;
+          document.getElementById('source-badge').textContent = 'Konten Halaman Kustom';
           renderStage('forward');
           renderThumbnailsGrid();
         } else if (book.id === 'book-arch') {
@@ -4110,21 +4735,9 @@
       }
 
       function generateBookPagesForReader(book) {
-        const total = book.pageCount || 6;
-        pagesDataUrls = [];
-        for (let i = 0; i < total; i++) {
-          const isCover = i === 0;
-          const kicker = isCover ? 'SAMPUL DEPAN' : 'BAGIAN ' + String(i).padStart(2, '0');
-          const title = isCover ? book.title : 'Bab ' + i + ': Pembahasan & Analisis';
-          const subtitle = isCover ? book.description.slice(0, 54) : 'Eksplorasi literatur dan materi komprehensif';
-          const body = book.description + ' Dokumen ini disajikan dalam format perpustakaan digital interaktif dengan efek pembalikan lembaran fisik 3D.';
-          const dataUrl = generateCanvasPageDataUrl(title, subtitle, kicker, book.author, body, isCover, total, i, book.accent || '#0B3B2C');
-          pagesDataUrls.push({
-            pageNumber: i + 1,
-            title: isCover ? book.title : 'Halaman ' + (i + 1),
-            dataUrl
-          });
-        }
+        const editable = buildEditablePagesForBook(book);
+        book.editablePages = editable;
+        pagesDataUrls = renderEditablePagesToDataUrls(book, editable);
         currentPage = 1;
         renderStage('forward');
         renderThumbnailsGrid();
@@ -5191,13 +5804,18 @@
 
         const adminControlIds = [
           'header-music-settings-btn',
+          'header-crud-etalase-btn',
           'header-admin-auth-btn',
           'header-admin-security-btn',
           'header-admin-logout-btn',
           'btn-admin-shelves-crud',
           'btn-add-shelf-modal',
+          'btn-open-crud-etalase-modal',
+          'btn-add-book-etalase',
+          'btn-edit-active-shelf-etalase',
           'btn-upload-to-shelf',
           'btn-toggle-admin-drawer',
+          'btn-open-crud-from-sidebar',
           'toolbar-music-settings-btn'
         ];
         adminControlIds.forEach((id) => {
@@ -5220,6 +5838,9 @@
         if (currentView === 'lobby') {
           const searchInput = document.getElementById('lobby-search-input');
           renderLobbyView(searchInput ? searchInput.value : '');
+        } else if (currentView === 'shelf') {
+          const shelfSearchInput = document.getElementById('shelf-search-input');
+          renderShelfBooksGrid(shelfSearchInput ? shelfSearchInput.value : '');
         }
       }
 
@@ -5231,7 +5852,7 @@
         }
         const sidebar = document.getElementById('admin-sidebar');
         if (sidebar) sidebar.classList.add('hidden');
-        ['modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings', 'modal-admin-security'].forEach((mid) => {
+        ['modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings', 'modal-admin-security', 'modal-crud-etalase-book'].forEach((mid) => {
           const m = document.getElementById(mid);
           if (m) m.classList.add('hidden');
         });
@@ -5793,19 +6414,59 @@
       };
 
       document.getElementById('btn-save-to-shelf').onclick = async () => {
-        const targetShelfId = document.getElementById('select-shelf-target').value;
+        const targetShelfId = document.getElementById('select-shelf-target').value || activeShelfId || 'rak-01';
         config.shelfId = targetShelfId;
         config.title = inpTitle.value.trim() || 'Publikasi Tanpa Judul';
         config.author = inpAuthor.value.trim() || 'Penerbit Mandiri';
         config.description = inpDesc.value.trim() || '';
 
+        const targetBookId = config.activeBookId || activeBookId;
+        const existingIdx = targetBookId ? books.findIndex((b) => b.id === targetBookId) : -1;
+        const existingBook = existingIdx >= 0 ? books[existingIdx] : null;
+
+        // Jika pengguna mengubah judul jauh berbeda dari buku bawaan (misal dari Panduan Kurikulum ke judul baru),
+        // atau belum ada buku aktif, pastikan sampul & halaman 1 diselaraskan dengan judul baru!
+        const isFreshPdfUpload = Boolean(currentUploadedPdfDataUrl && String(targetBookId || '').startsWith('book-pdf-'));
+        const bookId = existingIdx >= 0 ? targetBookId : ('book-' + Date.now());
+        config.activeBookId = bookId;
+        activeBookId = bookId;
+
+        const shelfObj = shelves.find((s) => s.id === targetShelfId);
+        const kickerLabel = (existingBook && existingBook.kicker) || (shelfObj ? shelfObj.code : 'KOLEKSI PUSTAKA 3D');
+        const accentHex = (existingBook && existingBook.accent) || '#0B3B2C';
+
+        let editablePages = existingBook && Array.isArray(existingBook.editablePages) && existingBook.editablePages.length > 0
+          ? existingBook.editablePages.map((p) => Object.assign({}, p))
+          : buildEditablePagesForBook({
+              title: config.title,
+              author: config.author,
+              description: config.description,
+              kicker: kickerLabel,
+              shelfId: targetShelfId,
+              pageCount: pagesDataUrls.length || 6
+            });
+
+        // Selalu sinkronkan halaman 1 (Sampul) dengan judul, penulis, dan deskripsi terbaru jika bukan PDF murni
+        if (!isFreshPdfUpload && editablePages.length > 0) {
+          editablePages[0].title = config.title;
+          editablePages[0].kicker = editablePages[0].kicker || kickerLabel;
+          editablePages[0].subtitle = config.description.slice(0, 68) || editablePages[0].subtitle;
+          editablePages[0].body = config.description || editablePages[0].body;
+          pagesDataUrls = renderEditablePagesToDataUrls(
+            {
+              title: config.title,
+              author: config.author,
+              description: config.description,
+              kicker: kickerLabel,
+              accent: accentHex
+            },
+            editablePages
+          );
+        }
+
         const coverDataUrl = pagesDataUrls.length > 0
           ? pagesDataUrls[0].dataUrl
-          : generateCanvasPageDataUrl(config.title, config.description, 'BUKU PERPUSTAKAAN', config.author, config.description, true, 4, 0, '#0B3B2C');
-
-        const existingIdx = config.activeBookId ? books.findIndex((b) => b.id === config.activeBookId) : -1;
-        const bookId = existingIdx >= 0 ? config.activeBookId : ('book-' + Date.now());
-        config.activeBookId = bookId;
+          : generateCanvasPageDataUrl(config.title, config.description, kickerLabel, config.author, config.description, true, editablePages.length || 6, 0, accentHex);
 
         const savedBook = {
           id: bookId,
@@ -5813,13 +6474,16 @@
           title: config.title,
           author: config.author,
           description: config.description,
-          pageCount: pagesDataUrls.length || 1,
+          kicker: kickerLabel,
+          pageCount: pagesDataUrls.length || editablePages.length || 6,
           passwordProtected: config.passwordProtected,
           password: config.password,
           pdfUrl: config.pdfUrl || '',
           coverUrl: coverDataUrl,
-          accent: '#0B3B2C',
-          spineColor: '#0B3B2C'
+          accent: accentHex,
+          spineColor: accentHex,
+          editablePages: editablePages,
+          isCustomPdf: isFreshPdfUpload
         };
 
         if (existingIdx >= 0) {
@@ -5833,14 +6497,864 @@
           bookMeta: savedBook,
           coverUrl: coverDataUrl,
           pagesDataUrls: pagesDataUrls.slice(),
+          editablePages: editablePages,
+          isCustomPdf: isFreshPdfUpload,
           pdfDataUrl: currentUploadedPdfDataUrl || null
         });
 
+        renderStage('forward');
+        renderThumbnailsGrid();
         renderLobbyView(document.getElementById('lobby-search-input').value || '');
         if (currentView === 'shelf') renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
 
         const targetShelf = shelves.find((s) => s.id === targetShelfId);
-        showToast('Buku "' + config.title + '" berhasil disimpan permanen ke ' + (targetShelf ? targetShelf.name : 'rak'));
+        showToast('Buku "' + config.title + '" & sampul 3D berhasil disimpan permanen ke ' + (targetShelf ? targetShelf.name : 'etalase'));
+      };
+
+      // =========================================================
+      // STUDIO MENU EDIT CRUD ETALASE & KONTEN HALAMAN BUKU
+      // =========================================================
+      let crudCurrentBookId = null;
+      let crudIsNewBook = false;
+      let crudActiveTab = 'metadata'; // 'metadata' | 'pages'
+      let crudWorkingBook = null;
+      let crudWorkingPages = [];
+      let crudSelectedPageIdx = 0;
+
+      function populateCrudShelfSelectors() {
+        const filterSel = document.getElementById('crud-filter-shelf-select');
+        const targetSel = document.getElementById('crud-inp-shelf');
+        if (filterSel) {
+          const prevVal = filterSel.value || 'ALL';
+          filterSel.innerHTML = '<option value="ALL">Semua Rak Etalase (' + books.length + ' Buku)</option>';
+          shelves.forEach((s) => {
+            const count = books.filter((b) => b.shelfId === s.id).length;
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.code + ' — ' + s.name + ' (' + count + ')';
+            filterSel.appendChild(opt);
+          });
+          if ([...filterSel.options].some((o) => o.value === prevVal)) {
+            filterSel.value = prevVal;
+          }
+        }
+        if (targetSel) {
+          targetSel.innerHTML = '';
+          shelves.forEach((s) => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.code + ' — ' + s.name;
+            targetSel.appendChild(opt);
+          });
+        }
+      }
+
+      function switchCrudTab(tabName) {
+        crudActiveTab = tabName === 'pages' ? 'pages' : 'metadata';
+        const btnMeta = document.getElementById('tab-btn-crud-metadata');
+        const btnPages = document.getElementById('tab-btn-crud-pages');
+        const panelMeta = document.getElementById('crud-panel-metadata');
+        const panelPages = document.getElementById('crud-panel-pages');
+
+        const activeBtnClass = 'px-3.5 py-2 text-xs font-bold rounded-t-xl border-t-2 border-x-2 border-[#D4AF37] bg-[#0B3B2C] text-[#F3E5AB] flex items-center gap-1.5 cursor-pointer transition-all';
+        const inactiveBtnClass = 'px-3.5 py-2 text-xs font-semibold rounded-t-xl border-t border-x border-transparent bg-[#072A20]/60 text-[#F3E5AB]/75 hover:text-white flex items-center gap-1.5 cursor-pointer transition-all';
+
+        if (btnMeta) btnMeta.className = crudActiveTab === 'metadata' ? activeBtnClass : inactiveBtnClass;
+        if (btnPages) btnPages.className = crudActiveTab === 'pages' ? activeBtnClass : inactiveBtnClass;
+        if (panelMeta) panelMeta.classList.toggle('hidden', crudActiveTab !== 'metadata');
+        if (panelPages) panelPages.classList.toggle('hidden', crudActiveTab !== 'pages');
+
+        if (crudActiveTab === 'pages') {
+          renderCrudPagesList();
+          loadCrudPageIntoForm(crudSelectedPageIdx);
+        } else {
+          updateCrudMetadataLivePreview();
+        }
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function openCrudEtalaseModal(bookId, initialTab, defaultShelfIdForNew) {
+        const modal = document.getElementById('modal-crud-etalase-book');
+        if (!modal) return;
+        populateCrudShelfSelectors();
+
+        const filterSel = document.getElementById('crud-filter-shelf-select');
+        if (filterSel && currentView === 'shelf' && activeShelfId) {
+          filterSel.value = activeShelfId;
+        }
+
+        if (defaultShelfIdForNew) {
+          startCreateNewBookInCrud(defaultShelfIdForNew);
+        } else {
+          const targetId = bookId || activeBookId || (books[0] && books[0].id);
+          const found = books.find((b) => b.id === targetId) || books[0];
+          if (found) {
+            selectBookInCrudStudio(found.id);
+          } else {
+            startCreateNewBookInCrud(activeShelfId || 'rak-01');
+          }
+        }
+
+        switchCrudTab(initialTab || 'metadata');
+        modal.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function closeCrudEtalaseModal() {
+        const modal = document.getElementById('modal-crud-etalase-book');
+        if (modal) modal.classList.add('hidden');
+      }
+
+      function startCreateNewBookInCrud(targetShelfId) {
+        crudIsNewBook = true;
+        const shelfId = targetShelfId || (currentView === 'shelf' ? activeShelfId : 'rak-01') || 'rak-01';
+        const shelfObj = shelves.find((s) => s.id === shelfId) || shelves[0];
+        const newId = 'book-' + Date.now();
+        crudCurrentBookId = newId;
+
+        crudWorkingBook = {
+          id: newId,
+          shelfId: shelfId,
+          title: 'Judul Buku Baru Koleksi 3D',
+          author: 'Nama Penulis / Penyusun',
+          description: 'Ringkasan kuratorial dan pokok bahasan utama buku dalam etalase koleksi 3D.',
+          kicker: shelfObj ? shelfObj.code : 'KOLEKSI PUSTAKA 3D',
+          pageCount: 6,
+          passwordProtected: false,
+          password: '',
+          accent: '#0B3B2C',
+          spineColor: '#0B3B2C',
+          hasCustomCoverImage: false,
+          customCoverDataUrl: ''
+        };
+
+        crudWorkingPages = buildEditablePagesForBook(crudWorkingBook);
+        crudSelectedPageIdx = 0;
+
+        const badge = document.getElementById('crud-active-mode-badge');
+        if (badge) {
+          badge.textContent = 'MODE TAMBAH BUKU BARU';
+          badge.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#D4AF37] text-[#072A20]';
+        }
+
+        populateCrudMetadataFormFromWorking();
+        renderCrudBooksListSidebar();
+        renderCrudPagesList();
+        loadCrudPageIntoForm(0);
+      }
+
+      function selectBookInCrudStudio(bookId) {
+        const found = books.find((b) => b.id === bookId);
+        if (!found) return;
+        crudIsNewBook = false;
+        crudCurrentBookId = found.id;
+
+        const shelfObj = shelves.find((s) => s.id === found.shelfId) || shelves[0];
+        crudWorkingBook = {
+          id: found.id,
+          shelfId: found.shelfId || (shelfObj ? shelfObj.id : 'rak-01'),
+          title: found.title || '',
+          author: found.author || '',
+          description: found.description || '',
+          kicker: found.kicker || (shelfObj ? shelfObj.code : 'KOLEKSI PUSTAKA 3D'),
+          pageCount: found.pageCount || 6,
+          passwordProtected: Boolean(found.passwordProtected),
+          password: found.password || '',
+          accent: found.accent || found.spineColor || '#0B3B2C',
+          spineColor: found.spineColor || found.accent || '#0B3B2C',
+          hasCustomCoverImage: Boolean(found.hasCustomCoverImage),
+          customCoverDataUrl: found.hasCustomCoverImage ? found.coverUrl : '',
+          isCustomPdf: Boolean(found.isCustomPdf)
+        };
+
+        const cachedAsset = bookAssetsCache[found.id];
+        if (cachedAsset && Array.isArray(cachedAsset.editablePages) && cachedAsset.editablePages.length > 0) {
+          crudWorkingPages = cachedAsset.editablePages.map((p, i) => ({
+            pageNumber: i + 1,
+            kicker: p.kicker || '',
+            title: p.title || '',
+            subtitle: p.subtitle || '',
+            body: p.body || '',
+            customImageDataUrl: p.customImageDataUrl || ''
+          }));
+        } else if (Array.isArray(found.editablePages) && found.editablePages.length > 0) {
+          crudWorkingPages = found.editablePages.map((p, i) => ({
+            pageNumber: i + 1,
+            kicker: p.kicker || '',
+            title: p.title || '',
+            subtitle: p.subtitle || '',
+            body: p.body || '',
+            customImageDataUrl: p.customImageDataUrl || ''
+          }));
+        } else {
+          crudWorkingPages = buildEditablePagesForBook(crudWorkingBook);
+        }
+
+        // Pastikan Halaman 1 memiliki judul yang sinkron dengan judul buku
+        if (crudWorkingPages.length > 0 && !crudWorkingBook.isCustomPdf) {
+          crudWorkingPages[0].title = crudWorkingBook.title;
+        }
+
+        crudSelectedPageIdx = 0;
+
+        const badge = document.getElementById('crud-active-mode-badge');
+        if (badge) {
+          badge.textContent = 'MODE EDIT BUKU';
+          badge.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/60 text-[#F3E5AB]';
+        }
+
+        populateCrudMetadataFormFromWorking();
+        renderCrudBooksListSidebar();
+        renderCrudPagesList();
+        loadCrudPageIntoForm(0);
+      }
+
+      function populateCrudMetadataFormFromWorking() {
+        if (!crudWorkingBook) return;
+        document.getElementById('crud-current-book-id-label').textContent = crudWorkingBook.id;
+        document.getElementById('crud-inp-title').value = crudWorkingBook.title;
+        document.getElementById('crud-inp-author').value = crudWorkingBook.author;
+        document.getElementById('crud-inp-shelf').value = crudWorkingBook.shelfId;
+        document.getElementById('crud-inp-kicker').value = crudWorkingBook.kicker || '';
+        document.getElementById('crud-inp-accent').value = crudWorkingBook.accent || '#0B3B2C';
+        document.getElementById('crud-inp-desc').value = crudWorkingBook.description;
+        document.getElementById('crud-chk-password').checked = Boolean(crudWorkingBook.passwordProtected);
+        document.getElementById('crud-inp-password').value = crudWorkingBook.password || '';
+        updateCrudMetadataLivePreview();
+      }
+
+      function syncWorkingBookFromMetadataInputs(alsoSyncPage1) {
+        if (!crudWorkingBook) return;
+        crudWorkingBook.title = document.getElementById('crud-inp-title').value.trim() || 'Publikasi Tanpa Judul';
+        crudWorkingBook.author = document.getElementById('crud-inp-author').value.trim() || 'Penerbit Mandiri';
+        crudWorkingBook.shelfId = document.getElementById('crud-inp-shelf').value || 'rak-01';
+        crudWorkingBook.kicker = document.getElementById('crud-inp-kicker').value.trim() || 'KOLEKSI PUSTAKA 3D';
+        crudWorkingBook.accent = document.getElementById('crud-inp-accent').value || '#0B3B2C';
+        crudWorkingBook.spineColor = crudWorkingBook.accent;
+        crudWorkingBook.description = document.getElementById('crud-inp-desc').value.trim() || '';
+        crudWorkingBook.passwordProtected = document.getElementById('crud-chk-password').checked;
+        crudWorkingBook.password = document.getElementById('crud-inp-password').value.trim();
+
+        if (alsoSyncPage1 && crudWorkingPages.length > 0) {
+          crudWorkingPages[0].title = crudWorkingBook.title;
+          crudWorkingPages[0].kicker = crudWorkingBook.kicker;
+          crudWorkingPages[0].subtitle = crudWorkingBook.description.slice(0, 68) || crudWorkingPages[0].subtitle;
+          crudWorkingPages[0].body = crudWorkingBook.description || crudWorkingPages[0].body;
+        }
+      }
+
+      function updateCrudMetadataLivePreview() {
+        if (!crudWorkingBook) return;
+        syncWorkingBookFromMetadataInputs(true);
+
+        const totalPages = crudWorkingPages.length || 6;
+        const page1 = crudWorkingPages[0] || {};
+        const coverUrl = crudWorkingBook.hasCustomCoverImage && crudWorkingBook.customCoverDataUrl
+          ? crudWorkingBook.customCoverDataUrl
+          : (page1.customImageDataUrl
+              ? page1.customImageDataUrl
+              : generateCanvasPageDataUrl(
+                  crudWorkingBook.title,
+                  page1.subtitle || crudWorkingBook.description.slice(0, 68),
+                  crudWorkingBook.kicker,
+                  crudWorkingBook.author,
+                  page1.body || crudWorkingBook.description,
+                  true,
+                  totalPages,
+                  0,
+                  crudWorkingBook.accent
+                ));
+
+        const imgEl = document.getElementById('crud-preview-cover-img');
+        if (imgEl) imgEl.src = coverUrl;
+        document.getElementById('crud-preview-page-count').textContent = totalPages + ' HALAMAN';
+        document.getElementById('crud-preview-title').textContent = crudWorkingBook.title;
+        document.getElementById('crud-preview-author').textContent = crudWorkingBook.author;
+        document.getElementById('crud-preview-desc').textContent = crudWorkingBook.description || 'Tanpa deskripsi.';
+        document.getElementById('crud-tab-pages-count').textContent = totalPages + ' Hal';
+        document.getElementById('crud-pages-count-badge').textContent = 'Total: ' + totalPages + ' Halaman';
+      }
+
+      function renderCrudBooksListSidebar() {
+        const container = document.getElementById('crud-books-list-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const filterShelf = (document.getElementById('crud-filter-shelf-select') || {}).value || 'ALL';
+        const q = ((document.getElementById('crud-search-book-input') || {}).value || '').toLowerCase().trim();
+
+        const filtered = books.filter((b) => {
+          if (filterShelf !== 'ALL' && b.shelfId !== filterShelf) return false;
+          if (!q) return true;
+          return (
+            (b.title || '').toLowerCase().includes(q) ||
+            (b.author || '').toLowerCase().includes(q)
+          );
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML =
+            '<div class="p-4 text-center text-xs text-[#F3E5AB]/70 rounded-xl border border-dashed border-[#D4AF37]/40">' +
+              'Tidak ada buku yang cocok dengan filter ini.' +
+            '</div>';
+          return;
+        }
+
+        filtered.forEach((b) => {
+          const isSelected = !crudIsNewBook && b.id === crudCurrentBookId;
+          const shelfObj = shelves.find((s) => s.id === b.shelfId);
+          const item = document.createElement('div');
+          item.className =
+            'p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ' +
+            (isSelected
+              ? 'bg-[#0B3B2C] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-md'
+              : 'bg-[#0B3B2C]/45 border-[#D4AF37]/30 hover:border-[#D4AF37]/80 hover:bg-[#0B3B2C]/80');
+
+          item.innerHTML =
+            '<img src="' + b.coverUrl + '" alt="' + b.title + '" class="w-10 h-14 object-cover rounded border border-[#D4AF37]/60 shrink-0 mt-0.5" />' +
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex items-center justify-between gap-1">' +
+                '<span class="text-[9px] font-mono-tabular px-1.5 py-0.2 rounded bg-[#072A20] text-[#D4AF37] border border-[#D4AF37]/40 truncate">' +
+                  (shelfObj ? shelfObj.code : 'RAK') +
+                '</span>' +
+                '<span class="text-[9px] font-mono-tabular text-[#F3E5AB]/75 shrink-0">' + (b.pageCount || 1) + ' Hal</span>' +
+              '</div>' +
+              '<h5 class="text-xs font-bold font-serif-editorial text-white truncate mt-1">' + b.title + '</h5>' +
+              '<p class="text-[10px] text-[#D4AF37] truncate">' + b.author + '</p>' +
+              '<div class="flex items-center gap-1 mt-1.5" onclick="event.stopPropagation()">' +
+                '<button type="button" class="btn-crud-list-move-up px-1.5 py-0.5 rounded bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 text-[10px]" data-id="' + b.id + '" title="Geser Urutan ke Atas">&uarr;</button>' +
+                '<button type="button" class="btn-crud-list-move-down px-1.5 py-0.5 rounded bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 text-[10px]" data-id="' + b.id + '" title="Geser Urutan ke Bawah">&darr;</button>' +
+                '<button type="button" class="btn-crud-list-edit-pages px-2 py-0.5 rounded bg-[#D4AF37]/20 hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#072A20] border border-[#D4AF37]/50 text-[10px] font-semibold ml-auto" data-id="' + b.id + '">Konten</button>' +
+              '</div>' +
+            '</div>';
+
+          item.onclick = () => {
+            selectBookInCrudStudio(b.id);
+          };
+
+          container.appendChild(item);
+        });
+
+        container.querySelectorAll('.btn-crud-list-move-up').forEach((btn) => {
+          btn.onclick = () => reorderBookInEtalase(btn.getAttribute('data-id'), 'up');
+        });
+        container.querySelectorAll('.btn-crud-list-move-down').forEach((btn) => {
+          btn.onclick = () => reorderBookInEtalase(btn.getAttribute('data-id'), 'down');
+        });
+        container.querySelectorAll('.btn-crud-list-edit-pages').forEach((btn) => {
+          btn.onclick = () => {
+            selectBookInCrudStudio(btn.getAttribute('data-id'));
+            switchCrudTab('pages');
+          };
+        });
+      }
+
+      function renderCrudPagesList() {
+        const listEl = document.getElementById('crud-pages-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        crudWorkingPages.forEach((p, idx) => {
+          p.pageNumber = idx + 1;
+          const isSel = idx === crudSelectedPageIdx;
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className =
+            'w-full text-left p-2.5 rounded-lg border transition-all flex items-center justify-between gap-2 cursor-pointer ' +
+            (isSel
+              ? 'bg-[#D4AF37] text-[#072A20] border-[#F3E5AB] font-bold shadow-sm'
+              : 'bg-[#0B3B2C]/70 text-[#F3E5AB] border-[#D4AF37]/35 hover:border-[#D4AF37]');
+
+          row.innerHTML =
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex items-center gap-1.5">' +
+                '<span class="text-[10px] font-mono-tabular px-1.5 py-0.2 rounded ' + (isSel ? 'bg-[#072A20] text-[#F3E5AB]' : 'bg-[#072A20] text-[#D4AF37]') + '">' +
+                  'Hal ' + (idx + 1) + (idx === 0 ? ' · Sampul' : '') +
+                '</span>' +
+              '</div>' +
+              '<p class="text-xs truncate mt-1">' + (p.title || 'Tanpa Judul') + '</p>' +
+            '</div>';
+
+          row.onclick = () => {
+            crudSelectedPageIdx = idx;
+            renderCrudPagesList();
+            loadCrudPageIntoForm(idx);
+          };
+
+          listEl.appendChild(row);
+        });
+
+        document.getElementById('crud-tab-pages-count').textContent = crudWorkingPages.length + ' Hal';
+        document.getElementById('crud-pages-count-badge').textContent = 'Total: ' + crudWorkingPages.length + ' Halaman';
+      }
+
+      function loadCrudPageIntoForm(idx) {
+        if (!crudWorkingPages.length) return;
+        const safeIdx = Math.max(0, Math.min(crudWorkingPages.length - 1, idx));
+        crudSelectedPageIdx = safeIdx;
+        const page = crudWorkingPages[safeIdx];
+
+        document.getElementById('crud-active-page-heading').textContent =
+          'Sunting Halaman ' + (safeIdx + 1) + (safeIdx === 0 ? ' (Sampul Depan 3D)' : ' dari ' + crudWorkingPages.length);
+        document.getElementById('crud-page-inp-kicker').value = page.kicker || '';
+        document.getElementById('crud-page-inp-title').value = page.title || '';
+        document.getElementById('crud-page-inp-subtitle').value = page.subtitle || '';
+        document.getElementById('crud-page-inp-body').value = page.body || '';
+
+        const btnClearImg = document.getElementById('btn-crud-clear-page-image');
+        if (btnClearImg) {
+          btnClearImg.classList.toggle('hidden', !page.customImageDataUrl);
+        }
+
+        updateCrudActivePageLivePreview();
+      }
+
+      function updateCrudActivePageLivePreview() {
+        if (!crudWorkingBook || !crudWorkingPages[crudSelectedPageIdx]) return;
+        const page = crudWorkingPages[crudSelectedPageIdx];
+        page.kicker = document.getElementById('crud-page-inp-kicker').value;
+        page.title = document.getElementById('crud-page-inp-title').value;
+        page.subtitle = document.getElementById('crud-page-inp-subtitle').value;
+        page.body = document.getElementById('crud-page-inp-body').value;
+
+        // Jika halaman 1 (Sampul) diubah judulnya dari tab konten, sinkronkan ke judul buku
+        if (crudSelectedPageIdx === 0 && page.title.trim()) {
+          crudWorkingBook.title = page.title.trim();
+          document.getElementById('crud-inp-title').value = crudWorkingBook.title;
+        }
+
+        const isCover = crudSelectedPageIdx === 0;
+        const previewDataUrl = page.customImageDataUrl
+          ? page.customImageDataUrl
+          : generateCanvasPageDataUrl(
+              page.title || (isCover ? crudWorkingBook.title : 'Halaman ' + (crudSelectedPageIdx + 1)),
+              page.subtitle || '',
+              page.kicker || (isCover ? crudWorkingBook.kicker : 'BAGIAN ' + String(crudSelectedPageIdx).padStart(2, '0')),
+              crudWorkingBook.author,
+              page.body || '',
+              isCover,
+              crudWorkingPages.length,
+              crudSelectedPageIdx,
+              crudWorkingBook.accent
+            );
+
+        const prevImg = document.getElementById('crud-page-live-preview-img');
+        if (prevImg) prevImg.src = previewDataUrl;
+        const folioLabel = document.getElementById('crud-page-preview-folio-label');
+        if (folioLabel) {
+          folioLabel.textContent = 'HALAMAN ' + (crudSelectedPageIdx + 1) + ' / ' + crudWorkingPages.length;
+        }
+      }
+
+      async function saveCrudWorkingBookPermanently(openReaderAfterSave) {
+        if (!crudWorkingBook) return;
+        syncWorkingBookFromMetadataInputs(false);
+
+        if (crudWorkingPages.length === 0) {
+          crudWorkingPages = buildEditablePagesForBook(crudWorkingBook);
+        }
+
+        // Pastikan Halaman 1 (Sampul) selaras dengan judul buku jika bukan gambar kustom
+        if (crudWorkingPages[0] && !crudWorkingPages[0].customImageDataUrl) {
+          crudWorkingPages[0].title = crudWorkingBook.title;
+          crudWorkingPages[0].kicker = crudWorkingBook.kicker || crudWorkingPages[0].kicker || 'SAMPUL DEPAN';
+          if (!crudWorkingPages[0].subtitle) {
+            crudWorkingPages[0].subtitle = crudWorkingBook.description.slice(0, 68);
+          }
+          if (!crudWorkingPages[0].body) {
+            crudWorkingPages[0].body = crudWorkingBook.description;
+          }
+        }
+
+        const renderedPages = renderEditablePagesToDataUrls(crudWorkingBook, crudWorkingPages);
+        const finalCoverUrl = crudWorkingBook.hasCustomCoverImage && crudWorkingBook.customCoverDataUrl
+          ? crudWorkingBook.customCoverDataUrl
+          : (renderedPages[0] ? renderedPages[0].dataUrl : '');
+
+        const finalBookRecord = {
+          id: crudWorkingBook.id,
+          shelfId: crudWorkingBook.shelfId,
+          title: crudWorkingBook.title,
+          author: crudWorkingBook.author,
+          description: crudWorkingBook.description,
+          kicker: crudWorkingBook.kicker,
+          pageCount: renderedPages.length,
+          passwordProtected: Boolean(crudWorkingBook.passwordProtected),
+          password: crudWorkingBook.password || '',
+          accent: crudWorkingBook.accent || '#0B3B2C',
+          spineColor: crudWorkingBook.accent || '#0B3B2C',
+          coverUrl: finalCoverUrl,
+          hasCustomCoverImage: Boolean(crudWorkingBook.hasCustomCoverImage),
+          editablePages: crudWorkingPages.map((p, idx) => Object.assign({}, p, { pageNumber: idx + 1 })),
+          isCustomPdf: false
+        };
+
+        const existingIdx = books.findIndex((b) => b.id === finalBookRecord.id);
+        if (existingIdx >= 0) {
+          books[existingIdx] = Object.assign({}, books[existingIdx], finalBookRecord);
+        } else {
+          books.unshift(finalBookRecord);
+        }
+        crudIsNewBook = false;
+        saveBooksToStorage();
+
+        await StorageHandler.saveBookAsset(finalBookRecord.id, {
+          bookMeta: finalBookRecord,
+          coverUrl: finalCoverUrl,
+          pagesDataUrls: renderedPages,
+          editablePages: finalBookRecord.editablePages,
+          isCustomPdf: false
+        });
+
+        populateCrudShelfSelectors();
+        renderCrudBooksListSidebar();
+        renderLobbyView(document.getElementById('lobby-search-input').value || '');
+        if (currentView === 'shelf') {
+          activeShelfId = finalBookRecord.shelfId;
+          openShelfView(activeShelfId);
+        }
+        if (activeBookId === finalBookRecord.id || openReaderAfterSave) {
+          openBookInReader(finalBookRecord);
+        }
+
+        if (openReaderAfterSave) {
+          closeCrudEtalaseModal();
+        }
+        showToast('Buku "' + finalBookRecord.title + '" (' + finalBookRecord.pageCount + ' halaman) berhasil disimpan permanen!');
+      }
+
+      async function deleteBookFromEtalase(bookId) {
+        const target = books.find((b) => b.id === bookId);
+        if (!target) return;
+        if (books.length <= 1) {
+          showToast('Minimal harus tersisa 1 buku di katalog perpustakaan.');
+          return;
+        }
+        if (!window.confirm('Hapus buku "' + target.title + '" secara permanen dari etalase?')) {
+          return;
+        }
+        books = books.filter((b) => b.id !== bookId);
+        saveBooksToStorage();
+        await StorageHandler.deleteBookAsset(bookId);
+
+        populateCrudShelfSelectors();
+        renderLobbyView(document.getElementById('lobby-search-input').value || '');
+        if (currentView === 'shelf') {
+          renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+        }
+        if (crudCurrentBookId === bookId && books.length > 0) {
+          selectBookInCrudStudio(books[0].id);
+        } else {
+          renderCrudBooksListSidebar();
+        }
+        showToast('Buku "' + target.title + '" telah dihapus dari etalase.');
+      }
+
+      async function duplicateBookInEtalase(bookId) {
+        const source = books.find((b) => b.id === bookId);
+        if (!source) return;
+        const newId = 'book-' + Date.now();
+        const newTitle = source.title + ' (Salinan)';
+        const clonedPages = buildEditablePagesForBook(source).map((p, idx) =>
+          idx === 0 ? Object.assign({}, p, { title: newTitle }) : Object.assign({}, p)
+        );
+        const dupBook = Object.assign({}, source, {
+          id: newId,
+          title: newTitle,
+          editablePages: clonedPages
+        });
+        const rendered = renderEditablePagesToDataUrls(dupBook, clonedPages);
+        dupBook.coverUrl = rendered[0] ? rendered[0].dataUrl : source.coverUrl;
+        dupBook.pageCount = rendered.length;
+
+        const idx = books.findIndex((b) => b.id === bookId);
+        books.splice(idx + 1, 0, dupBook);
+        saveBooksToStorage();
+
+        await StorageHandler.saveBookAsset(newId, {
+          bookMeta: dupBook,
+          coverUrl: dupBook.coverUrl,
+          pagesDataUrls: rendered,
+          editablePages: clonedPages,
+          isCustomPdf: false
+        });
+
+        populateCrudShelfSelectors();
+        renderLobbyView(document.getElementById('lobby-search-input').value || '');
+        if (currentView === 'shelf') {
+          renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+        }
+        selectBookInCrudStudio(newId);
+        showToast('Buku berhasil diduplikasi menjadi "' + newTitle + '".');
+      }
+
+      function reorderBookInEtalase(bookId, direction) {
+        const idx = books.findIndex((b) => b.id === bookId);
+        if (idx < 0) return;
+        const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (targetIdx < 0 || targetIdx >= books.length) return;
+        const temp = books[targetIdx];
+        books[targetIdx] = books[idx];
+        books[idx] = temp;
+        saveBooksToStorage();
+        renderCrudBooksListSidebar();
+        renderLobbyView(document.getElementById('lobby-search-input').value || '');
+        if (currentView === 'shelf') {
+          renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+        }
+      }
+
+      // Event Listeners Studio CRUD Etalase & Konten Buku
+      const headerCrudBtn = document.getElementById('header-crud-etalase-btn');
+      if (headerCrudBtn) {
+        headerCrudBtn.onclick = () => {
+          requireAdminAuth(() => openCrudEtalaseModal(activeBookId, 'metadata'));
+        };
+      }
+      const btnOpenCrudEtalase = document.getElementById('btn-open-crud-etalase-modal');
+      if (btnOpenCrudEtalase) {
+        btnOpenCrudEtalase.onclick = () => {
+          requireAdminAuth(() => openCrudEtalaseModal(null, 'metadata'));
+        };
+      }
+      const btnAddBookEtalase = document.getElementById('btn-add-book-etalase');
+      if (btnAddBookEtalase) {
+        btnAddBookEtalase.onclick = () => {
+          requireAdminAuth(() => openCrudEtalaseModal(null, 'metadata', activeShelfId));
+        };
+      }
+      const btnEditActiveShelfEtalase = document.getElementById('btn-edit-active-shelf-etalase');
+      if (btnEditActiveShelfEtalase) {
+        btnEditActiveShelfEtalase.onclick = () => {
+          requireAdminAuth(() => openEditShelfModal(activeShelfId));
+        };
+      }
+      const btnOpenCrudSidebar = document.getElementById('btn-open-crud-from-sidebar');
+      if (btnOpenCrudSidebar) {
+        btnOpenCrudSidebar.onclick = () => {
+          requireAdminAuth(() => openCrudEtalaseModal(config.activeBookId || activeBookId, 'pages'));
+        };
+      }
+
+      document.getElementById('btn-close-crud-etalase-modal').onclick = closeCrudEtalaseModal;
+      document.getElementById('btn-crud-open-shelves-manager').onclick = () => {
+        closeCrudEtalaseModal();
+        openAdminShelvesModal();
+      };
+      document.getElementById('btn-crud-create-new-book').onclick = () => {
+        const filterVal = document.getElementById('crud-filter-shelf-select').value;
+        const targetShelf = filterVal && filterVal !== 'ALL' ? filterVal : (activeShelfId || 'rak-01');
+        startCreateNewBookInCrud(targetShelf);
+        switchCrudTab('metadata');
+        showToast('Formulir buku baru siap diisi.');
+      };
+
+      document.getElementById('crud-filter-shelf-select').onchange = renderCrudBooksListSidebar;
+      document.getElementById('crud-search-book-input').oninput = renderCrudBooksListSidebar;
+
+      document.getElementById('tab-btn-crud-metadata').onclick = () => switchCrudTab('metadata');
+      document.getElementById('tab-btn-crud-pages').onclick = () => switchCrudTab('pages');
+      document.getElementById('btn-crud-goto-pages-tab').onclick = () => switchCrudTab('pages');
+
+      ['crud-inp-title', 'crud-inp-author', 'crud-inp-shelf', 'crud-inp-kicker', 'crud-inp-accent', 'crud-inp-desc', 'crud-chk-password', 'crud-inp-password'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.oninput = () => {
+            if (crudWorkingBook) crudWorkingBook.hasCustomCoverImage = false;
+            updateCrudMetadataLivePreview();
+          };
+          el.onchange = () => updateCrudMetadataLivePreview();
+        }
+      });
+
+      document.querySelectorAll('.crud-color-preset').forEach((btn) => {
+        btn.onclick = () => {
+          const c = btn.getAttribute('data-color');
+          if (c) {
+            document.getElementById('crud-inp-accent').value = c;
+            if (crudWorkingBook) crudWorkingBook.hasCustomCoverImage = false;
+            updateCrudMetadataLivePreview();
+          }
+        };
+      });
+
+      document.getElementById('btn-crud-regen-cover').onclick = () => {
+        if (!crudWorkingBook) return;
+        crudWorkingBook.hasCustomCoverImage = false;
+        crudWorkingBook.customCoverDataUrl = '';
+        if (crudWorkingPages[0]) {
+          crudWorkingPages[0].customImageDataUrl = '';
+        }
+        updateCrudMetadataLivePreview();
+        showToast('Sampul 3D disinkronkan dengan Judul & Penulis terbaru.');
+      };
+
+      // Unggah gambar sampul kustom di modal CRUD
+      document.getElementById('crud-cover-image-input').onchange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !crudWorkingBook) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            crudWorkingBook.hasCustomCoverImage = true;
+            crudWorkingBook.customCoverDataUrl = reader.result;
+            if (crudWorkingPages[0]) {
+              crudWorkingPages[0].customImageDataUrl = reader.result;
+            }
+            updateCrudMetadataLivePreview();
+            showToast('Gambar sampul kustom diterapkan.');
+          }
+        };
+        reader.readAsDataURL(file);
+      };
+
+      // Impor halaman dari file PDF di dalam modal CRUD
+      document.getElementById('crud-pdf-file-input').onchange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !crudWorkingBook || !window.pdfjsLib) return;
+        showToast('Mengimpor halaman dari berkas PDF...');
+        try {
+          const buf = await file.arrayBuffer();
+          const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+          const total = pdf.numPages;
+          const dpr = Math.min(window.devicePixelRatio || 2, 2);
+          const importedPages = [];
+          for (let i = 1; i <= total; i++) {
+            const page = await pdf.getPage(i);
+            const vp1 = page.getViewport({ scale: 1 });
+            const scale = (580 / vp1.width) * dpr;
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            const imgData = canvas.toDataURL('image/jpeg', 0.90);
+            importedPages.push({
+              pageNumber: i,
+              kicker: i === 1 ? 'SAMPUL PDF' : 'HALAMAN PDF ' + i,
+              title: i === 1 ? crudWorkingBook.title : 'Halaman ' + i,
+              subtitle: file.name,
+              body: 'Halaman diimpor dari dokumen PDF: ' + file.name,
+              customImageDataUrl: imgData
+            });
+          }
+          crudWorkingPages = importedPages;
+          crudSelectedPageIdx = 0;
+          updateCrudMetadataLivePreview();
+          renderCrudPagesList();
+          loadCrudPageIntoForm(0);
+          showToast('Berhasil mengimpor ' + total + ' halaman dari PDF!');
+        } catch (err) {
+          showToast('Gagal mengimpor PDF. Pastikan berkas PDF valid.');
+        }
+      };
+
+      // Editor Konten Per Halaman (Tab 2)
+      ['crud-page-inp-kicker', 'crud-page-inp-title', 'crud-page-inp-subtitle', 'crud-page-inp-body'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.oninput = () => {
+            updateCrudActivePageLivePreview();
+            renderCrudPagesList();
+          };
+        }
+      });
+
+      document.getElementById('btn-crud-sync-cover-page').onclick = () => {
+        if (!crudWorkingBook || !crudWorkingPages.length) return;
+        syncWorkingBookFromMetadataInputs(true);
+        crudWorkingPages[0].customImageDataUrl = '';
+        crudSelectedPageIdx = 0;
+        renderCrudPagesList();
+        loadCrudPageIntoForm(0);
+        showToast('Halaman 1 (Sampul) berhasil disinkronkan dengan Judul & Penulis buku.');
+      };
+
+      document.getElementById('btn-crud-add-page').onclick = () => {
+        const insertAfter = crudSelectedPageIdx >= 0 ? crudSelectedPageIdx : crudWorkingPages.length - 1;
+        const newPageNum = insertAfter + 2;
+        const newPage = {
+          pageNumber: newPageNum,
+          kicker: 'BAGIAN ' + String(newPageNum - 1).padStart(2, '0'),
+          title: 'Bab ' + (newPageNum - 1) + ': Pokok Bahasan Baru',
+          subtitle: 'Subjudul atau ringkasan materi pada halaman ini',
+          body: 'Ketik uraian materi, kisah inspiratif, atau poin pembelajaran pada halaman ini. Teks otomatis dirender ke lembaran buku 3D.',
+          customImageDataUrl: ''
+        };
+        crudWorkingPages.splice(insertAfter + 1, 0, newPage);
+        crudSelectedPageIdx = insertAfter + 1;
+        renderCrudPagesList();
+        loadCrudPageIntoForm(crudSelectedPageIdx);
+        showToast('Halaman baru ditambahkan (Halaman ' + (crudSelectedPageIdx + 1) + ').');
+      };
+
+      document.getElementById('btn-crud-page-move-up').onclick = () => {
+        if (crudSelectedPageIdx <= 0 || crudSelectedPageIdx >= crudWorkingPages.length) return;
+        const tmp = crudWorkingPages[crudSelectedPageIdx - 1];
+        crudWorkingPages[crudSelectedPageIdx - 1] = crudWorkingPages[crudSelectedPageIdx];
+        crudWorkingPages[crudSelectedPageIdx] = tmp;
+        crudSelectedPageIdx -= 1;
+        renderCrudPagesList();
+        loadCrudPageIntoForm(crudSelectedPageIdx);
+      };
+
+      document.getElementById('btn-crud-page-move-down').onclick = () => {
+        if (crudSelectedPageIdx < 0 || crudSelectedPageIdx >= crudWorkingPages.length - 1) return;
+        const tmp = crudWorkingPages[crudSelectedPageIdx + 1];
+        crudWorkingPages[crudSelectedPageIdx + 1] = crudWorkingPages[crudSelectedPageIdx];
+        crudWorkingPages[crudSelectedPageIdx] = tmp;
+        crudSelectedPageIdx += 1;
+        renderCrudPagesList();
+        loadCrudPageIntoForm(crudSelectedPageIdx);
+      };
+
+      document.getElementById('btn-crud-page-delete').onclick = () => {
+        if (crudWorkingPages.length <= 1) {
+          showToast('Buku minimal harus memiliki 1 halaman.');
+          return;
+        }
+        crudWorkingPages.splice(crudSelectedPageIdx, 1);
+        crudSelectedPageIdx = Math.max(0, Math.min(crudWorkingPages.length - 1, crudSelectedPageIdx));
+        renderCrudPagesList();
+        loadCrudPageIntoForm(crudSelectedPageIdx);
+        showToast('Halaman berhasil dihapus.');
+      };
+
+      document.getElementById('crud-page-image-input').onchange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !crudWorkingPages[crudSelectedPageIdx]) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result) {
+            crudWorkingPages[crudSelectedPageIdx].customImageDataUrl = reader.result;
+            loadCrudPageIntoForm(crudSelectedPageIdx);
+            showToast('Gambar diterapkan pada Halaman ' + (crudSelectedPageIdx + 1) + '.');
+          }
+        };
+        reader.readAsDataURL(file);
+      };
+
+      document.getElementById('btn-crud-clear-page-image').onclick = () => {
+        if (!crudWorkingPages[crudSelectedPageIdx]) return;
+        crudWorkingPages[crudSelectedPageIdx].customImageDataUrl = '';
+        loadCrudPageIntoForm(crudSelectedPageIdx);
+        showToast('Halaman dikembalikan ke mode teks kanvas.');
+      };
+
+      document.getElementById('btn-crud-save-all').onclick = () => {
+        saveCrudWorkingBookPermanently(false);
+      };
+      document.getElementById('btn-crud-open-in-reader').onclick = () => {
+        saveCrudWorkingBookPermanently(true);
+      };
+      document.getElementById('btn-crud-delete-current-book').onclick = () => {
+        if (crudCurrentBookId) deleteBookFromEtalase(crudCurrentBookId);
+      };
+      document.getElementById('btn-crud-duplicate-current-book').onclick = () => {
+        if (crudCurrentBookId) duplicateBookInEtalase(crudCurrentBookId);
       };
 
       // =========================================================
@@ -6533,12 +8047,31 @@
               if (!asset || !asset.id) return;
               const existingBook = books.find((b) => b.id === asset.id);
               if (existingBook) {
-                if (asset.coverUrl) existingBook.coverUrl = asset.coverUrl;
-                if (asset.pagesDataUrls && asset.pagesDataUrls.length > 0) {
-                  existingBook.pageCount = asset.pagesDataUrls.length;
+                if (Array.isArray(asset.editablePages) && asset.editablePages.length > 0) {
+                  existingBook.editablePages = asset.editablePages;
+                }
+                const isPdfBook = Boolean(asset.isCustomPdf || existingBook.isCustomPdf || String(asset.id).startsWith('book-pdf-'));
+                if (!isPdfBook && !existingBook.hasCustomCoverImage) {
+                  // Pastikan coverUrl selalu selaras dengan judul buku asli (mencegah cover buku lain terbawa)
+                  const ep = buildEditablePagesForBook(existingBook);
+                  ep[0].title = existingBook.title;
+                  existingBook.editablePages = ep;
+                  const rendered = renderEditablePagesToDataUrls(existingBook, ep);
+                  existingBook.coverUrl = rendered[0] ? rendered[0].dataUrl : existingBook.coverUrl;
+                  existingBook.pageCount = rendered.length;
+                  asset.coverUrl = existingBook.coverUrl;
+                  asset.pagesDataUrls = rendered;
+                } else {
+                  if (asset.coverUrl) existingBook.coverUrl = asset.coverUrl;
+                  if (asset.pagesDataUrls && asset.pagesDataUrls.length > 0) {
+                    existingBook.pageCount = asset.pagesDataUrls.length;
+                  }
                 }
               } else if (asset.bookMeta) {
                 const hydratedBook = Object.assign({}, asset.bookMeta);
+                if (Array.isArray(asset.editablePages) && asset.editablePages.length > 0) {
+                  hydratedBook.editablePages = asset.editablePages;
+                }
                 if (asset.coverUrl) hydratedBook.coverUrl = asset.coverUrl;
                 if (asset.pagesDataUrls && asset.pagesDataUrls.length > 0) {
                   hydratedBook.pageCount = asset.pagesDataUrls.length;

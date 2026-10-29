@@ -913,4 +913,279 @@ export function validateVerifiedPasswordResetSubmission(
   return validateAdminPasswordChange('', newPasswordInput, confirmPasswordInput, null, true);
 }
 
+// =========================================================
+// PURE LOGIC FOR CRUD ETALASE & KONTEN HALAMAN BUKU
+// =========================================================
+
+export interface EditableBookPage {
+  pageNumber: number;
+  kicker: string;
+  title: string;
+  subtitle: string;
+  body: string;
+  customImageDataUrl?: string;
+}
+
+export interface EtalaseBookRecord {
+  id: string;
+  shelfId: string;
+  title: string;
+  author: string;
+  description: string;
+  kicker?: string;
+  pageCount: number;
+  passwordProtected: boolean;
+  password?: string;
+  accent: string;
+  spineColor: string;
+  coverUrl?: string;
+  editablePages?: EditableBookPage[];
+}
+
+export type PageCrudAction =
+  | {
+      type: 'add';
+      afterIndex?: number;
+      kicker?: string;
+      title?: string;
+      subtitle?: string;
+      body?: string;
+    }
+  | {
+      type: 'update';
+      index: number;
+      patch: Partial<Omit<EditableBookPage, 'pageNumber'>>;
+    }
+  | {
+      type: 'delete';
+      index: number;
+    }
+  | {
+      type: 'move-up';
+      index: number;
+    }
+  | {
+      type: 'move-down';
+      index: number;
+    }
+  | {
+      type: 'sync-cover';
+      bookTitle: string;
+      bookAuthor: string;
+      bookDescription: string;
+      bookKicker?: string;
+    };
+
+export function normalizeEditablePagesOrder(pages: EditableBookPage[]): EditableBookPage[] {
+  return pages.map((p, idx) => ({
+    ...p,
+    pageNumber: idx + 1,
+  }));
+}
+
+export function buildDefaultEditablePagesForBook(book: {
+  title: string;
+  author: string;
+  description: string;
+  kicker?: string;
+  pageCount?: number;
+}): EditableBookPage[] {
+  const total = Math.max(2, Math.min(50, Number(book.pageCount) || 6));
+  const cleanTitle = (book.title || 'Publikasi Tanpa Judul').trim();
+  const cleanDesc = (book.description || 'Koleksi literatur digital interaktif dengan efek lembaran 3D.').trim();
+  const cleanKicker = (book.kicker || 'KOLEKSI PUSTAKA 3D').trim();
+
+  const pages: EditableBookPage[] = [];
+  for (let i = 0; i < total; i++) {
+    const isCover = i === 0;
+    pages.push({
+      pageNumber: i + 1,
+      kicker: isCover ? cleanKicker : `BAGIAN ${String(i).padStart(2, '0')}`,
+      title: isCover ? cleanTitle : `Bab ${i}: Pembahasan & Kajian Utama`,
+      subtitle: isCover
+        ? cleanDesc.slice(0, 68)
+        : `Eksplorasi materi bagian ${i} pada koleksi ${cleanTitle}`,
+      body: isCover
+        ? cleanDesc
+        : `${cleanDesc} Bagian ini memuat uraian mendalam, kutipan ilmiah, dan intisari pembelajaran yang dapat disunting langsung melalui Menu Edit CRUD Konten Buku.`,
+    });
+  }
+  return pages;
+}
+
+export function applyPageCrudAction(
+  currentPages: EditableBookPage[],
+  action: PageCrudAction
+): EditableBookPage[] {
+  const list = Array.isArray(currentPages) ? currentPages.map((p) => ({ ...p })) : [];
+
+  if (action.type === 'add') {
+    const insertIdx =
+      typeof action.afterIndex === 'number' && action.afterIndex >= 0 && action.afterIndex < list.length
+        ? action.afterIndex + 1
+        : list.length;
+    const newPageNum = insertIdx + 1;
+    const newPage: EditableBookPage = {
+      pageNumber: newPageNum,
+      kicker: (action.kicker || `BAGIAN ${String(newPageNum - 1).padStart(2, '0')}`).trim(),
+      title: (action.title || `Bab ${newPageNum - 1}: Topik Pembahasan Baru`).trim(),
+      subtitle: (action.subtitle || 'Subjudul atau ringkasan pokok bahasan halaman ini').trim(),
+      body: (
+        action.body ||
+        'Tuliskan isi materi, narasi bab, atau penjelasan lengkap pada halaman ini. Seluruh teks akan dirender secara tajam ke lembaran buku 3D.'
+      ).trim(),
+    };
+    list.splice(insertIdx, 0, newPage);
+    return normalizeEditablePagesOrder(list);
+  }
+
+  if (action.type === 'update') {
+    if (action.index < 0 || action.index >= list.length) {
+      return normalizeEditablePagesOrder(list);
+    }
+    const target = list[action.index];
+    list[action.index] = {
+      ...target,
+      ...action.patch,
+      pageNumber: action.index + 1,
+    };
+    return normalizeEditablePagesOrder(list);
+  }
+
+  if (action.type === 'delete') {
+    if (list.length <= 1) {
+      return normalizeEditablePagesOrder(list);
+    }
+    if (action.index < 0 || action.index >= list.length) {
+      return normalizeEditablePagesOrder(list);
+    }
+    list.splice(action.index, 1);
+    return normalizeEditablePagesOrder(list);
+  }
+
+  if (action.type === 'move-up') {
+    if (action.index <= 0 || action.index >= list.length) {
+      return normalizeEditablePagesOrder(list);
+    }
+    const temp = list[action.index - 1];
+    list[action.index - 1] = list[action.index];
+    list[action.index] = temp;
+    return normalizeEditablePagesOrder(list);
+  }
+
+  if (action.type === 'move-down') {
+    if (action.index < 0 || action.index >= list.length - 1) {
+      return normalizeEditablePagesOrder(list);
+    }
+    const temp = list[action.index + 1];
+    list[action.index + 1] = list[action.index];
+    list[action.index] = temp;
+    return normalizeEditablePagesOrder(list);
+  }
+
+  if (action.type === 'sync-cover') {
+    const cleanTitle = (action.bookTitle || 'Publikasi Tanpa Judul').trim();
+    const cleanDesc = (action.bookDescription || '').trim();
+    const cleanKicker = (action.bookKicker || 'SAMPUL DEPAN').trim();
+    if (list.length === 0) {
+      return buildDefaultEditablePagesForBook({
+        title: cleanTitle,
+        author: action.bookAuthor,
+        description: cleanDesc,
+        kicker: cleanKicker,
+        pageCount: 4,
+      });
+    }
+    list[0] = {
+      ...list[0],
+      pageNumber: 1,
+      kicker: cleanKicker,
+      title: cleanTitle,
+      subtitle: cleanDesc.slice(0, 68) || list[0].subtitle,
+      body: cleanDesc || list[0].body,
+    };
+    return normalizeEditablePagesOrder(list);
+  }
+
+  return normalizeEditablePagesOrder(list);
+}
+
+export type EtalaseBookCrudAction =
+  | {
+      type: 'create';
+      book: EtalaseBookRecord;
+    }
+  | {
+      type: 'update';
+      id: string;
+      patch: Partial<EtalaseBookRecord>;
+    }
+  | {
+      type: 'delete';
+      id: string;
+    }
+  | {
+      type: 'duplicate';
+      id: string;
+      newId: string;
+    }
+  | {
+      type: 'reorder';
+      id: string;
+      direction: 'up' | 'down';
+    };
+
+export function applyEtalaseBookCrudAction(
+  currentBooks: EtalaseBookRecord[],
+  action: EtalaseBookCrudAction
+): EtalaseBookRecord[] {
+  const list = Array.isArray(currentBooks) ? currentBooks.map((b) => ({ ...b })) : [];
+
+  if (action.type === 'create') {
+    return [action.book, ...list];
+  }
+
+  if (action.type === 'update') {
+    return list.map((b) => (b.id === action.id ? { ...b, ...action.patch, id: b.id } : b));
+  }
+
+  if (action.type === 'delete') {
+    return list.filter((b) => b.id !== action.id);
+  }
+
+  if (action.type === 'duplicate') {
+    const idx = list.findIndex((b) => b.id === action.id);
+    if (idx < 0) return list;
+    const source = list[idx];
+    const copy: EtalaseBookRecord = {
+      ...source,
+      id: action.newId,
+      title: `${source.title} (Salinan)`,
+      editablePages: source.editablePages
+        ? source.editablePages.map((p, i) =>
+            i === 0 ? { ...p, title: `${source.title} (Salinan)` } : { ...p }
+          )
+        : undefined,
+    };
+    const next = [...list];
+    next.splice(idx + 1, 0, copy);
+    return next;
+  }
+
+  if (action.type === 'reorder') {
+    const idx = list.findIndex((b) => b.id === action.id);
+    if (idx < 0) return list;
+    const targetIdx = action.direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= list.length) return list;
+    const next = [...list];
+    const temp = next[targetIdx];
+    next[targetIdx] = next[idx];
+    next[idx] = temp;
+    return next;
+  }
+
+  return list;
+}
+
+
 
