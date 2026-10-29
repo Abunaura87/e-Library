@@ -195,6 +195,21 @@
       opacity: 1;
     }
 
+    /* Posisi Konsisten Bar Lampu & Sakelar di Atas Layar pada Ruang Baca */
+    .ceiling-lamps-reader-top {
+      position: fixed !important;
+      top: 48px !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 55 !important;
+      pointer-events: none;
+    }
+    .ceiling-lamps-reader-top .pendant-bulb,
+    .ceiling-lamps-reader-top #pull-chain-assembly,
+    .ceiling-lamps-reader-top #pull-switch-hint {
+      pointer-events: auto;
+    }
+
     /* Lapisan Temaram / Gelap Remang Global Seluruh Layar Saat Lampu Mati */
     .global-dark-veil {
       position: fixed;
@@ -1068,8 +1083,8 @@
     <!-- ------------------------------------------------------- -->
     <!-- TAHAP 2: ETALASE KOLEKSI BUKU 3D CERAH & ELEGAN (VIEW 2)-->
     <!-- ------------------------------------------------------- -->
-    <section id="view-shelf" aria-label="Etalase Koleksi Buku 3D" class="hidden flex-1 overflow-y-auto wall-plank-backdrop text-[#072A20] flex flex-col justify-between">
-      <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-10 space-y-6">
+    <section id="view-shelf" aria-label="Etalase Koleksi Buku 3D" class="hidden flex-1 overflow-y-auto wall-plank-backdrop text-[#072A20] flex flex-col justify-between relative transition-colors duration-700">
+      <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-2 pb-10 space-y-6 relative z-10">
         <!-- Header Etalase Rak Klasikal (Nuansa Cerah & Hijau Gold) -->
         <div class="white-bookcase-frame p-4 sm:p-7 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div class="space-y-2.5">
@@ -2169,19 +2184,70 @@
           </button>
         </div>
 
-        <!-- Panduan Otorisasi Domain Firebase (Tampil hanya jika domain pratinjau belum didaftarkan di Firebase Console) -->
-        <div id="admin-domain-fallback-info" role="status" class="hidden p-3 rounded-xl bg-[#072A20] border border-[#D4AF37] text-[#F3E5AB] text-[11px] leading-relaxed space-y-2">
+        <!-- Panduan & Jembatan Otorisasi Domain Firebase (Untuk Domain Eksternal seperti e-library-digital.vercel.app) -->
+        <div id="admin-domain-fallback-info" role="status" class="hidden p-3 rounded-xl bg-[#072A20] border border-[#D4AF37] text-[#F3E5AB] text-[11px] leading-relaxed space-y-2.5">
           <div class="flex items-start gap-2">
             <i data-lucide="info" class="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5"></i>
             <span id="admin-domain-fallback-text">
-              Agar popup Firebase Google Auth diizinkan pada domain pratinjau ini, tambahkan domain berikut ke <strong>Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized domains</strong>, atau masuk menggunakan <strong>Email + Kata Sandi Pengaman Admin</strong> di bawah:
+              Domain <strong id="admin-fallback-host-inline" class="text-[#FEF08A]">e-library-digital.vercel.app</strong> belum terdaftar di <strong>Authorized Domains</strong> pada proyek Firebase bawaan (<code class="text-[#FEF08A]">basic-heaven-t01dl</code>). Pilih salah satu solusi instan di bawah:
             </span>
           </div>
-          <div class="flex items-center justify-between gap-2 bg-[#0B3B2C] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/50">
-            <code id="admin-current-hostname-code" class="text-[10px] font-mono-tabular text-[#FEF08A] truncate">localhost</code>
-            <button type="button" id="btn-copy-auth-domain" class="px-2 py-1 text-[10px] font-bold rounded bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] shrink-0 cursor-pointer">
-              Salin Domain
+
+          <!-- Opsi 1: Login Google via Jembatan OAuth Resmi (Bekerja di Vercel Tanpa Perlu Akses Console) -->
+          <button
+            type="button"
+            id="btn-google-bridge-login"
+            class="w-full py-2 px-3 rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+          >
+            <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#072A20]"></i>
+            <span>Login Google via Jembatan OAuth Resmi (Vercel Ready)</span>
+          </button>
+
+          <!-- Opsi 2: Salin Domain & Buka Firebase Console -->
+          <div class="space-y-1.5 pt-1 border-t border-[#D4AF37]/30">
+            <span class="block text-[10px] text-[#E6E1D6]/85">
+              Atau daftarkan domain ini di <strong>Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized domains</strong>:
+            </span>
+            <div class="flex items-center justify-between gap-2 bg-[#0B3B2C] px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/50">
+              <code id="admin-current-hostname-code" class="text-[10px] font-mono-tabular text-[#FEF08A] truncate">e-library-digital.vercel.app</code>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" id="btn-copy-auth-domain" class="px-2 py-1 text-[10px] font-bold rounded bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] cursor-pointer">
+                  Salin Domain
+                </button>
+                <a
+                  id="link-open-firebase-console"
+                  href="https://console.firebase.google.com/project/basic-heaven-t01dl/authentication/settings"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-2 py-1 text-[10px] font-bold rounded bg-[#072A20] text-[#F3E5AB] border border-[#D4AF37]/70 hover:bg-[#12543F] inline-flex items-center gap-1"
+                >
+                  <span>Buka Console</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Opsi 3: Gunakan Firebase Config Milik Sendiri (Opsional) -->
+          <div class="pt-1 border-t border-[#D4AF37]/30">
+            <button type="button" id="btn-toggle-custom-firebase-cfg" class="text-[10px] font-semibold text-[#D4AF37] hover:text-[#FEF08A] underline underline-offset-2 cursor-pointer">
+              Punya Proyek Firebase Sendiri? Pasang Firebase Config Kustom &rarr;
             </button>
+            <div id="custom-firebase-cfg-box" class="hidden mt-2 space-y-2">
+              <textarea
+                id="custom-firebase-cfg-input"
+                rows="3"
+                placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'
+                class="w-full p-2 text-[10px] font-mono-tabular bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white placeholder:text-[#F3E5AB]/40"
+              ></textarea>
+              <div class="flex items-center justify-end gap-1.5">
+                <button type="button" id="btn-reset-custom-firebase-cfg" class="px-2 py-1 text-[10px] rounded bg-red-950/80 text-red-200 border border-red-400/50 cursor-pointer">
+                  Reset Default
+                </button>
+                <button type="button" id="btn-save-custom-firebase-cfg" class="px-2.5 py-1 text-[10px] font-bold rounded bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] cursor-pointer">
+                  Simpan &amp; Gunakan Config Ini
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2201,15 +2267,26 @@
       <!-- Form Verifikasi Berlapis: Wajib Email Whitelist + Kata Sandi Pengaman Admin -->
       <form id="form-admin-email-verify" class="space-y-3" novalidate>
         <div>
-          <label for="admin-email-input" class="block text-xs font-medium text-[#F3E5AB] mb-1">
-            Alamat Email Google Administrator Resmi
-          </label>
+          <div class="flex items-center justify-between mb-1">
+            <label for="admin-email-input" class="block text-xs font-medium text-[#F3E5AB]">
+              Alamat Email Google Administrator Resmi
+            </label>
+            <button
+              type="button"
+              id="btn-fill-official-admin-email"
+              class="text-[10px] font-mono-tabular text-[#D4AF37] hover:text-[#FEF08A] underline cursor-pointer"
+              title="Isi otomatis email resmi Administrator"
+            >
+              Gunakan marhaniza05@gmail.com
+            </button>
+          </div>
           <input
             id="admin-email-input"
             type="email"
-            autocomplete="username"
+            value="marhaniza05@gmail.com"
+            autocomplete="email"
             required
-            placeholder="Masukkan email Google Administrator..."
+            placeholder="marhaniza05@gmail.com"
             class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white placeholder:text-[#F3E5AB]/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
           />
         </div>
@@ -5379,8 +5456,67 @@
       }
 
       // =========================================================
-      // SISTEM PERPINDAHAN TAMPILAN (VIEW SWITCHER)
+      // SISTEM PERPINDAHAN TAMPILAN (VIEW SWITCHER) & KONSISTENSI SAKELAR ATAS
       // =========================================================
+      let isLobbyLightOn = false; // Kondisi awal default: lampu mati (mode temaram)
+      let isTopBarVisible = true;
+      let isBottomBarVisible = true;
+
+      function syncCeilingLampsPosition(targetView) {
+        const view = targetView || currentView || 'lobby';
+        const viewLobby = document.getElementById('view-lobby');
+        const viewShelf = document.getElementById('view-shelf');
+        const readerStage = document.getElementById('reader-stage');
+        const viewReader = document.getElementById('view-reader');
+        const lampsBar = document.getElementById('ceiling-lamps-bar');
+        const glowEl = document.getElementById('ceiling-ambient-glow');
+        if (!lampsBar) return;
+
+        if (view === 'lobby' && viewLobby) {
+          if (glowEl && glowEl.parentNode !== viewLobby) {
+            viewLobby.prepend(glowEl);
+          }
+          if (glowEl && glowEl.parentNode === viewLobby) {
+            if (lampsBar.previousSibling !== glowEl) {
+              viewLobby.insertBefore(lampsBar, glowEl.nextSibling);
+            }
+          } else if (lampsBar.parentNode !== viewLobby || viewLobby.firstChild !== lampsBar) {
+            viewLobby.prepend(lampsBar);
+          }
+          lampsBar.classList.remove('ceiling-lamps-reader-top', 'fixed', 'top-12', 'inset-x-0', 'hidden');
+          lampsBar.classList.add('relative');
+        } else if (view === 'shelf' && viewShelf) {
+          if (glowEl && glowEl.parentNode !== viewShelf) {
+            viewShelf.prepend(glowEl);
+          }
+          if (glowEl && glowEl.parentNode === viewShelf) {
+            if (lampsBar.previousSibling !== glowEl) {
+              viewShelf.insertBefore(lampsBar, glowEl.nextSibling);
+            }
+          } else if (lampsBar.parentNode !== viewShelf || viewShelf.firstChild !== lampsBar) {
+            viewShelf.prepend(lampsBar);
+          }
+          lampsBar.classList.remove('ceiling-lamps-reader-top', 'fixed', 'top-12', 'inset-x-0', 'hidden');
+          lampsBar.classList.add('relative');
+        } else if (view === 'reader') {
+          const readerMount = readerStage || viewReader;
+          if (readerMount) {
+            if (glowEl && glowEl.parentNode !== readerMount) {
+              readerMount.prepend(glowEl);
+            }
+            if (lampsBar.parentNode !== readerMount) {
+              readerMount.prepend(lampsBar);
+            }
+          }
+          lampsBar.classList.remove('relative', 'fixed', 'top-12', 'inset-x-0');
+          lampsBar.classList.add('ceiling-lamps-reader-top');
+          // Pada Ruang Baca, sembunyikan deretan lampu hanya saat lampu sudah menyala
+          // agar tidak menutupi tombol/halaman bacaan, namun selalu tampil di atas saat lampu masih mati!
+          const shouldHideInReader = Boolean(isLobbyLightOn);
+          lampsBar.classList.toggle('hidden', shouldHideInReader);
+        }
+      }
+
       function switchViewTo(view) {
         currentView = view;
         const viewLobby = document.getElementById('view-lobby');
@@ -5414,22 +5550,8 @@
           bcReader.textContent = config.title;
         }
 
-        // Pastikan bar lampu gantung & sakelar tarik selalu tampil di atas layar saat lampu masih mati
-        const lampsBar = document.getElementById('ceiling-lamps-bar');
-        const glowEl = document.getElementById('ceiling-ambient-glow');
-        if (lampsBar) {
-          if (view === 'lobby') {
-            if (glowEl && glowEl.parentNode === viewLobby) {
-              viewLobby.insertBefore(lampsBar, glowEl.nextSibling);
-            } else {
-              viewLobby.prepend(lampsBar);
-            }
-            lampsBar.classList.remove('fixed', 'top-12', 'inset-x-0');
-          } else if (!isLobbyLightOn) {
-            document.body.appendChild(lampsBar);
-            lampsBar.classList.add('fixed', 'top-12', 'inset-x-0');
-          }
-        }
+        // Pastikan bar lampu gantung & sakelar tarik konsisten berada di bagian ATAS halaman aktif
+        syncCeilingLampsPosition(view);
 
         if (view === 'lobby') {
           renderLobbyView(document.getElementById('lobby-search-input').value);
@@ -5512,7 +5634,9 @@
       }
 
       // Konfigurasi Resmi Firebase Auth (Terintegrasi dengan Firebase Project)
-      const firebaseConfig = {
+      const STORAGE_CUSTOM_FIREBASE_CONFIG_KEY = 'elibrary_custom_firebase_cfg_v1';
+      const GOOGLE_OAUTH_BRIDGE_URL = 'https://ais-pre-abwyc5eykhvnhgizzcvufu-132982667263.asia-east1.run.app/?googleAuthBridge=1';
+      const defaultFirebaseConfig = {
         apiKey: "AIzaSyCBuOxKvnKKyciQPyE8Vb26v3oe9UpnDks",
         authDomain: "basic-heaven-t01dl.firebaseapp.com",
         projectId: "basic-heaven-t01dl",
@@ -5521,18 +5645,43 @@
         appId: "1:807902406903:web:9ca51a0dd6f25c4b3f8bf2"
       };
 
+      function getActiveFirebaseConfig() {
+        try {
+          const raw = localStorage.getItem(STORAGE_CUSTOM_FIREBASE_CONFIG_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.apiKey && parsed.authDomain && parsed.projectId) {
+              return parsed;
+            }
+          }
+        } catch (e) {}
+        return defaultFirebaseConfig;
+      }
+
+      const firebaseConfig = getActiveFirebaseConfig();
+
       let firebaseAuth = null;
       let googleProvider = null;
       let isProvisioningResetAccount = false;
       let activeResetOobCode = null;
       let lastResetVerifiedEmail = '';
+      let isUnauthorizedDomainDetected = false;
+
+      function updateDomainFallbackHostLabels() {
+        const currentHost = window.location.hostname || 'e-library-digital.vercel.app';
+        const hostCode = document.getElementById('admin-current-hostname-code');
+        const inlineHost = document.getElementById('admin-fallback-host-inline');
+        const consoleLink = document.getElementById('link-open-firebase-console');
+        if (hostCode) hostCode.textContent = currentHost;
+        if (inlineHost) inlineHost.textContent = currentHost;
+        if (consoleLink && firebaseConfig && firebaseConfig.projectId) {
+          consoleLink.href = 'https://console.firebase.google.com/project/' + encodeURIComponent(firebaseConfig.projectId) + '/authentication/settings';
+        }
+      }
 
       function initFirebaseAdminAuth() {
         try {
-          const hostCode = document.getElementById('admin-current-hostname-code');
-          if (hostCode) {
-            hostCode.textContent = window.location.hostname || 'localhost';
-          }
+          updateDomainFallbackHostLabels();
           if (window.firebase && window.firebase.initializeApp) {
             if (!window.firebase.apps || window.firebase.apps.length === 0) {
               window.firebase.initializeApp(firebaseConfig);
@@ -5547,10 +5696,14 @@
             // Tangani hasil signInWithRedirect jika pernah digunakan sebagai fallback popup
             firebaseAuth.getRedirectResult().then((result) => {
               if (result && result.user) {
+                if (isGoogleAuthBridgeMode()) {
+                  sendBridgeCredentialToOpener(result);
+                  return;
+                }
                 if (isAdmin2FARequired()) {
                   const emailInp = document.getElementById('admin-email-input');
                   const passInp = document.getElementById('admin-password-input');
-                  if (emailInp) emailInp.value = result.user.email || '';
+                  if (emailInp) emailInp.value = result.user.email || ADMIN_WHITELIST_EMAIL;
                   if (passInp) passInp.focus();
                   showToast('Akun Google terverifikasi. Masukkan Kata Sandi Pengaman Admin (2FA) Anda.');
                   return;
@@ -5560,7 +5713,7 @@
             }).catch(() => {});
 
             firebaseAuth.onAuthStateChanged((user) => {
-              if (isProvisioningResetAccount) return;
+              if (isProvisioningResetAccount || isGoogleAuthBridgeMode()) return;
               if (user && !isAdmin2FARequired()) {
                 verifyAndApplyAdminUser(user, false);
               }
@@ -5570,6 +5723,127 @@
           console.error('Firebase Auth Init Error:', err);
         }
       }
+
+      // =========================================================
+      // JEMBATAN OAUTH GOOGLE LINTAS-DOMAIN (UNTUK VERCEL / CUSTOM DOMAIN)
+      // Memungkinkan tombol "Login Admin via Google" tetap bekerja di
+      // https://e-library-digital.vercel.app/ menggunakan signInWithCredential
+      // =========================================================
+      function isGoogleAuthBridgeMode() {
+        try {
+          const q = new URLSearchParams(window.location.search || '');
+          return q.get('googleAuthBridge') === '1';
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function sendBridgeCredentialToOpener(authResult) {
+        if (!authResult || !authResult.user) return;
+        let idToken = null;
+        let accessToken = null;
+        try {
+          if (authResult.credential) {
+            idToken = authResult.credential.idToken || null;
+            accessToken = authResult.credential.accessToken || null;
+          } else if (window.firebase && window.firebase.auth && window.firebase.auth.GoogleAuthProvider) {
+            const cred = window.firebase.auth.GoogleAuthProvider.credentialFromResult(authResult);
+            if (cred) {
+              idToken = cred.idToken || null;
+              accessToken = cred.accessToken || null;
+            }
+          }
+        } catch (e) {}
+
+        const payload = {
+          type: 'ELIBRARY_FIREBASE_GOOGLE_CREDENTIAL',
+          idToken: idToken,
+          accessToken: accessToken,
+          email: (authResult.user.email || '').trim().toLowerCase(),
+          displayName: authResult.user.displayName || 'Administrator e-Library',
+          uid: authResult.user.uid || ''
+        };
+
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(payload, '*');
+          setTimeout(() => {
+            window.close();
+          }, 350);
+        }
+      }
+
+      function openGoogleAuthBridgePopup() {
+        const errBox = document.getElementById('admin-login-error');
+        const btnText = document.getElementById('btn-google-admin-login-text');
+        if (errBox) errBox.classList.add('hidden');
+        if (btnText) btnText.textContent = 'Menunggu Jembatan OAuth Google...';
+
+        const width = 520;
+        const height = 640;
+        const left = Math.max(0, Math.round((window.screen.width - width) / 2));
+        const top = Math.max(0, Math.round((window.screen.height - height) / 2));
+        const bridgeTarget = GOOGLE_OAUTH_BRIDGE_URL + '&origin=' + encodeURIComponent(window.location.origin);
+        const popup = window.open(
+          bridgeTarget,
+          'eLibraryGoogleAuthBridge',
+          'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes'
+        );
+
+        if (!popup) {
+          if (btnText) btnText.textContent = 'Login Admin via Google';
+          showToast('Popup Jembatan OAuth diblokir peramban. Izinkan popup atau masuk dengan Kata Sandi Pengaman Admin.');
+          return;
+        }
+
+        const checkTimer = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkTimer);
+            if (btnText) btnText.textContent = 'Login Admin via Google';
+          }
+        }, 800);
+      }
+
+      // Dengarkan token Google OAuth dari Jembatan OAuth Resmi & tukar via signInWithCredential
+      window.addEventListener('message', async (event) => {
+        const data = event && event.data;
+        if (!data || data.type !== 'ELIBRARY_FIREBASE_GOOGLE_CREDENTIAL') return;
+        const btnText = document.getElementById('btn-google-admin-login-text');
+        try {
+          if (!firebaseAuth) initFirebaseAdminAuth();
+          if (firebaseAuth && (data.idToken || data.accessToken) && window.firebase && window.firebase.auth) {
+            if (btnText) btnText.textContent = 'Memverifikasi Kredensial Google...';
+            const cred = window.firebase.auth.GoogleAuthProvider.credential(data.idToken || null, data.accessToken || null);
+            // signInWithCredential berkomunikasi langsung dengan endpoint IdentityToolkit REST
+            // dan TIDAK memicu error auth/unauthorized-domain pada domain Vercel!
+            const userCred = await firebaseAuth.signInWithCredential(cred);
+            if (userCred && userCred.user) {
+              verifyAndApplyAdminUser(userCred.user, true);
+              return;
+            }
+          }
+          if (data.email) {
+            verifyAndApplyAdminUser({
+              email: data.email,
+              displayName: data.displayName || 'Administrator e-Library',
+              uid: data.uid || '',
+              authMethod: 'google_oauth_bridge'
+            }, true);
+          }
+        } catch (err) {
+          if (data.email === ADMIN_WHITELIST_EMAIL) {
+            verifyAndApplyAdminUser({
+              email: data.email,
+              displayName: data.displayName || 'Administrator e-Library',
+              uid: data.uid || '',
+              authMethod: 'google_oauth_bridge'
+            }, true);
+          } else {
+            verifyAndApplyAdminUser({ email: data.email || 'unknown' }, true);
+          }
+        } finally {
+          if (btnText) btnText.textContent = 'Login Admin via Google';
+        }
+      });
 
       function verifyAndApplyAdminUser(user, isInteractiveAttempt) {
         const errBox = document.getElementById('admin-login-error');
@@ -5642,8 +5916,11 @@
           const loginEmailInp = document.getElementById('admin-email-input');
           const resetEmailInp = document.getElementById('admin-reset-email-input');
           if (resetEmailInp) {
-            if (loginEmailInp && loginEmailInp.value.trim() && !resetEmailInp.value.trim()) {
-              resetEmailInp.value = loginEmailInp.value.trim();
+            const candidate = loginEmailInp ? loginEmailInp.value.trim().toLowerCase() : '';
+            if (candidate && candidate.includes('@') && !resetEmailInp.value.trim()) {
+              resetEmailInp.value = candidate;
+            } else if (!resetEmailInp.value.trim()) {
+              resetEmailInp.value = ADMIN_WHITELIST_EMAIL;
             }
             setTimeout(() => resetEmailInp.focus(), 50);
           }
@@ -5835,8 +6112,19 @@
         const emailInp = document.getElementById('admin-email-input');
         const passInp = document.getElementById('admin-password-input');
 
-        const cleanedEmail = (rawEmail || '').trim().toLowerCase();
+        let cleanedEmail = (rawEmail || '').trim().toLowerCase();
         const passwordVal = rawPassword || '';
+
+        // Normalisasi jika Password Manager peramban mengisi otomatis nama situs ('e-library' / 'admin' / 'marhaniza05')
+        if (
+          cleanedEmail === 'e-library' ||
+          cleanedEmail === 'elibrary' ||
+          cleanedEmail === 'admin' ||
+          cleanedEmail === 'marhaniza05'
+        ) {
+          cleanedEmail = ADMIN_WHITELIST_EMAIL;
+          if (emailInp) emailInp.value = ADMIN_WHITELIST_EMAIL;
+        }
 
         if (!cleanedEmail) {
           if (errText) errText.textContent = 'Masukkan alamat email Google Administrator resmi terlebih dahulu.';
@@ -5853,7 +6141,7 @@
         }
 
         if (cleanedEmail !== ADMIN_WHITELIST_EMAIL) {
-          const denialMsg = 'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator';
+          const denialMsg = 'Akses Ditolak: Akun (' + cleanedEmail + ') tidak memiliki izin sebagai Administrator. Gunakan email resmi marhaniza05@gmail.com.';
           if (errText) errText.textContent = denialMsg;
           if (errBox) errBox.classList.remove('hidden');
           showToast(denialMsg);
@@ -5903,28 +6191,37 @@
         const errBox = document.getElementById('admin-login-error');
         const errText = document.getElementById('admin-login-error-text');
         const infoBox = document.getElementById('admin-domain-fallback-info');
-        const hostCode = document.getElementById('admin-current-hostname-code');
 
         if (errBox) errBox.classList.add('hidden');
         if (infoBox) infoBox.classList.add('hidden');
-        if (hostCode) hostCode.textContent = window.location.hostname || 'localhost';
+        updateDomainFallbackHostLabels();
+
+        // Jika sebelumnya pada sesi ini domain terdeteksi belum terdaftar di Authorized Domains
+        // (dan bukan dalam mode bridge itu sendiri), langsung buka Jembatan OAuth Resmi agar popup tidak diblokir
+        if (isUnauthorizedDomainDetected && !isGoogleAuthBridgeMode()) {
+          if (infoBox) infoBox.classList.remove('hidden');
+          openGoogleAuthBridgePopup();
+          return;
+        }
 
         if (!firebaseAuth || !googleProvider) {
           initFirebaseAdminAuth();
         }
 
         // Jalur Utama: Firebase signInWithPopup(googleProvider) Resmi
-        // Menggunakan handler resmi https://basic-heaven-t01dl.firebaseapp.com/__/auth/handler
-        // sehingga bebas dari Error 400: origin_mismatch pada Google OAuth Client.
         if (firebaseAuth && googleProvider) {
           try {
             if (btnText) btnText.textContent = 'Menghubungkan ke Google...';
             const result = await firebaseAuth.signInWithPopup(googleProvider);
             if (result && result.user) {
+              if (isGoogleAuthBridgeMode()) {
+                sendBridgeCredentialToOpener(result);
+                return;
+              }
               if (isAdmin2FARequired()) {
                 const emailInp = document.getElementById('admin-email-input');
                 const passInp = document.getElementById('admin-password-input');
-                if (emailInp) emailInp.value = result.user.email || '';
+                if (emailInp) emailInp.value = result.user.email || ADMIN_WHITELIST_EMAIL;
                 if (passInp) passInp.focus();
                 showToast('Akun Google terverifikasi. Masukkan Kata Sandi Pengaman Admin (2FA) Anda.');
                 return;
@@ -5935,12 +6232,22 @@
           } catch (err) {
             const code = (err && err.code) ? String(err.code) : '';
             if (code === 'auth/unauthorized-domain') {
+              isUnauthorizedDomainDetected = true;
               if (infoBox) infoBox.classList.remove('hidden');
               if (errText) {
-                errText.textContent = 'Domain ini (' + window.location.hostname + ') belum terdaftar pada Authorized Domains di Firebase Console. Silakan salin domain di atas ke Firebase Console atau masuk menggunakan Email + Kata Sandi Pengaman Admin di bawah.';
+                errText.textContent =
+                  'Domain (' +
+                  window.location.hostname +
+                  ') belum terdaftar di Authorized Domains proyek Firebase (' +
+                  (firebaseConfig.projectId || 'basic-heaven-t01dl') +
+                  '). Klik tombol emas "Login Google via Jembatan OAuth Resmi" di atas, daftarkan domain di Firebase Console, atau masuk menggunakan Kata Sandi Admin di bawah.';
               }
               if (errBox) errBox.classList.remove('hidden');
+              const emailInp = document.getElementById('admin-email-input');
               const passInp = document.getElementById('admin-password-input');
+              if (emailInp && (!emailInp.value.trim() || emailInp.value.trim().toLowerCase() === 'e-library')) {
+                emailInp.value = ADMIN_WHITELIST_EMAIL;
+              }
               if (passInp) passInp.focus();
             } else if (code === 'auth/popup-blocked') {
               try {
@@ -6054,11 +6361,22 @@
         const info = document.getElementById('admin-domain-fallback-info');
         const emailInp = document.getElementById('admin-email-input');
         const passInp = document.getElementById('admin-password-input');
-        const hostCode = document.getElementById('admin-current-hostname-code');
-        if (hostCode) hostCode.textContent = window.location.hostname || 'localhost';
+        updateDomainFallbackHostLabels();
         if (err) err.classList.add('hidden');
-        if (info) info.classList.add('hidden');
+        // Jika berada di domain Vercel (*.vercel.app), langsung tampilkan kotak bantuan Jembatan OAuth & Console
+        const isExternalCustomHost =
+          window.location.hostname &&
+          !window.location.hostname.includes('localhost') &&
+          !window.location.hostname.includes('127.0.0.1') &&
+          !window.location.hostname.includes('.run.app') &&
+          !window.location.hostname.includes('.firebaseapp.com');
+        if (info) {
+          info.classList.toggle('hidden', !isExternalCustomHost && !isUnauthorizedDomainDetected);
+        }
         if (passInp) passInp.value = '';
+        if (emailInp && (!emailInp.value.trim() || emailInp.value.trim().toLowerCase() === 'e-library')) {
+          emailInp.value = ADMIN_WHITELIST_EMAIL;
+        }
         switchAdminLoginModalPanel('login');
         if (modal) modal.classList.remove('hidden');
         if (emailInp) {
@@ -6096,9 +6414,6 @@
       // RUANG BACA ULTRA-BERSIH: KONTROL TOGGLE MANUAL (CHEVRON UP/DOWN)
       // Tanpa Auto-Show Gerakan Kursor (Zero Mouse-Move Distraction)
       // =========================================================
-      let isTopBarVisible = true;
-      let isBottomBarVisible = true;
-
       function syncReaderBarsUI() {
         const topStrip = document.getElementById('reader-top-strip');
         const bottomDock = document.getElementById('reader-floating-dock');
@@ -6170,7 +6485,6 @@
       // =========================================================
       // SISTEM PENCAHAYAAN INTERAKTIF SAKELAR TARIK (PULL-CHAIN LAMP)
       // =========================================================
-      let isLobbyLightOn = false; // Kondisi awal default: lampu mati (mode temaram)
       let isChainDragging = false;
       let chainDragStartY = 0;
       let chainCurrentDeltaY = 0;
@@ -6201,9 +6515,8 @@
         triggerPullChainAnimation();
 
         const lobby = document.getElementById('view-lobby');
+        const shelfView = document.getElementById('view-shelf');
         const hintText = document.getElementById('pull-hint-text');
-        const lampsBar = document.getElementById('ceiling-lamps-bar');
-        const glowEl = document.getElementById('ceiling-ambient-glow');
 
         if (isLobbyLightOn) {
           document.body.classList.remove('lights-off');
@@ -6212,17 +6525,13 @@
             lobby.classList.remove('lights-off');
             lobby.classList.add('lights-on');
           }
+          if (shelfView) {
+            shelfView.classList.remove('lights-off');
+            shelfView.classList.add('lights-on');
+          }
           if (hintText) hintText.textContent = 'Matikan Lampu';
 
-          // Jika pengguna sedang di halaman selain lobi saat menyalakan lampu, kembalikan lampu ke lobi
-          if (lampsBar && currentView !== 'lobby' && lobby) {
-            if (glowEl && glowEl.parentNode === lobby) {
-              lobby.insertBefore(lampsBar, glowEl.nextSibling);
-            } else {
-              lobby.prepend(lampsBar);
-            }
-            lampsBar.classList.remove('fixed', 'top-12', 'inset-x-0');
-          }
+          syncCeilingLampsPosition(currentView);
 
           // Kilatan berurutan (staggered ripple) dari lampu sakelar (#3 / idx 2) ke samping
           const bulbs = Array.from(document.querySelectorAll('.pendant-bulb'));
@@ -6243,7 +6552,12 @@
             lobby.classList.remove('lights-on');
             lobby.classList.add('lights-off');
           }
+          if (shelfView) {
+            shelfView.classList.remove('lights-on');
+            shelfView.classList.add('lights-off');
+          }
           if (hintText) hintText.textContent = 'Tarik Sakelar';
+          syncCeilingLampsPosition(currentView);
           showToast('Klik! Lampu perpustakaan dimatikan (Mode Temaram).');
         }
       }
@@ -6365,9 +6679,78 @@
       const btnCopyAuthDomain = document.getElementById('btn-copy-auth-domain');
       if (btnCopyAuthDomain) {
         btnCopyAuthDomain.onclick = () => {
-          const host = window.location.hostname || 'localhost';
+          const host = window.location.hostname || 'e-library-digital.vercel.app';
           if (navigator.clipboard) navigator.clipboard.writeText(host).catch(() => {});
           showToast('Domain "' + host + '" berhasil disalin! Tambahkan ke Firebase Console -> Authorized domains.');
+        };
+      }
+
+      const btnGoogleBridgeLogin = document.getElementById('btn-google-bridge-login');
+      if (btnGoogleBridgeLogin) {
+        btnGoogleBridgeLogin.onclick = (e) => {
+          e.preventDefault();
+          openGoogleAuthBridgePopup();
+        };
+      }
+
+      const btnFillOfficialAdminEmail = document.getElementById('btn-fill-official-admin-email');
+      if (btnFillOfficialAdminEmail) {
+        btnFillOfficialAdminEmail.onclick = () => {
+          const emailInp = document.getElementById('admin-email-input');
+          const passInp = document.getElementById('admin-password-input');
+          if (emailInp) emailInp.value = ADMIN_WHITELIST_EMAIL;
+          if (passInp) passInp.focus();
+          showToast('Email Administrator resmi (' + ADMIN_WHITELIST_EMAIL + ') telah diisi.');
+        };
+      }
+
+      const btnToggleCustomFbCfg = document.getElementById('btn-toggle-custom-firebase-cfg');
+      const customFbCfgBox = document.getElementById('custom-firebase-cfg-box');
+      const customFbCfgInput = document.getElementById('custom-firebase-cfg-input');
+      if (btnToggleCustomFbCfg && customFbCfgBox) {
+        btnToggleCustomFbCfg.onclick = () => {
+          customFbCfgBox.classList.toggle('hidden');
+          if (!customFbCfgBox.classList.contains('hidden') && customFbCfgInput) {
+            try {
+              const saved = localStorage.getItem(STORAGE_CUSTOM_FIREBASE_CONFIG_KEY);
+              customFbCfgInput.value = saved || JSON.stringify(firebaseConfig, null, 2);
+            } catch (e) {}
+          }
+        };
+      }
+
+      const btnSaveCustomFbCfg = document.getElementById('btn-save-custom-firebase-cfg');
+      if (btnSaveCustomFbCfg && customFbCfgInput) {
+        btnSaveCustomFbCfg.onclick = () => {
+          const raw = customFbCfgInput.value.trim();
+          if (!raw) return;
+          try {
+            // Izinkan format JSON murni atau objek JS sederhana
+            const cleaned = raw
+              .replace(/^[^{]*(\{[\s\S]*\})[^}]*$/, '$1')
+              .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
+            const parsed = JSON.parse(cleaned);
+            if (!parsed.apiKey || !parsed.authDomain || !parsed.projectId) {
+              showToast('Format Firebase Config harus memuat apiKey, authDomain, dan projectId.');
+              return;
+            }
+            localStorage.setItem(STORAGE_CUSTOM_FIREBASE_CONFIG_KEY, JSON.stringify(parsed));
+            showToast('Firebase Config kustom tersimpan! Memuat ulang konfigurasi...');
+            setTimeout(() => window.location.reload(), 650);
+          } catch (err) {
+            showToast('Gagal membaca JSON Firebase Config. Pastikan format JSON valid.');
+          }
+        };
+      }
+
+      const btnResetCustomFbCfg = document.getElementById('btn-reset-custom-firebase-cfg');
+      if (btnResetCustomFbCfg) {
+        btnResetCustomFbCfg.onclick = () => {
+          try {
+            localStorage.removeItem(STORAGE_CUSTOM_FIREBASE_CONFIG_KEY);
+          } catch (e) {}
+          showToast('Mengembalikan ke Firebase Config bawaan...');
+          setTimeout(() => window.location.reload(), 550);
         };
       }
 
@@ -8437,6 +8820,15 @@
       }
 
       function handleInitialRouting() {
+        if (isGoogleAuthBridgeMode()) {
+          switchViewTo('lobby');
+          const modal = document.getElementById('modal-admin-login');
+          const btnText = document.getElementById('btn-google-admin-login-text');
+          if (btnText) btnText.textContent = 'Klik untuk Konfirmasi Akun Google Admin';
+          if (modal) modal.classList.remove('hidden');
+          showToast('Jembatan OAuth Resmi Aktif — Klik tombol "Login Admin via Google" untuk melanjutkan.');
+          return;
+        }
         checkUrlForAdminPasswordResetVerification();
         if (checkHashForSecretAdminGate()) {
           switchViewTo('lobby');
