@@ -14,10 +14,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
-  <!-- Firebase App, Firebase Auth & Google Identity Services SDK (CDN Publik Resmi) -->
+  <!-- Firebase App & Firebase Auth SDK (CDN Publik Resmi) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" crossorigin="anonymous"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -4514,7 +4513,7 @@
 
       // =========================================================
       // SISTEM AUTENTIKASI ADMIN BERLAPIS:
-      // 1. Otentikasi Akun Google Resmi (Google Identity Services OAuth2 + Firebase Auth)
+      // 1. Otentikasi Akun Google Resmi via Firebase Auth (signInWithPopup)
       // 2. Proteksi Kata Sandi Pengaman Admin (Cryptographic Hash)
       // Whitelist Email Tunggal: marhaniza05@gmail.com
       // =========================================================
@@ -4522,12 +4521,10 @@
       const DEFAULT_ADMIN_INITIAL_PASSWORD = 'AdminElibrary#2026';
       const STORAGE_ADMIN_PASS_HASH_KEY = 'elibrary_admin_pass_hash_v1';
       const STORAGE_ADMIN_2FA_KEY = 'elibrary_admin_require_2fa_v1';
-      const GOOGLE_OAUTH_CLIENT_ID = '807902406903-2ankmtl4s6p7jquhnph0bv5e5moo0oqd.apps.googleusercontent.com';
 
       let isAdminMode = false; // Hanya bernilai true apabila terautentikasi resmi sebagai marhaniza05@gmail.com
       let currentAdminUser = null;
       let pendingAdminAction = null;
-      let gsiTokenClient = null;
 
       // Fungsi Hash Kriptografis Deterministik untuk Kata Sandi Pengaman Admin
       function computeAdminPasswordHash(rawPassword) {
@@ -4591,6 +4588,21 @@
               prompt: 'select_account',
               login_hint: ADMIN_WHITELIST_EMAIL
             });
+
+            // Tangani hasil signInWithRedirect jika pernah digunakan sebagai fallback popup
+            firebaseAuth.getRedirectResult().then((result) => {
+              if (result && result.user) {
+                if (isAdmin2FARequired()) {
+                  const emailInp = document.getElementById('admin-email-input');
+                  const passInp = document.getElementById('admin-password-input');
+                  if (emailInp) emailInp.value = result.user.email || '';
+                  if (passInp) passInp.focus();
+                  showToast('Akun Google terverifikasi. Masukkan Kata Sandi Pengaman Admin (2FA) Anda.');
+                  return;
+                }
+                verifyAndApplyAdminUser(result.user, true);
+              }
+            }).catch(() => {});
 
             firebaseAuth.onAuthStateChanged((user) => {
               if (user && !isAdmin2FARequired()) {
@@ -4704,70 +4716,6 @@
         }, true);
       }
 
-      // Pertukaran Token OAuth Google Resmi ke Firebase Auth & Endpoint UserInfo Google
-      async function handleOfficialGoogleAccessToken(accessToken) {
-        const btnText = document.getElementById('btn-google-admin-login-text');
-        const errBox = document.getElementById('admin-login-error');
-        const errText = document.getElementById('admin-login-error-text');
-        try {
-          if (btnText) btnText.textContent = 'Memverifikasi Token Google Resmi...';
-          // 1. Coba masuk ke Firebase Auth menggunakan GoogleAuthProvider.credential
-          if (firebaseAuth && window.firebase && window.firebase.auth && window.firebase.auth.GoogleAuthProvider) {
-            try {
-              const cred = window.firebase.auth.GoogleAuthProvider.credential(null, accessToken);
-              const fbResult = await firebaseAuth.signInWithCredential(cred);
-              if (fbResult && fbResult.user && fbResult.user.email) {
-                if (isAdmin2FARequired()) {
-                  const emailInp = document.getElementById('admin-email-input');
-                  const passInp = document.getElementById('admin-password-input');
-                  if (emailInp) emailInp.value = fbResult.user.email;
-                  if (passInp) passInp.focus();
-                  showToast('Akun Google terverifikasi. Masukkan Kata Sandi Pengaman Admin (2FA) untuk membuka panel.');
-                  return;
-                }
-                verifyAndApplyAdminUser(fbResult.user, true);
-                return;
-              }
-            } catch (credErr) {
-              console.warn('Firebase signInWithCredential fallback ke Google UserInfo:', credErr);
-            }
-          }
-
-          // 2. Verifikasi langsung ke server resmi Google OAuth2 v3 UserInfo
-          const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: 'Bearer ' + accessToken }
-          });
-          if (!resp.ok) {
-            throw new Error('Token Google tidak valid');
-          }
-          const profile = await resp.json();
-          if (!profile || !profile.email || profile.email_verified === false) {
-            throw new Error('Email Google belum terverifikasi');
-          }
-          if (isAdmin2FARequired()) {
-            const emailInp = document.getElementById('admin-email-input');
-            const passInp = document.getElementById('admin-password-input');
-            if (emailInp) emailInp.value = profile.email;
-            if (passInp) passInp.focus();
-            showToast('Akun Google terverifikasi. Masukkan Kata Sandi Pengaman Admin (2FA) untuk melanjutkan.');
-            return;
-          }
-          verifyAndApplyAdminUser({
-            email: profile.email,
-            displayName: profile.name || 'Administrator e-Library',
-            photoURL: profile.picture || '',
-            authMethod: 'google_oauth_official'
-          }, true);
-        } catch (err) {
-          if (errText) {
-            errText.textContent = 'Verifikasi token Google gagal: ' + (err && err.message ? err.message : 'Silakan coba lagi.');
-          }
-          if (errBox) errBox.classList.remove('hidden');
-        } finally {
-          if (btnText) btnText.textContent = 'Login Admin via Google';
-        }
-      }
-
       async function signInWithGoogleAdmin() {
         const btnText = document.getElementById('btn-google-admin-login-text');
         const errBox = document.getElementById('admin-login-error');
@@ -4776,63 +4724,16 @@
         const hostCode = document.getElementById('admin-current-hostname-code');
 
         if (errBox) errBox.classList.add('hidden');
+        if (infoBox) infoBox.classList.add('hidden');
         if (hostCode) hostCode.textContent = window.location.hostname || 'localhost';
 
         if (!firebaseAuth || !googleProvider) {
           initFirebaseAdminAuth();
         }
 
-        // Jalur 1 (Utama & Bebas Kendala Domain Pratinjau):
-        // Panggil Google Identity Services OAuth 2.0 secara SINKRON di dalam event klik
-        // agar popup resmi accounts.google.com langsung terbuka tanpa terblokir oleh async gesture
-        // dan kemudian ditukarkan ke Firebase Auth (signInWithCredential) + Google UserInfo.
-        if (window.google && window.google.accounts && window.google.accounts.oauth2) {
-          try {
-            if (!gsiTokenClient) {
-              gsiTokenClient = window.google.accounts.oauth2.initTokenClient({
-                client_id: GOOGLE_OAUTH_CLIENT_ID,
-                scope: 'openid email profile',
-                prompt: 'select_account',
-                hint: ADMIN_WHITELIST_EMAIL,
-                callback: (tokenResponse) => {
-                  if (tokenResponse && tokenResponse.access_token) {
-                    handleOfficialGoogleAccessToken(tokenResponse.access_token);
-                  } else if (tokenResponse && tokenResponse.error) {
-                    if (btnText) btnText.textContent = 'Login Admin via Google';
-                    if (infoBox) infoBox.classList.remove('hidden');
-                    if (errText) {
-                      errText.textContent = 'Otentikasi Google melaporkan kendala (' + tokenResponse.error + '). Anda juga dapat masuk menggunakan Email + Kata Sandi Pengaman Admin di bawah.';
-                    }
-                    if (errBox) errBox.classList.remove('hidden');
-                  }
-                },
-                error_callback: (oauthErr) => {
-                  if (btnText) btnText.textContent = 'Login Admin via Google';
-                  const errType = (oauthErr && oauthErr.type) ? String(oauthErr.type) : '';
-                  if (errType === 'popup_closed') {
-                    showToast('Jendela login Google ditutup.');
-                    return;
-                  }
-                  if (infoBox) infoBox.classList.remove('hidden');
-                  const passInp = document.getElementById('admin-password-input');
-                  if (passInp) passInp.focus();
-                }
-              });
-            }
-            if (btnText) btnText.textContent = 'Membuka Otentikasi Google Resmi...';
-            gsiTokenClient.requestAccessToken({ prompt: 'select_account' });
-            setTimeout(() => {
-              if (btnText && btnText.textContent === 'Membuka Otentikasi Google Resmi...') {
-                btnText.textContent = 'Login Admin via Google';
-              }
-            }, 4000);
-            return;
-          } catch (gsiSyncErr) {
-            console.warn('GSI OAuth init fallback ke Firebase signInWithPopup:', gsiSyncErr);
-          }
-        }
-
-        // Jalur 2: Firebase signInWithPopup Resmi
+        // Jalur Utama: Firebase signInWithPopup(googleProvider) Resmi
+        // Menggunakan handler resmi https://basic-heaven-t01dl.firebaseapp.com/__/auth/handler
+        // sehingga bebas dari Error 400: origin_mismatch pada Google OAuth Client.
         if (firebaseAuth && googleProvider) {
           try {
             if (btnText) btnText.textContent = 'Menghubungkan ke Google...';
@@ -4854,16 +4755,27 @@
             if (code === 'auth/unauthorized-domain') {
               if (infoBox) infoBox.classList.remove('hidden');
               if (errText) {
-                errText.textContent = 'Domain pratinjau (' + window.location.hostname + ') belum didaftarkan pada Authorized Domains di Firebase Console. Silakan salin domain di atas ke Firebase Console atau masuk menggunakan Email + Kata Sandi Pengaman Admin.';
+                errText.textContent = 'Domain ini (' + window.location.hostname + ') belum terdaftar pada Authorized Domains di Firebase Console. Silakan salin domain di atas ke Firebase Console atau masuk menggunakan Email + Kata Sandi Pengaman Admin di bawah.';
               }
               if (errBox) errBox.classList.remove('hidden');
               const passInp = document.getElementById('admin-password-input');
               if (passInp) passInp.focus();
-            } else if (code === 'auth/popup-closed-by-user') {
+            } else if (code === 'auth/popup-blocked') {
+              try {
+                showToast('Popup diblokir peramban, mengalihkan ke halaman login Google...');
+                await firebaseAuth.signInWithRedirect(googleProvider);
+                return;
+              } catch (redirErr) {
+                if (errText) {
+                  errText.textContent = 'Popup login Google diblokir oleh peramban. Izinkan popup atau masuk menggunakan Email + Kata Sandi Pengaman Admin di bawah.';
+                }
+                if (errBox) errBox.classList.remove('hidden');
+              }
+            } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
               showToast('Jendela login Google ditutup sebelum selesai.');
             } else {
               if (errText) {
-                errText.textContent = 'Otentikasi popup Google gagal (' + (code || 'Diblokir Peramban') + '). Gunakan Email + Kata Sandi Pengaman Admin di bawah.';
+                errText.textContent = 'Otentikasi popup Google gagal (' + (code || 'Kendala Koneksi') + '). Anda juga dapat masuk menggunakan Email + Kata Sandi Pengaman Admin di bawah.';
               }
               if (errBox) errBox.classList.remove('hidden');
             }
