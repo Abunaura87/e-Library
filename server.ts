@@ -43,6 +43,229 @@ async function startServer() {
   });
 
   app.use(express.json({ limit: '60mb' }));
+  app.use(express.text({ type: ['text/plain', 'text/*'], limit: '60mb' }));
+
+  function parseIncomingBody(req: express.Request): any {
+    if (!req.body) return {};
+    if (typeof req.body === 'string') {
+      try {
+        return JSON.parse(req.body);
+      } catch (e) {
+        return {};
+      }
+    }
+    return req.body;
+  }
+
+  function loadCatalogRecord(): any {
+    if (fs.existsSync(CATALOG_FILE)) {
+      try {
+        return JSON.parse(fs.readFileSync(CATALOG_FILE, 'utf-8'));
+      } catch (e) {}
+    }
+    return {
+      shelves: [],
+      books: [],
+      bookOrder: [],
+      deletedBookIds: [],
+      customScriptApiUrl: '',
+      updatedAt: Date.now()
+    };
+  }
+
+  function saveCatalogRecord(record: any): void {
+    fs.writeFileSync(CATALOG_FILE, JSON.stringify(record, null, 2), 'utf-8');
+  }
+
+  // Google Apps Script (GAS) Web App Compatible Endpoint (GET & POST)
+  // Supports exact GAS Web App protocol: GET returns { status: 'success', racks, books }
+  // POST accepts action: 'saveRack' | 'deleteRack' | 'saveBook' | 'deleteBook' | 'syncAll' | 'setScriptUrl'
+  app.get('/api/gas', (req, res) => {
+    try {
+      const cat = loadCatalogRecord();
+      const deletedSet = new Set<string>(Array.isArray(cat.deletedBookIds) ? cat.deletedBookIds.map(String) : []);
+      const cleanBooks = (Array.isArray(cat.books) ? cat.books : []).filter(
+        (b: any) => b && b.id && b.id !== 'elibrary-system-settings' && !deletedSet.has(String(b.id))
+      );
+      const racks = Array.isArray(cat.shelves) ? cat.shelves : (Array.isArray(cat.racks) ? cat.racks : []);
+      return res.json({
+        status: 'success',
+        racks,
+        shelves: racks,
+        books: cleanBooks,
+        deletedBookIds: Array.from(deletedSet),
+        customScriptApiUrl: cat.customScriptApiUrl || '',
+        updatedAt: cat.updatedAt || Date.now()
+      });
+    } catch (err: any) {
+      return res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  app.post('/api/gas', (req, res) => {
+    try {
+      const payload = parseIncomingBody(req);
+      const action = String(payload.action || '').trim();
+      const cat = loadCatalogRecord();
+      if (!Array.isArray(cat.shelves)) cat.shelves = [];
+      if (!Array.isArray(cat.books)) cat.books = [];
+      if (!Array.isArray(cat.deletedBookIds)) cat.deletedBookIds = [];
+
+      if (action === 'setScriptUrl') {
+        cat.customScriptApiUrl = String(payload.scriptApiUrl || '').trim();
+        cat.updatedAt = getSafeServerTimestamp(payload.updatedAt, cat.updatedAt);
+        saveCatalogRecord(cat);
+        return res.json({ status: 'success', action, customScriptApiUrl: cat.customScriptApiUrl });
+      }
+
+      if (action === 'saveRack') {
+        if (Array.isArray(payload.racks) && payload.racks.length > 0) {
+          cat.shelves = payload.racks;
+        } else if (payload.rack && payload.rack.id) {
+          const r = payload.rack;
+          const idx = cat.shelves.findIndex((s: any) => s && s.id === r.id);
+          const rackRecord = {
+            id: String(r.id),
+            code: String(r.code || 'KLASIKAL'),
+            name: String(r.name || r.title || 'Rak Koleksi'),
+            description: String(r.description || ''),
+            accent: String(r.accent || '#0B3B2C'),
+            colSpan: String(r.colSpan || 'lg:col-span-4'),
+            bookStyle: String(r.bookStyle || 'standing-row'),
+            orderIndex: typeof r.orderIndex === 'number' ? r.orderIndex : (idx >= 0 ? idx : cat.shelves.length),
+            updatedAt: getSafeServerTimestamp(r.updatedAt),
+            isCustomEdited: true
+          };
+          if (idx >= 0) {
+            cat.shelves[idx] = { ...cat.shelves[idx], ...rackRecord };
+          } else {
+            cat.shelves.push(rackRecord);
+          }
+        }
+        cat.updatedAt = getSafeServerTimestamp(payload.updatedAt, cat.updatedAt);
+        saveCatalogRecord(cat);
+        return res.json({ status: 'success', action, racks: cat.shelves });
+      }
+
+      if (action === 'deleteRack') {
+        const rackId = String(payload.id || (payload.rack && payload.rack.id) || '').trim();
+        if (rackId) {
+          cat.shelves = cat.shelves.filter((s: any) => s && s.id !== rackId);
+          const fallbackId = (cat.shelves[0] && cat.shelves[0].id) || 'rak-01';
+          cat.books.forEach((b: any) => {
+            if (b && (b.shelfId === rackId || b.rackId === rackId)) {
+              b.shelfId = fallbackId;
+              b.rackId = fallbackId;
+            }
+          });
+          cat.updatedAt = getSafeServerTimestamp(payload.updatedAt, cat.updatedAt);
+          saveCatalogRecord(cat);
+        }
+        return res.json({ status: 'success', action, id: rackId, racks: cat.shelves });
+      }
+
+      if (action === 'saveBook') {
+        const b = payload.book || payload;
+        if (!b || !b.id) {
+          return res.status(400).json({ status: 'error', message: 'Missing book id' });
+        }
+        const bookId = String(b.id);
+        cat.deletedBookIds = cat.deletedBookIds.filter((delId: string) => String(delId) !== bookId);
+        const shelfId = String(b.shelfId || b.rackId || 'rak-01');
+        const bookMeta = {
+          id: bookId,
+          rackId: shelfId,
+          shelfId: shelfId,
+          title: String(b.title || 'Buku Koleksi'),
+          author: String(b.author || 'Anonim'),
+          description: String(b.description || ''),
+          kicker: String(b.kicker || ''),
+          accent: String(b.accent || '#0B3B2C'),
+          spineColor: String(b.spineColor || b.accent || '#0B3B2C'),
+          pageCount: Number(b.pageCount) || 1,
+          passwordProtected: Boolean(b.passwordProtected && b.password),
+          password: b.passwordProtected ? String(b.password || '').trim() : '',
+          coverUrl: String(b.coverUrl || ''),
+          pdfUrl: String(b.pdfUrl || ''),
+          hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf || b.coverUrl),
+          isCustomPdf: Boolean(b.isCustomPdf || b.pdfUrl),
+          driveFileId: String(b.driveFileId || ''),
+          drivePdfFileId: String(b.drivePdfFileId || ''),
+          editablePages: Array.isArray(b.editablePages) ? b.editablePages : undefined,
+          updatedAt: getSafeServerTimestamp(b.updatedAt)
+        };
+        const existingIdx = cat.books.findIndex((item: any) => item && item.id === bookId);
+        if (existingIdx >= 0) {
+          cat.books[existingIdx] = { ...cat.books[existingIdx], ...bookMeta };
+        } else {
+          cat.books.unshift(bookMeta);
+        }
+        cat.bookOrder = cat.books.map((item: any) => item.id);
+        cat.updatedAt = getSafeServerTimestamp(payload.updatedAt, cat.updatedAt);
+        saveCatalogRecord(cat);
+
+        // Save full book asset if pages or asset payload provided
+        const safeId = bookId.replace(/[^a-zA-Z0-9_\-]/g, '-');
+        const bookPath = path.join(BOOKS_DIR, `${safeId}.json`);
+        if (payload.asset || Array.isArray(b.pagesDataUrls) || Array.isArray(b.editablePages)) {
+          try {
+            const fullAsset = payload.asset || b;
+            fs.writeFileSync(bookPath, JSON.stringify(fullAsset, null, 2), 'utf-8');
+          } catch (e) {}
+        }
+        return res.json({ status: 'success', action, book: bookMeta, count: cat.books.length });
+      }
+
+      if (action === 'deleteBook') {
+        const rawId = String(payload.id || (payload.book && payload.book.id) || '').trim();
+        if (!rawId) {
+          return res.status(400).json({ status: 'error', message: 'Missing book id to delete' });
+        }
+        const safeId = rawId.replace(/[^a-zA-Z0-9_\-]/g, '-');
+        const bookPath = path.join(BOOKS_DIR, `${safeId}.json`);
+        if (fs.existsSync(bookPath)) {
+          try { fs.unlinkSync(bookPath); } catch (e) {}
+        }
+        cat.books = cat.books.filter((b: any) => b && b.id !== rawId && b.id !== safeId);
+        if (Array.isArray(cat.bookOrder)) {
+          cat.bookOrder = cat.bookOrder.filter((id: any) => id !== rawId && id !== safeId);
+        }
+        if (!cat.deletedBookIds.includes(rawId)) {
+          cat.deletedBookIds.push(rawId);
+        }
+        cat.updatedAt = getSafeServerTimestamp(payload.updatedAt, cat.updatedAt);
+        saveCatalogRecord(cat);
+        return res.json({ status: 'success', action, deletedId: rawId, count: cat.books.length });
+      }
+
+      if (action === 'syncAll') {
+        if (Array.isArray(payload.racks) && payload.racks.length > 0) {
+          cat.shelves = payload.racks;
+        } else if (Array.isArray(payload.shelves) && payload.shelves.length > 0) {
+          cat.shelves = payload.shelves;
+        }
+        if (Array.isArray(payload.deletedBookIds)) {
+          payload.deletedBookIds.forEach((delId: string) => {
+            if (delId && !cat.deletedBookIds.includes(String(delId))) {
+              cat.deletedBookIds.push(String(delId));
+            }
+          });
+        }
+        if (Array.isArray(payload.books)) {
+          const delSet = new Set<string>(cat.deletedBookIds.map(String));
+          cat.books = payload.books.filter((b: any) => b && b.id && !delSet.has(String(b.id)));
+          cat.bookOrder = cat.books.map((b: any) => b.id);
+        }
+        cat.updatedAt = getSafeServerTimestamp(payload.updatedAt, cat.updatedAt);
+        saveCatalogRecord(cat);
+        return res.json({ status: 'success', action, count: cat.books.length, rackCount: cat.shelves.length });
+      }
+
+      return res.status(400).json({ status: 'error', message: `Unsupported action: ${action}` });
+    } catch (err: any) {
+      return res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
 
   // Centralized catalog API for seamless cross-account & multi-user persistence
   app.get('/api/catalog', (req, res) => {
