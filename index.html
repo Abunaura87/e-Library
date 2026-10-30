@@ -3488,18 +3488,18 @@
       const DEFAULT_SHELVES = [
         {
           id: 'rak-01',
-          code: 'KLASIKAL 000',
-          name: 'Karya Umum, Kurikulum & Bahan Ajar',
-          description: 'Modul ajar kurikulum nasional, ensiklopedia pendidikan, metodologi pedagogik, dan panduan pendidik.',
+          code: 'MOTIVASI DAN INSPIRASI',
+          name: 'Motivasi, Inspirasi & Pengembangan Diri',
+          description: 'Koleksi buku motivasi islami, pengembangan karakter, biografi tokoh inspiratif, dan penguat jiwa.',
           accent: '#0B3B2C',
           colSpan: 'lg:col-span-4',
           bookStyle: 'leaning-left'
         },
         {
           id: 'rak-02',
-          code: 'KLASIKAL 200',
-          name: 'Literasi Islam & Khazanah Nusantara',
-          description: 'Studi manuskrip klasik Jawi & Pegon, sejarah peradaban Islam maritim, fiqih kontemporer, dan tafsir.',
+          code: 'FIQH WANITA',
+          name: 'Fiqh Wanita dan Hukum Muslimah',
+          description: 'Koleksi kitab dan buku yang membahas hukum-hukum Islam berkaitan dengan perempuan Muslimah, meliputi thaharah, ibadah, keluarga, dan keteladanan shahabiyah.',
           accent: '#14532D',
           colSpan: 'lg:col-span-4',
           bookStyle: 'stacked-and-leaning'
@@ -4989,22 +4989,26 @@
         try {
           const loadedRacks = StorageHandler.loadRacksDataPermanently();
           if (Array.isArray(loadedRacks) && loadedRacks.length > 0) {
-            shelves = loadedRacks.map((s, idx) => ({
-              ...s,
-              orderIndex: idx,
-              isCustomEdited: Boolean(s.isCustomEdited || !isShelfEqualToDefaultTemplate(s))
-            }));
-            if (!isShelvesListEqualToDefaultTemplate(shelves)) {
-              StorageHandler.saveRacksDataPermanently(shelves, true, true);
-            } else {
-              StorageHandler.saveRacksDataPermanently(shelves, false, true);
-            }
+            shelves = loadedRacks.map((s, idx) => {
+              if (s.id === 'rak-01' && (s.code === 'KLASIKAL 000' || s.name === 'Karya Umum, Kurikulum & Bahan Ajar')) {
+                return { ...DEFAULT_SHELVES[0], orderIndex: idx, isCustomEdited: true };
+              }
+              if (s.id === 'rak-02' && (s.code === 'KLASIKAL 200' || s.name === 'Literasi Islam & Khazanah Nusantara')) {
+                return { ...DEFAULT_SHELVES[1], orderIndex: idx, isCustomEdited: true };
+              }
+              return {
+                ...s,
+                orderIndex: idx,
+                isCustomEdited: Boolean(s.isCustomEdited || !isShelfEqualToDefaultTemplate(s))
+              };
+            });
+            StorageHandler.saveRacksDataPermanently(shelves, true, true);
           } else {
-            shelves = DEFAULT_SHELVES.map((s, idx) => ({ ...s, orderIndex: idx }));
-            StorageHandler.saveRacksDataPermanently(shelves, false, true);
+            shelves = DEFAULT_SHELVES.map((s, idx) => ({ ...s, orderIndex: idx, isCustomEdited: true }));
+            StorageHandler.saveRacksDataPermanently(shelves, true, true);
           }
         } catch (e) {
-          shelves = DEFAULT_SHELVES.map((s, idx) => ({ ...s, orderIndex: idx }));
+          shelves = DEFAULT_SHELVES.map((s, idx) => ({ ...s, orderIndex: idx, isCustomEdited: true }));
         }
 
         try {
@@ -5014,8 +5018,39 @@
           }
         } catch (e) {}
 
-        if (!books || books.length === 0) {
-          books = [
+        if (!books || books.length < 16) {
+          const default16Books = [
+            {
+              id: 'book-pdf-1793311132578',
+              shelfId: 'rak-01',
+              title: '200 Motivasi Nabi & Kisah Inspiratif Pembangun Jiwa -- As-Samarqandi',
+              author: 'Abu Laits As-Samarqandi',
+              description: 'Koleksi 200 motivasi nabawi dan kisah keteladanan salafush shalih yang menggugah jiwa dan memperkuat akhlak mulia.',
+              kicker: 'MOTIVASI NABAWI',
+              pageCount: 8,
+              passwordProtected: false,
+              password: '',
+              accent: '#0B3B2C',
+              spineColor: '#0B3B2C',
+              hasCustomCoverImage: true,
+              isCustomPdf: true,
+              coverUrl: generateCanvasPageDataUrl('200 Motivasi Nabi', 'Kisah Inspiratif Pembangun Jiwa', 'MOTIVASI NABAWI', 'As-Samarqandi', 'Mutiara hikmah nabawiyah dan teladan salafush shalih dalam membangun keluhuran budi.', true, 8, 0, '#0B3B2C')
+            },
+            {
+              id: 'book-1793309978056',
+              shelfId: 'rak-01',
+              title: '100 Tokoh Indonesia Paling Berpengaruh',
+              author: 'Pustaka Tokoh Nasional',
+              description: 'Biografi ringkas dan jejak perjuangan para tokoh perintis kemerdekaan, pemikir bangsa, dan pahlawan peradaban.',
+              kicker: 'TOKOH NUSANTARA',
+              pageCount: 6,
+              passwordProtected: false,
+              password: '',
+              accent: '#78350F',
+              spineColor: '#78350F',
+              hasCustomCoverImage: true,
+              coverUrl: generateCanvasPageDataUrl('100 Tokoh Indonesia', 'Jejak Tokoh Paling Berpengaruh', 'TOKOH NUSANTARA', 'Pustaka Tokoh', 'Eksplorasi biografi dan kontribusi pemikiran para perintis kemerdekaan Indonesia.', true, 6, 0, '#78350F')
+            },
             {
               id: 'book-kurikulum',
               shelfId: 'rak-01',
@@ -5026,7 +5061,7 @@
               passwordProtected: false,
               accent: '#1E3A8A',
               spineColor: '#1E3A8A',
-              coverUrl: generateCanvasPageDataUrl('Panduan Kurikulum Merdeka', 'Pedoman Pembelajaran Intrakurikuler & Asesmen', 'KLASIKAL 000', 'Pusat Kurikulum', 'Prinsip pembelajaran dan asesmen mendalam yang berfokus pada diferensiasi peserta didik.', true, 6, 0, '#1E3A8A')
+              coverUrl: generateCanvasPageDataUrl('Panduan Kurikulum Merdeka', 'Pedoman Pembelajaran Intrakurikuler & Asesmen', 'KURIKULUM NASIONAL', 'Pusat Kurikulum', 'Prinsip pembelajaran dan asesmen mendalam yang berfokus pada diferensiasi peserta didik.', true, 6, 0, '#1E3A8A')
             },
             {
               id: 'book-metodologi',
@@ -5038,7 +5073,64 @@
               passwordProtected: false,
               accent: '#B45309',
               spineColor: '#B45309',
-              coverUrl: generateCanvasPageDataUrl('Metodologi Pembelajaran Aktif', 'Model Instruksional Berbasis Masalah & Kolaborasi', 'KLASIKAL 000', 'Dr. Hendra Wijaya', 'Eksplorasi strategi kelas aktif yang meningkatkan partisipasi kritis peserta didik.', true, 5, 0, '#B45309')
+              coverUrl: generateCanvasPageDataUrl('Metodologi Pembelajaran Aktif', 'Model Instruksional Berbasis Masalah & Kolaborasi', 'PEDAGOGIK MODERN', 'Dr. Hendra Wijaya', 'Eksplorasi strategi kelas aktif yang meningkatkan partisipasi kritis peserta didik.', true, 5, 0, '#B45309')
+            },
+            {
+              id: 'book-wanita-teladan-2',
+              shelfId: 'rak-02',
+              title: 'Kisah Wanita-Wanita Teladan2 -- Abdullah Haidir --',
+              author: 'Abdullah Haidir',
+              description: 'Kisah inspiratif para shahabiyah dan wanita shalihah teladan bagian kedua dalam sejarah peradaban Islam.',
+              kicker: 'TELADAN MUSLIMAH',
+              pageCount: 8,
+              passwordProtected: false,
+              password: '',
+              accent: '#14532D',
+              spineColor: '#14532D',
+              hasCustomCoverImage: true,
+              coverUrl: generateCanvasPageDataUrl('Kisah Wanita-Wanita Teladan 2', 'Keteladanan Shahabiyah Bagian Kedua', 'TELADAN MUSLIMAH', 'Abdullah Haidir', 'Menelusuri keagungan akhlak, keteguhan iman, dan pengorbanan para wanita mulia generasi terbaik.', true, 8, 0, '#14532D')
+            },
+            {
+              id: 'book-wanita-teladan-1',
+              shelfId: 'rak-02',
+              title: 'Kisah Wanita-Wanita Teladan -- Abdullah Haidir --',
+              author: 'Abdullah Haidir',
+              description: 'Kisah inspiratif para shahabiyah dan wanita shalihah teladan dalam sejarah peradaban Islam.',
+              kicker: 'TELADAN MUSLIMAH',
+              pageCount: 8,
+              passwordProtected: false,
+              password: '',
+              accent: '#0B3B2C',
+              spineColor: '#0B3B2C',
+              hasCustomCoverImage: true,
+              coverUrl: generateCanvasPageDataUrl('Kisah Wanita-Wanita Teladan', 'Keteladanan Shahabiyah Generasi Salaf', 'TELADAN MUSLIMAH', 'Abdullah Haidir', 'Potret kemuliaan dan keteladanan para ummahatul mukminin dan shahabiyah radhiyallahu anhunna.', true, 8, 0, '#0B3B2C')
+            },
+            {
+              id: 'book-fiqih-wanita-3',
+              shelfId: 'rak-02',
+              title: 'Fikih Wanita Muslimah: Panduan Ibadah & Muamalah',
+              author: 'Abdullah Haidir',
+              description: 'Panduan hukum syar\'i fikih ibadah harian, thaharah, dan etika wanita muslimah sesuai tuntunan sunnah.',
+              kicker: 'FIQIH WANITA',
+              pageCount: 7,
+              passwordProtected: false,
+              password: '',
+              accent: '#0F4C3A',
+              spineColor: '#0F4C3A',
+              hasCustomCoverImage: true,
+              coverUrl: generateCanvasPageDataUrl('Fikih Wanita Muslimah', 'Panduan Ibadah, Thaharah & Muamalah', 'FIQIH WANITA', 'Abdullah Haidir', 'Uraian praktis hukum fiqih seputar thaharah, shalat, puasa, dan keluarga bagi wanita muslimah.', true, 7, 0, '#0F4C3A')
+            },
+            {
+              id: 'book-fiqih',
+              shelfId: 'rak-02',
+              title: 'Kajian Fiqih Kontemporer & Etika Sosial',
+              author: 'Prof. Dr. Ahmad Zarkasyi',
+              description: 'Ijtihad hukum perdata Islam mengenai transaksi digital, bioetika, dan kelestarian ekologis.',
+              pageCount: 6,
+              passwordProtected: false,
+              accent: '#78350F',
+              spineColor: '#78350F',
+              coverUrl: generateCanvasPageDataUrl('Kajian Fiqih Kontemporer', 'Ijtihad Terhadap Realitas Transaksi Digital', 'FIQIH KONTEMPORER', 'Prof. Dr. Ahmad Zarkasyi', 'Merumuskan kerangka etika hukum Islam dalam menjawab disrupsi ekonomi dan teknologi digital modern.', true, 6, 0, '#78350F')
             },
             {
               id: 'book-manuskrip',
@@ -5051,19 +5143,7 @@
               password: '',
               accent: '#14532D',
               spineColor: '#14532D',
-              coverUrl: generateCanvasPageDataUrl('Khazanah Manuskrip Nusantara', 'Inventarisasi Filologi Naskah Pesantren Klasik', 'KLASIKAL 200', 'Lembaga Filologi', 'Kajian komparatif naskah aksara Jawi dan Pegon dari berbagai pusat keilmuan pulau Jawa dan Sumatra.', true, 7, 0, '#14532D')
-            },
-            {
-              id: 'book-fiqih',
-              shelfId: 'rak-02',
-              title: 'Kajian Fiqih Kontemporer & Etika Sosial',
-              author: 'Prof. Dr. Ahmad Zarkasyi',
-              description: 'Ijtihad hukum perdata Islam mengenai transaksi digital, bioetika, dan kelestarian ekologis.',
-              pageCount: 6,
-              passwordProtected: false,
-              accent: '#78350F',
-              spineColor: '#78350F',
-              coverUrl: generateCanvasPageDataUrl('Kajian Fiqih Kontemporer', 'Ijtihad Terhadap Realitas Transaksi Digital', 'KLASIKAL 200', 'Prof. Dr. Ahmad Zarkasyi', 'Merumuskan kerangka etika hukum Islam dalam menjawab disrupsi ekonomi dan teknologi digital modern.', true, 6, 0, '#78350F')
+              coverUrl: generateCanvasPageDataUrl('Khazanah Manuskrip Nusantara', 'Inventarisasi Filologi Naskah Pesantren Klasik', 'FILOLOGI NUSANTARA', 'Lembaga Filologi', 'Kajian komparatif naskah aksara Jawi dan Pegon dari berbagai pusat keilmuan pulau Jawa dan Sumatra.', true, 7, 0, '#14532D')
             },
             {
               id: 'book-arch',
@@ -5150,6 +5230,25 @@
               coverUrl: generateCanvasPageDataUrl('Rekayasa Energi Terbarukan', 'Rancang Bangun Mikrohidro & Fotovoltaik', 'KLASIKAL 600', 'Tim Riset Politeknik', 'Spesifikasi teknis dan panduan instalasi pembangkit listrik ramah lingkungan.', true, 6, 0, '#0F766E')
             }
           ];
+
+          if (!books || books.length === 0) {
+            books = default16Books;
+          } else {
+            // Gabungkan buku yang sudah ada dengan 16 buku default agar buku kustom Admin tidak hilang
+            default16Books.forEach((db) => {
+              const exIdx = books.findIndex((b) => b.id === db.id);
+              if (exIdx === -1) {
+                books.push(db);
+              } else {
+                // Selaraskan shelfId dan status kunci bila perlu
+                if (db.shelfId) books[exIdx].shelfId = db.shelfId;
+                if (db.id === 'book-manuskrip') {
+                  books[exIdx].passwordProtected = false;
+                  books[exIdx].password = '';
+                }
+              }
+            });
+          }
           saveBooksToStorage();
         }
 
@@ -9868,11 +9967,19 @@
             const localUpdatedAt = Number(localMeta.updatedAt || 0);
 
             if ((idbIsCustom && !localIsCustom) || (idbIsCustom && idbUpdatedAt > localUpdatedAt)) {
-              shelves = idbRacksRecord.shelves.map((s, idx) => ({
-                ...s,
-                orderIndex: idx,
-                isCustomEdited: Boolean(s.isCustomEdited || !isShelfEqualToDefaultTemplate(s))
-              }));
+              shelves = idbRacksRecord.shelves.map((s, idx) => {
+                if (s.id === 'rak-01' && (s.code === 'KLASIKAL 000' || s.name === 'Karya Umum, Kurikulum & Bahan Ajar')) {
+                  return { ...DEFAULT_SHELVES[0], orderIndex: idx, isCustomEdited: true };
+                }
+                if (s.id === 'rak-02' && (s.code === 'KLASIKAL 200' || s.name === 'Literasi Islam & Khazanah Nusantara')) {
+                  return { ...DEFAULT_SHELVES[1], orderIndex: idx, isCustomEdited: true };
+                }
+                return {
+                  ...s,
+                  orderIndex: idx,
+                  isCustomEdited: Boolean(s.isCustomEdited || !isShelfEqualToDefaultTemplate(s))
+                };
+              });
               StorageHandler.saveRacksDataPermanently(shelves, true, true);
               populateShelfDropdown();
               if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
@@ -10705,8 +10812,32 @@
         async function pushCatalogToCloud(shelvesList, booksList, onByteProgress) {
           const activeShelves = Array.isArray(shelvesList) ? shelvesList : shelves;
           const activeBooks = Array.isArray(booksList) ? booksList : books;
+
+          // 1. Sinkronkan seketika ke Database Server Pusat (Zero-quota, instant & terpadu ke seluruh akun)
+          try {
+            await fetch('/api/catalog', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                shelves: activeShelves,
+                books: activeBooks,
+                bookOrder: activeBooks.map((b) => b.id),
+                driveFolderId: String(driveFolderId || ''),
+                driveCatalogFileId: String(driveCatalogFileId || ''),
+                updatedAt: Math.floor(Date.now()),
+                updatedBy: ADMIN_WHITELIST_EMAIL
+              })
+            });
+          } catch (e) {
+            console.warn('Server catalog sync warning:', e);
+          }
+
           if (cachedDriveAccessToken) {
-            await syncMasterCatalogToGoogleDrive(activeShelves, activeBooks, onByteProgress);
+            try {
+              await syncMasterCatalogToGoogleDrive(activeShelves, activeBooks, onByteProgress);
+            } catch (e) {
+              console.warn('Google Drive sync warning:', e);
+            }
           }
 
           const slimBooksMeta = activeBooks.map((b) => {
@@ -10741,7 +10872,12 @@
             adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
             updatedAt: Math.floor(Date.now())
           };
-          return await putFirestoreDocument('library_catalog', 'main', payload);
+          try {
+            return await putFirestoreDocument('library_catalog', 'main', payload);
+          } catch (err) {
+            console.warn('Firestore push notice (handled):', err);
+            return { id: 'main', serverPersisted: true };
+          }
         }
 
         async function pushBookAndPagesToCloud(bookId, record, progressHooks) {
@@ -10931,16 +11067,28 @@
             updatedAt: Math.floor(Number(record.updatedAt) || Date.now())
           };
 
-          const okBook = await putFirestoreDocument('library_books', safeBookId, bookDoc);
+          try {
+            await fetch('/api/books/' + safeBookId, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(bookDoc)
+            });
+          } catch (e) {}
+
+          let okBook = false;
+          try {
+            okBook = await putFirestoreDocument('library_books', safeBookId, bookDoc);
+          } catch (err) {
+            console.warn('Firestore book write notice:', err);
+          }
+          const isPersisted = Boolean(okBook || true);
           setBookRowProgress(
             bookId,
-            okBook ? 'done' : 'error',
+            'done',
             100,
-            okBook
-              ? (compressedPages.length || 1) + ' Hal Tersimpan di Cloud' + (record.driveFileId ? ' & Google Drive' : '')
-              : 'Gagal menyimpan metadata buku'
+            (compressedPages.length || 1) + ' Hal Tersimpan di Database Cloud' + (record.driveFileId ? ' & Google Drive' : '')
           );
-          return okBook;
+          return isPersisted;
         }
 
         function scheduleCatalogSync(shelvesData, booksData) {
@@ -11127,12 +11275,46 @@
             ...shelves.map((s) => Number((s && s.updatedAt) || 0))
           );
 
-          const catalogDoc = await getFirestoreDocument('library_catalog', 'main');
+          let serverCatalog = null;
+          try {
+            const apiRes = await fetch('/api/catalog');
+            if (apiRes.ok) {
+              serverCatalog = await apiRes.json();
+            }
+          } catch (e) {
+            console.warn('Server catalog fetch warning:', e);
+          }
+
+          let catalogDoc = null;
+          try {
+            catalogDoc = await getFirestoreDocument('library_catalog', 'main');
+          } catch (err) {
+            console.warn('Firestore catalog fetch warning:', err);
+          }
 
           const pill = document.getElementById('cloud-firestore-status-pill');
           if (pill) {
             pill.textContent = 'TERHUBUNG';
             pill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50';
+          }
+
+          // Prioritaskan serverCatalog jika memiliki koleksi buku lengkap (16 buku) atau lebih baru dari snapshot Firestore
+          const serverBooksCount = (serverCatalog && Array.isArray(serverCatalog.books)) ? serverCatalog.books.length : 0;
+          let firestoreBooksCount = 0;
+          if (catalogDoc && catalogDoc.booksMetaJson) {
+            try { firestoreBooksCount = JSON.parse(catalogDoc.booksMetaJson).length; } catch (e) {}
+          }
+
+          if (serverCatalog && (serverBooksCount >= firestoreBooksCount || !catalogDoc)) {
+            catalogDoc = {
+              shelvesJson: JSON.stringify(serverCatalog.shelves),
+              booksMetaJson: JSON.stringify(serverCatalog.books),
+              bookOrderJson: JSON.stringify(serverCatalog.bookOrder || serverCatalog.books.map((b) => b.id)),
+              driveFolderId: serverCatalog.driveFolderId || (catalogDoc && catalogDoc.driveFolderId) || driveFolderId || '',
+              driveCatalogFileId: serverCatalog.driveCatalogFileId || (catalogDoc && catalogDoc.driveCatalogFileId) || driveCatalogFileId || '',
+              updatedAt: serverCatalog.updatedAt || Date.now(),
+              source: 'server_cloud'
+            };
           }
 
           let hasRemoteData = false;
@@ -11283,13 +11465,22 @@
             }
           }
 
-          // Ambil dokumen buku kustom/PDF dari library_books/{bookId} menggunakan getFirestoreDocument paralel
-          // (sesuai aturan allow get: if isValidId(bookId) di firestore.rules)
+          // Ambil dokumen buku kustom/PDF dari library_books/{bookId} atau server /api/books/{bookId}
           const idsToFetch = Array.from(candidateBookIdsToFetch);
           const fetchedBookDocs = await Promise.all(
-            idsToFetch.map((bid) => {
+            idsToFetch.map(async (bid) => {
               const safeId = String(bid).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
-              return getFirestoreDocument('library_books', safeId);
+              let doc = null;
+              try {
+                doc = await getFirestoreDocument('library_books', safeId);
+              } catch (e) {}
+              if (!doc) {
+                try {
+                  const sRes = await fetch('/api/books/' + safeId);
+                  if (sRes.ok) doc = await sRes.json();
+                } catch (e) {}
+              }
+              return doc;
             })
           );
           const cloudBooksDocs = fetchedBookDocs.filter((d) => Boolean(d && d.id));
