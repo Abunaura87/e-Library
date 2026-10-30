@@ -2179,21 +2179,23 @@
                     <input id="crud-inp-password" type="text" placeholder="Ketik kata sandi buku (opsional)..." class="w-full px-3 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/60 rounded-lg text-white font-mono-tabular" />
                   </div>
 
-                  <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-2.5">
+                  <div class="p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/50 space-y-2.5 min-w-0 overflow-hidden">
                     <div class="flex flex-wrap items-center justify-between gap-1.5">
                       <label for="crud-inp-pdf-url" class="block text-xs font-bold text-[#F3E5AB]">Direct URL PDF / Link Google Drive Publik:</label>
                       <span id="crud-original-content-badge" class="hidden text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-900/90 text-[#F3E5AB] border border-[#D4AF37]/70 whitespace-nowrap shrink-0">
                         ✓ Stream PDF Aktif
                       </span>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                      <input id="crud-inp-pdf-url" type="url" placeholder="https://drive.google.com/file/d/ID_FILE/view... atau Direct URL PDF" class="flex-1 px-2.5 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white placeholder:text-[#F3E5AB]/45 focus:outline-none focus:border-[#D4AF37]" />
-                      <button type="button" id="btn-crud-load-pdf-url" class="px-2.5 py-1.5 text-[11px] font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] whitespace-nowrap shrink-0 cursor-pointer">
-                        Muat &amp; Stream PDF
+                    <div class="space-y-2">
+                      <input id="crud-inp-pdf-url" type="url" placeholder="https://drive.google.com/file/d/ID_FILE/view... atau URL PDF" class="w-full min-w-0 px-2.5 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/70 rounded-lg text-white placeholder:text-[#F3E5AB]/45 focus:outline-none focus:border-[#D4AF37]" />
+                      <button type="button" id="btn-crud-load-pdf-url" class="w-full px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-all">
+                        <i data-lucide="download-cloud" class="w-3.5 h-3.5 shrink-0"></i>
+                        <span id="btn-crud-load-pdf-url-label">Muat &amp; Stream PDF dari Link</span>
                       </button>
+                      <div id="crud-pdf-url-status" class="hidden text-[11px] px-2.5 py-2 rounded-lg border leading-snug break-words"></div>
                     </div>
                     <p class="text-[10px] text-[#E6E1D6]/75 leading-snug">
-                      Otomatis mengonversi link berbagi Google Drive (<code class="text-[#FEF08A]">/file/d/ID_FILE/view</code>) menjadi URL stream PDF (<code class="text-[#FEF08A]">uc?export=download&amp;id=ID_FILE</code>) agar langsung bisa dibaca seluruh pengunjung publik.
+                      Tempel link berbagi Google Drive (<code class="text-[#FEF08A]">Siapa saja yang memiliki link</code>) atau Direct URL PDF. Sistem otomatis merender sampul &amp; seluruh halaman asli buku.
                     </p>
                     <div class="flex flex-wrap items-center gap-2">
                       <label for="crud-cover-image-input" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer inline-flex items-center gap-1.5">
@@ -3624,9 +3626,6 @@
 
       function getCloudPdfProxyUrl(targetUrl) {
         const encoded = encodeURIComponent(String(targetUrl || '').trim());
-        if (isStaticExternalHost()) {
-          return CLOUD_API_FALLBACK_BASES[0] + '/api/pdf-proxy?url=' + encoded;
-        }
         return '/api/pdf-proxy?url=' + encoded;
       }
 
@@ -6436,32 +6435,172 @@
       let lastUploadedPdfDataUrl = '';
       let currentUploadedPdfDataUrl = '';
 
+      function hasValidPdfHeaderBytes(uint8) {
+        if (!uint8 || uint8.length < 5) return false;
+        const limit = Math.min(uint8.length - 4, 1024);
+        for (let i = 0; i < limit; i++) {
+          if (
+            uint8[i] === 0x25 && // %
+            uint8[i + 1] === 0x50 && // P
+            uint8[i + 2] === 0x44 && // D
+            uint8[i + 3] === 0x46 && // F
+            uint8[i + 4] === 0x2d // -
+          ) {
+            return true;
+          }
+        }
+        return false;
+      }
+
       async function openPdfWithCorsFallback(sourceObj) {
         if (sourceObj && typeof sourceObj.url === 'string' && sourceObj.url.trim()) {
+          const rawInputUrl = sourceObj.url.trim();
           const norm = window.normalizePublicPdfUrl
-            ? window.normalizePublicPdfUrl(sourceObj.url)
-            : { directUrl: sourceObj.url.trim(), proxyUrl: '/api/pdf-proxy?url=' + encodeURIComponent(sourceObj.url.trim()), isGoogleDrive: false, fileId: '' };
-          // For Google Drive links, try proxy first to avoid CORS redirects, then fallback to directUrl
-          const candidates = norm.isGoogleDrive
-            ? [norm.proxyUrl, norm.directUrl]
-            : [norm.directUrl, norm.proxyUrl];
-          let lastErr = null;
-          for (let i = 0; i < candidates.length; i++) {
-            const candidateUrl = candidates[i];
-            if (!candidateUrl) continue;
+            ? window.normalizePublicPdfUrl(rawInputUrl)
+            : {
+                directUrl: rawInputUrl,
+                proxyUrl: '/api/pdf-proxy?url=' + encodeURIComponent(rawInputUrl),
+                isGoogleDrive: false,
+                fileId: ''
+              };
+
+          let detectedFilename = '';
+          let specificErrorMsg = '';
+          const driveToken =
+            typeof cachedDriveAccessToken === 'string' && cachedDriveAccessToken.trim()
+              ? cachedDriveAccessToken.trim()
+              : '';
+          const gApiKey =
+            typeof firebaseConfig === 'object' && firebaseConfig && firebaseConfig.apiKey
+              ? String(firebaseConfig.apiKey).trim()
+              : '';
+
+          // Jika link Google Drive, coba ambil metadata nama file via Drive API v3
+          if (norm.isGoogleDrive && norm.fileId && (driveToken || gApiKey)) {
             try {
-              const task = window.pdfjsLib.getDocument({ url: candidateUrl });
-              const doc = await task.promise;
-              return { pdf: doc, normalized: norm };
+              const metaUrl =
+                'https://www.googleapis.com/drive/v3/files/' +
+                encodeURIComponent(norm.fileId) +
+                '?fields=name,mimeType' +
+                (gApiKey ? '&key=' + encodeURIComponent(gApiKey) : '');
+              const metaHeaders = driveToken ? { Authorization: 'Bearer ' + driveToken } : {};
+              const metaRes = await fetch(metaUrl, { headers: metaHeaders });
+              if (metaRes.ok) {
+                const metaJson = await metaRes.json();
+                if (metaJson && metaJson.name) {
+                  detectedFilename = String(metaJson.name);
+                }
+              } else if (metaRes.status === 403 || metaRes.status === 404) {
+                // File mungkin masih Dibatasi (Restricted) untuk publik
+              }
+            } catch (e) {}
+          }
+
+          // Daftar kandidat fetch biner PDF yang memvalidasi magic bytes %PDF-
+          const binaryFetchCandidates = [];
+
+          // 1. Same-origin /api/pdf-proxy (berfungsi di AI Studio server.ts & Vercel /api/pdf-proxy.js)
+          const sameOriginProxyUrl =
+            '/api/pdf-proxy?url=' +
+            encodeURIComponent(norm.directUrl || rawInputUrl) +
+            (driveToken ? '&token=' + encodeURIComponent(driveToken) : '');
+          binaryFetchCandidates.push({ url: sameOriginProxyUrl, isProxy: true });
+
+          // 2. Google Drive API v3 alt=media langsung dari browser (mendukung CORS!)
+          if (norm.isGoogleDrive && norm.fileId) {
+            if (driveToken) {
+              binaryFetchCandidates.push({
+                url: 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(norm.fileId) + '?alt=media',
+                headers: { Authorization: 'Bearer ' + driveToken }
+              });
+            }
+            if (gApiKey) {
+              binaryFetchCandidates.push({
+                url:
+                  'https://www.googleapis.com/drive/v3/files/' +
+                  encodeURIComponent(norm.fileId) +
+                  '?alt=media&key=' +
+                  encodeURIComponent(gApiKey)
+              });
+            }
+            const driveConfirmUrl =
+              'https://drive.usercontent.google.com/download?id=' +
+              encodeURIComponent(norm.fileId) +
+              '&export=download&confirm=t';
+            binaryFetchCandidates.push({
+              url: 'https://corsproxy.io/?' + encodeURIComponent(driveConfirmUrl)
+            });
+            binaryFetchCandidates.push({
+              url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(driveConfirmUrl)
+            });
+          } else {
+            binaryFetchCandidates.push({ url: norm.directUrl });
+            binaryFetchCandidates.push({
+              url: 'https://corsproxy.io/?' + encodeURIComponent(norm.directUrl)
+            });
+          }
+
+          for (let i = 0; i < binaryFetchCandidates.length; i++) {
+            const cand = binaryFetchCandidates[i];
+            if (!cand || !cand.url) continue;
+            try {
+              const res = await fetch(cand.url, {
+                headers: cand.headers || undefined
+              });
+              if (!res.ok) {
+                if (cand.isProxy && (res.status === 403 || res.status === 422)) {
+                  const errData = await res.json().catch(() => null);
+                  if (errData && errData.error) {
+                    specificErrorMsg = errData.error;
+                  }
+                } else if (res.status === 403 || res.status === 404) {
+                  if (norm.isGoogleDrive && !specificErrorMsg) {
+                    specificErrorMsg =
+                      'Akses file Google Drive masih "Dibatasi" (Restricted). Buka Google Drive -> Klik Bagikan (Share) -> Ubah Akses Umum menjadi "Siapa saja yang memiliki link" (Anyone with the link).';
+                  }
+                }
+                continue;
+              }
+              const headerFname = res.headers.get('X-PDF-Filename');
+              if (headerFname && !detectedFilename) {
+                try {
+                  detectedFilename = decodeURIComponent(headerFname);
+                } catch (e) {
+                  detectedFilename = headerFname;
+                }
+              }
+              const ab = await res.arrayBuffer();
+              const uint8 = new Uint8Array(ab);
+              if (hasValidPdfHeaderBytes(uint8)) {
+                const doc = await window.pdfjsLib.getDocument({ data: uint8 }).promise;
+                return { pdf: doc, normalized: norm, filename: detectedFilename };
+              }
             } catch (e) {
-              lastErr = e;
+              // Lanjut ke kandidat berikutnya
             }
           }
-          throw lastErr || new Error('Gagal memuat URL PDF publik.');
+
+          // Fallback terakhir: coba panggil pdfjsLib.getDocument({ url }) langsung
+          const fallbackUrls = norm.isGoogleDrive ? [norm.directUrl] : [norm.directUrl, norm.proxyUrl];
+          for (let j = 0; j < fallbackUrls.length; j++) {
+            const fUrl = fallbackUrls[j];
+            if (!fUrl) continue;
+            try {
+              const doc = await window.pdfjsLib.getDocument({ url: fUrl }).promise;
+              return { pdf: doc, normalized: norm, filename: detectedFilename };
+            } catch (e) {}
+          }
+
+          throw new Error(
+            specificErrorMsg ||
+              (norm.isGoogleDrive
+                ? 'Gagal memuat PDF dari Google Drive. Pastikan akses file di Google Drive sudah diubah menjadi "Siapa saja yang memiliki link" (Anyone with the link).'
+                : 'Gagal memuat URL PDF publik. Pastikan tautan mengarah langsung ke file PDF yang valid.')
+          );
         }
         const loadingTask = window.pdfjsLib.getDocument(sourceObj);
         const pdf = await loadingTask.promise;
-        return { pdf: pdf, normalized: null };
+        return { pdf: pdf, normalized: null, filename: '' };
       }
 
       async function loadPdfDocument(sourceObj, labelName, pdfDataUrlForIdb) {
@@ -9001,7 +9140,12 @@
           accent: '#0B3B2C',
           spineColor: '#0B3B2C',
           hasCustomCoverImage: false,
-          customCoverDataUrl: ''
+          customCoverDataUrl: '',
+          isCustomPdf: false,
+          pdfUrl: '',
+          drivePdfFileId: '',
+          pdfDataUrl: '',
+          originalPagesDataUrls: null
         };
 
         crudWorkingPages = buildEditablePagesForBook(crudWorkingBook);
@@ -9011,6 +9155,20 @@
         if (badge) {
           badge.textContent = 'MODE TAMBAH BUKU BARU';
           badge.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#D4AF37] text-[#072A20]';
+        }
+
+        const origBadge = document.getElementById('crud-original-content-badge');
+        if (origBadge) {
+          origBadge.classList.add('hidden');
+        }
+        const pdfStatusEl = document.getElementById('crud-pdf-url-status');
+        if (pdfStatusEl) {
+          pdfStatusEl.classList.add('hidden');
+          pdfStatusEl.textContent = '';
+        }
+        const regenLabel = document.getElementById('btn-crud-regen-cover-label');
+        if (regenLabel) {
+          regenLabel.textContent = 'Sinkron Sampul';
         }
 
         populateCrudMetadataFormFromWorking();
@@ -9103,7 +9261,13 @@
 
         const origBadge = document.getElementById('crud-original-content-badge');
         if (origBadge) {
+          origBadge.textContent = '✓ Stream PDF Aktif';
           origBadge.classList.toggle('hidden', !isOriginalPdfOrImg);
+        }
+        const pdfStatusEl = document.getElementById('crud-pdf-url-status');
+        if (pdfStatusEl) {
+          pdfStatusEl.classList.add('hidden');
+          pdfStatusEl.textContent = '';
         }
         const regenLabel = document.getElementById('btn-crud-regen-cover-label');
         if (regenLabel) {
@@ -9377,6 +9541,20 @@
 
       async function saveCrudWorkingBookPermanently(openReaderAfterSave) {
         if (!crudWorkingBook) return;
+
+        // Jika Admin menempelkan link PDF di kolom URL lalu langsung klik "Simpan Permanen ke Etalase"
+        // tanpa menekan tombol "Muat & Stream PDF" terlebih dahulu, muat & render PDF-nya secara otomatis!
+        const crudPdfUrlEl = document.getElementById('crud-inp-pdf-url');
+        const rawPdfUrlInput = crudPdfUrlEl ? crudPdfUrlEl.value.trim() : '';
+        const hasRenderedPdfPages = crudWorkingPages.some((p) => Boolean(p && p.isOriginalPdfPage && p.customImageDataUrl));
+        if (rawPdfUrlInput && !hasRenderedPdfPages) {
+          const loadedOk = await loadPdfUrlIntoCrudWorkingBook(rawPdfUrlInput, { silentIfAlreadyLoaded: true });
+          if (!loadedOk) {
+            // Hentikan penyimpanan buku kosong jika link PDF gagal dimuat (misal masih Restricted)
+            return;
+          }
+        }
+
         syncWorkingBookFromMetadataInputs(false);
 
         const prevAsset = bookAssetsCache[crudWorkingBook.id] || {};
@@ -9798,75 +9976,164 @@
         }
       };
 
+      let isCrudPdfUrlLoading = false;
+
+      function setCrudPdfUrlStatus(type, message) {
+        const statusEl = document.getElementById('crud-pdf-url-status');
+        if (!statusEl) return;
+        if (!message) {
+          statusEl.classList.add('hidden');
+          statusEl.textContent = '';
+          return;
+        }
+        statusEl.classList.remove('hidden');
+        if (type === 'loading') {
+          statusEl.className = 'text-[11px] px-2.5 py-2 rounded-lg border leading-snug break-words bg-[#0B3B2C] border-[#D4AF37]/70 text-[#FEF08A]';
+        } else if (type === 'success') {
+          statusEl.className = 'text-[11px] px-2.5 py-2 rounded-lg border leading-snug break-words bg-emerald-950/90 border-emerald-400/70 text-emerald-200';
+        } else {
+          statusEl.className = 'text-[11px] px-2.5 py-2 rounded-lg border leading-snug break-words bg-red-950/90 border-red-400/80 text-red-200';
+        }
+        statusEl.textContent = message;
+      }
+
+      async function loadPdfUrlIntoCrudWorkingBook(rawUrlInput, opts) {
+        const urlInput = document.getElementById('crud-inp-pdf-url');
+        const rawUrl = String(rawUrlInput || (urlInput ? urlInput.value : '') || '').trim();
+        if (!rawUrl) {
+          showToast('Masukkan Direct URL PDF atau tautan Google Drive terlebih dahulu.');
+          setCrudPdfUrlStatus('error', 'Masukkan tautan berbagi Google Drive atau URL PDF terlebih dahulu.');
+          return false;
+        }
+        if (isCrudPdfUrlLoading) return false;
+        isCrudPdfUrlLoading = true;
+
+        const btnEl = document.getElementById('btn-crud-load-pdf-url');
+        const btnLabelEl = document.getElementById('btn-crud-load-pdf-url-label');
+        if (btnEl) btnEl.disabled = true;
+        if (btnLabelEl) btnLabelEl.textContent = 'Memuat & Merender PDF...';
+
+        try {
+          setCrudPdfUrlStatus('loading', '⏳ Mengonversi link & merender halaman asli PDF...');
+          showToast('Mengonversi tautan & merender PDF publik...');
+          const opened = await openPdfWithCorsFallback({ url: rawUrl });
+          const pdf = opened.pdf;
+          const norm = opened.normalized;
+          const detectedName = opened.filename || '';
+          const total = pdf.numPages;
+          const dpr = Math.min(window.devicePixelRatio || 2, 2.2);
+          const importedPages = [];
+          const rawRenderedPages = [];
+
+          // Jika judul buku masih default, otomatis isi dengan nama file PDF asli
+          if (detectedName && crudWorkingBook) {
+            const cleanTitle = detectedName.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').trim();
+            const titleInput = document.getElementById('crud-inp-title');
+            if (
+              cleanTitle &&
+              (!crudWorkingBook.title ||
+                crudWorkingBook.title === 'Judul Buku Baru Koleksi 3D' ||
+                crudWorkingBook.title === 'Publikasi Tanpa Judul')
+            ) {
+              crudWorkingBook.title = cleanTitle;
+              if (titleInput) titleInput.value = cleanTitle;
+            }
+          }
+
+          for (let i = 1; i <= total; i++) {
+            if (btnLabelEl) {
+              btnLabelEl.textContent = 'Merender Hal ' + i + ' / ' + total + '...';
+            }
+            const page = await pdf.getPage(i);
+            const vp1 = page.getViewport({ scale: 1 });
+            const scale = (650 / vp1.width) * dpr;
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            const imgData = canvas.toDataURL('image/jpeg', 0.91);
+            rawRenderedPages.push({
+              pageNumber: i,
+              title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
+              dataUrl: imgData,
+              isOriginalPdfPage: true
+            });
+            importedPages.push({
+              pageNumber: i,
+              kicker: i === 1 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + i,
+              title: i === 1 ? crudWorkingBook.title : 'Halaman ' + i,
+              subtitle: detectedName || 'PDF Publik / Google Drive',
+              body: '',
+              customImageDataUrl: imgData,
+              isOriginalPdfPage: true
+            });
+          }
+
+          crudWorkingPages = importedPages;
+          crudWorkingBook.pageCount = total;
+          crudWorkingBook.isCustomPdf = true;
+          crudWorkingBook.hasCustomCoverImage = true;
+          crudWorkingBook.customCoverDataUrl = importedPages[0] ? importedPages[0].customImageDataUrl : '';
+          crudWorkingBook.pdfUrl = (norm && norm.directUrl) || rawUrl;
+          crudWorkingBook.drivePdfFileId = (norm && norm.fileId) || '';
+          if (urlInput && norm && norm.directUrl) {
+            urlInput.value = norm.directUrl;
+          }
+          crudWorkingBook.originalPagesDataUrls = rawRenderedPages;
+          crudSelectedPageIdx = 0;
+
+          const origBadge = document.getElementById('crud-original-content-badge');
+          if (origBadge) {
+            origBadge.textContent = '✓ Stream PDF Aktif (' + total + ' Hal)';
+            origBadge.classList.remove('hidden');
+          }
+
+          setCrudPdfUrlStatus(
+            'success',
+            '✓ Berhasil memuat ' + total + ' halaman PDF asli beserta sampul! Klik "Simpan Permanen ke Etalase" di kanan bawah untuk menyimpan.'
+          );
+
+          updateCrudMetadataLivePreview();
+          renderCrudPagesList();
+          loadCrudPageIntoForm(0);
+          showToast('Berhasil memuat ' + total + ' halaman dari URL PDF / Google Drive!');
+          return true;
+        } catch (e) {
+          const errMsg =
+            (e && e.message) ||
+            'Gagal memuat URL PDF. Pastikan link Google Drive disetel "Siapa saja yang memiliki link" (Anyone with the link).';
+          setCrudPdfUrlStatus('error', '⚠️ ' + errMsg);
+          showToast(errMsg);
+          return false;
+        } finally {
+          isCrudPdfUrlLoading = false;
+          if (btnEl) btnEl.disabled = false;
+          if (btnLabelEl) btnLabelEl.textContent = 'Muat & Stream PDF dari Link';
+        }
+      }
+
       const btnCrudLoadPdfUrl = document.getElementById('btn-crud-load-pdf-url');
       if (btnCrudLoadPdfUrl) {
         btnCrudLoadPdfUrl.onclick = async () => {
           const urlInput = document.getElementById('crud-inp-pdf-url');
           const rawUrl = urlInput ? urlInput.value.trim() : '';
-          if (!rawUrl) {
-            showToast('Masukkan Direct URL PDF atau tautan Google Drive terlebih dahulu.');
-            return;
-          }
-          try {
-            showToast('Mengonversi tautan & merender PDF publik...');
-            const opened = await openPdfWithCorsFallback({ url: rawUrl });
-            const pdf = opened.pdf;
-            const norm = opened.normalized;
-            const total = pdf.numPages;
-            const dpr = Math.min(window.devicePixelRatio || 2, 2.2);
-            const importedPages = [];
-            const rawRenderedPages = [];
-            for (let i = 1; i <= total; i++) {
-              const page = await pdf.getPage(i);
-              const vp1 = page.getViewport({ scale: 1 });
-              const scale = (650 / vp1.width) * dpr;
-              const viewport = page.getViewport({ scale });
-              const canvas = document.createElement('canvas');
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              const ctx = canvas.getContext('2d');
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              await page.render({ canvasContext: ctx, viewport }).promise;
-              const imgData = canvas.toDataURL('image/jpeg', 0.91);
-              rawRenderedPages.push({
-                pageNumber: i,
-                title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
-                dataUrl: imgData,
-                isOriginalPdfPage: true
-              });
-              importedPages.push({
-                pageNumber: i,
-                kicker: i === 1 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + i,
-                title: i === 1 ? crudWorkingBook.title : 'Halaman ' + i,
-                subtitle: 'PDF Publik / Google Drive',
-                body: '',
-                customImageDataUrl: imgData,
-                isOriginalPdfPage: true
-              });
-            }
-            crudWorkingPages = importedPages;
-            crudWorkingBook.isCustomPdf = true;
-            crudWorkingBook.hasCustomCoverImage = true;
-            crudWorkingBook.customCoverDataUrl = importedPages[0] ? importedPages[0].customImageDataUrl : '';
-            crudWorkingBook.pdfUrl = (norm && norm.directUrl) || rawUrl;
-            crudWorkingBook.drivePdfFileId = (norm && norm.fileId) || '';
-            if (urlInput && norm && norm.directUrl) {
-              urlInput.value = norm.directUrl;
-            }
-            crudWorkingBook.originalPagesDataUrls = rawRenderedPages;
-            crudSelectedPageIdx = 0;
+          await loadPdfUrlIntoCrudWorkingBook(rawUrl);
+        };
+      }
 
-            const origBadge = document.getElementById('crud-original-content-badge');
-            if (origBadge) origBadge.classList.remove('hidden');
-
-            updateCrudMetadataLivePreview();
-            renderCrudPagesList();
-            loadCrudPageIntoForm(0);
-            showToast('Berhasil memuat ' + total + ' halaman dari URL PDF / Google Drive!');
-          } catch (e) {
-            showToast('Gagal memuat URL PDF. Pastikan link Google Drive disetel "Anyone with the link".');
-          }
+      const crudInpPdfUrlEl = document.getElementById('crud-inp-pdf-url');
+      if (crudInpPdfUrlEl) {
+        crudInpPdfUrlEl.onpaste = () => {
+          setTimeout(() => {
+            const pastedVal = crudInpPdfUrlEl.value.trim();
+            if (pastedVal && (pastedVal.startsWith('http://') || pastedVal.startsWith('https://'))) {
+              loadPdfUrlIntoCrudWorkingBook(pastedVal);
+            }
+          }, 120);
         };
       }
 
