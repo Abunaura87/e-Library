@@ -42,12 +42,32 @@ async function startServer() {
         return res.status(400).json({ error: 'Invalid catalog payload' });
       }
 
+      const deletedSet = new Set<string>(Array.isArray(payload.deletedBookIds) ? payload.deletedBookIds : []);
+      
+      // Clean up any files in BOOKS_DIR for deleted books
+      deletedSet.forEach((delId: string) => {
+        const safeDelId = String(delId).replace(/[^a-zA-Z0-9_\-]/g, '-');
+        const p = path.join(BOOKS_DIR, `${safeDelId}.json`);
+        if (fs.existsSync(p)) {
+          try { fs.unlinkSync(p); } catch (e) {}
+        }
+      });
+
+      // Filter out any deleted books from catalog
+      const cleanBooks = payload.books.filter((b: any) => b && b.id && !deletedSet.has(b.id));
+      const cleanBookOrder = Array.isArray(payload.bookOrder)
+        ? payload.bookOrder.filter((id: any) => !deletedSet.has(id))
+        : undefined;
+
       const record = {
         ...payload,
+        books: cleanBooks,
+        ...(cleanBookOrder ? { bookOrder: cleanBookOrder } : {}),
+        deletedBookIds: Array.from(deletedSet),
         updatedAt: payload.updatedAt || Date.now()
       };
       fs.writeFileSync(CATALOG_FILE, JSON.stringify(record, null, 2), 'utf-8');
-      return res.json({ success: true, count: payload.books.length, updatedAt: record.updatedAt });
+      return res.json({ success: true, count: cleanBooks.length, updatedAt: record.updatedAt, deletedCount: deletedSet.size });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -74,6 +94,34 @@ async function startServer() {
       const bookPath = path.join(BOOKS_DIR, `${safeId}.json`);
       fs.writeFileSync(bookPath, JSON.stringify(req.body, null, 2), 'utf-8');
       return res.json({ success: true, id: safeId });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/books/:id', (req, res) => {
+    try {
+      const rawId = req.params.id;
+      const safeId = rawId.replace(/[^a-zA-Z0-9_\-]/g, '-');
+      const bookPath = path.join(BOOKS_DIR, `${safeId}.json`);
+      if (fs.existsSync(bookPath)) {
+        try { fs.unlinkSync(bookPath); } catch (e) {}
+      }
+      if (fs.existsSync(CATALOG_FILE)) {
+        const raw = fs.readFileSync(CATALOG_FILE, 'utf-8');
+        const cat = JSON.parse(raw);
+        if (cat && Array.isArray(cat.books)) {
+          cat.books = cat.books.filter((b: any) => b.id !== rawId && b.id !== safeId);
+          if (Array.isArray(cat.bookOrder)) {
+            cat.bookOrder = cat.bookOrder.filter((id: any) => id !== rawId && id !== safeId);
+          }
+          if (!Array.isArray(cat.deletedBookIds)) cat.deletedBookIds = [];
+          if (!cat.deletedBookIds.includes(rawId)) cat.deletedBookIds.push(rawId);
+          cat.updatedAt = Date.now();
+          fs.writeFileSync(CATALOG_FILE, JSON.stringify(cat, null, 2), 'utf-8');
+        }
+      }
+      return res.json({ success: true, deletedId: rawId });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

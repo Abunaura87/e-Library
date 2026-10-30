@@ -3103,8 +3103,38 @@
       const STORAGE_RACKS_DATA_KEY = 'elibrary_racks_data';
       const STORAGE_RACKS_META_KEY = 'elibrary_racks_meta_v1';
       const STORAGE_BOOKS_KEY = 'elibrary_cubby_books_v4';
+      const STORAGE_DELETED_BOOKS_KEY = 'elibrary_deleted_books_v1';
       const STORAGE_MUSIC_PLAYING_KEY = 'elibrary_music_playing_v2';
       const STORAGE_CUSTOM_FILENAME_KEY = 'elibrary_custom_music_filename_v2';
+
+      function getDeletedBookIds() {
+        try {
+          const raw = localStorage.getItem(STORAGE_DELETED_BOOKS_KEY);
+          const arr = raw ? JSON.parse(raw) : [];
+          return new Set(Array.isArray(arr) ? arr : []);
+        } catch (e) {
+          return new Set();
+        }
+      }
+
+      function markBookAsDeleted(bookId) {
+        if (!bookId) return;
+        const set = getDeletedBookIds();
+        set.add(String(bookId));
+        try {
+          localStorage.setItem(STORAGE_DELETED_BOOKS_KEY, JSON.stringify(Array.from(set)));
+        } catch (e) {}
+      }
+
+      function unmarkBookAsDeleted(bookId) {
+        if (!bookId) return;
+        const set = getDeletedBookIds();
+        if (set.delete(String(bookId))) {
+          try {
+            localStorage.setItem(STORAGE_DELETED_BOOKS_KEY, JSON.stringify(Array.from(set)));
+          } catch (e) {}
+        }
+      }
 
       // =========================================================
       // MODUL HELPER PENYIMPANAN PERMANEN (INDEXEDDB + LOCALSTORAGE)
@@ -3483,6 +3513,73 @@
         }
       };
       window.StorageHandler = StorageHandler;
+
+      async function autoSyncCatalogEverywhere(options) {
+        const opts = options || {};
+
+        // Update UI badge instantly
+        const syncBadgeText = document.getElementById('header-cloud-sync-badge-text');
+        if (syncBadgeText) {
+          syncBadgeText.textContent = 'Cloud DB (' + books.length + ' Buku)';
+        }
+        const booksSummaryCount = document.getElementById('cloud-drive-books-summary-count');
+        if (booksSummaryCount) {
+          booksSummaryCount.textContent = books.length + ' Buku Terdaftar';
+        }
+
+        // If a specific book was deleted, call server delete endpoint immediately
+        if (opts.deletedBookId) {
+          markBookAsDeleted(opts.deletedBookId);
+          fetch('/api/books/' + encodeURIComponent(opts.deletedBookId), { method: 'DELETE' }).catch(() => {});
+          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.deleteBookEverywhere === 'function') {
+            window.CloudDriveSyncEngine.deleteBookEverywhere(opts.deletedBookId, opts.prevPageCount, opts.prevRec).catch(() => {});
+          }
+        }
+
+        // If a specific book was saved / updated, post to /api/books/:id
+        if (opts.savedBook && opts.savedBook.id) {
+          unmarkBookAsDeleted(opts.savedBook.id);
+          const safeId = String(opts.savedBook.id).replace(/[^a-zA-Z0-9_\-]/g, '-');
+          const assetPayload = opts.asset || (typeof bookAssetsCache !== 'undefined' ? bookAssetsCache[opts.savedBook.id] : null) || opts.savedBook;
+          fetch('/api/books/' + safeId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(assetPayload)
+          }).catch(() => {});
+          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.scheduleBookSync === 'function') {
+            window.CloudDriveSyncEngine.scheduleBookSync(opts.savedBook.id, assetPayload);
+          }
+        }
+
+        // Send updated catalog to /api/catalog
+        const cleanBooks = books.filter((b) => b && b.id && !getDeletedBookIds().has(String(b.id)));
+        try {
+          await fetch('/api/catalog', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              shelves: shelves,
+              books: cleanBooks,
+              bookOrder: cleanBooks.map((b) => b.id),
+              deletedBookIds: Array.from(getDeletedBookIds()),
+              updatedAt: Date.now(),
+              updatedBy: (typeof ADMIN_WHITELIST_EMAIL !== 'undefined' ? ADMIN_WHITELIST_EMAIL : 'marhaniza05@gmail.com')
+            })
+          });
+        } catch (err) {
+          console.warn('Auto-sync /api/catalog notice:', err);
+        }
+
+        // Cloud Firestore background push
+        if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
+          window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, cleanBooks).catch(() => {});
+        }
+
+        if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.renderCloudDriveBooksStatusList === 'function') {
+          window.CloudDriveSyncEngine.renderCloudDriveBooksStatusList();
+        }
+      }
+      window.autoSyncCatalogEverywhere = autoSyncCatalogEverywhere;
 
       // 8 Kotak Rak Klasikal Utama (Nuansa Hijau Zamrud & Emas Klasik)
       const DEFAULT_SHELVES = [
@@ -5011,15 +5108,16 @@
           shelves = DEFAULT_SHELVES.map((s, idx) => ({ ...s, orderIndex: idx, isCustomEdited: true }));
         }
 
+        const deletedIds = getDeletedBookIds();
+        let savedBooks = null;
         try {
-          const savedBooks = localStorage.getItem(STORAGE_BOOKS_KEY);
-          if (savedBooks) {
-            books = JSON.parse(savedBooks);
+          const rawBooks = localStorage.getItem(STORAGE_BOOKS_KEY);
+          if (rawBooks) {
+            savedBooks = JSON.parse(rawBooks);
           }
         } catch (e) {}
 
-        if (!books || books.length < 16) {
-          const default16Books = [
+        const default16Books = [
             {
               id: 'book-pdf-1793311132578',
               shelfId: 'rak-01',
@@ -5074,21 +5172,6 @@
               accent: '#B45309',
               spineColor: '#B45309',
               coverUrl: generateCanvasPageDataUrl('Metodologi Pembelajaran Aktif', 'Model Instruksional Berbasis Masalah & Kolaborasi', 'PEDAGOGIK MODERN', 'Dr. Hendra Wijaya', 'Eksplorasi strategi kelas aktif yang meningkatkan partisipasi kritis peserta didik.', true, 5, 0, '#B45309')
-            },
-            {
-              id: 'book-wanita-teladan-2',
-              shelfId: 'rak-02',
-              title: 'Kisah Wanita-Wanita Teladan2 -- Abdullah Haidir --',
-              author: 'Abdullah Haidir',
-              description: 'Kisah inspiratif para shahabiyah dan wanita shalihah teladan bagian kedua dalam sejarah peradaban Islam.',
-              kicker: 'TELADAN MUSLIMAH',
-              pageCount: 8,
-              passwordProtected: false,
-              password: '',
-              accent: '#14532D',
-              spineColor: '#14532D',
-              hasCustomCoverImage: true,
-              coverUrl: generateCanvasPageDataUrl('Kisah Wanita-Wanita Teladan 2', 'Keteladanan Shahabiyah Bagian Kedua', 'TELADAN MUSLIMAH', 'Abdullah Haidir', 'Menelusuri keagungan akhlak, keteguhan iman, dan pengorbanan para wanita mulia generasi terbaik.', true, 8, 0, '#14532D')
             },
             {
               id: 'book-wanita-teladan-1',
@@ -5231,26 +5314,14 @@
             }
           ];
 
-          if (!books || books.length === 0) {
-            books = default16Books;
+          if (Array.isArray(savedBooks)) {
+            // Jaga persis buku pilihan pengguna dan saring semua buku yang telah dihapus
+            books = savedBooks.filter((b) => b && b.id && !deletedIds.has(String(b.id)));
           } else {
-            // Gabungkan buku yang sudah ada dengan 16 buku default agar buku kustom Admin tidak hilang
-            default16Books.forEach((db) => {
-              const exIdx = books.findIndex((b) => b.id === db.id);
-              if (exIdx === -1) {
-                books.push(db);
-              } else {
-                // Selaraskan shelfId dan status kunci bila perlu
-                if (db.shelfId) books[exIdx].shelfId = db.shelfId;
-                if (db.id === 'book-manuskrip') {
-                  books[exIdx].passwordProtected = false;
-                  books[exIdx].password = '';
-                }
-              }
-            });
+            // Hanya gunakan default saat aplikasi pertama kali diakses
+            books = default16Books.filter((b) => !deletedIds.has(String(b.id)));
+            saveBooksToStorage();
           }
-          saveBooksToStorage();
-        }
 
         // Pastikan setiap buku non-PDF memiliki editablePages, coverUrl, dan status kunci yang bersih & konsisten
         let booksFixed = false;
@@ -5945,9 +6016,7 @@
           } else {
             books.unshift(autoBookRecord);
           }
-          saveBooksToStorage();
-
-          await StorageHandler.saveBookAsset(autoBookId, {
+          const pdfAsset = {
             ...autoBookRecord,
             bookMeta: autoBookRecord,
             coverUrl: coverDataUrl,
@@ -5957,7 +6026,11 @@
             originalPagesDataUrls: rendered,
             editablePages: pdfEditablePages,
             pdfDataUrl: lastUploadedPdfDataUrl || ''
-          });
+          };
+
+          await StorageHandler.saveBookAsset(autoBookId, pdfAsset);
+
+          autoSyncCatalogEverywhere({ savedBook: autoBookRecord, asset: pdfAsset });
 
           renderLobbyView(document.getElementById('lobby-search-input').value || '');
           if (currentView === 'shelf') {
@@ -8001,7 +8074,7 @@
 
             books.unshift(imgBookRecord);
             saveBooksToStorage();
-            await StorageHandler.saveBookAsset(newBookId, {
+            const imgAsset = {
               ...imgBookRecord,
               bookMeta: imgBookRecord,
               coverUrl: renderedPages[0].dataUrl,
@@ -8010,13 +8083,16 @@
               pagesDataUrls: renderedPages,
               originalPagesDataUrls: renderedPages,
               editablePages: editablePages
-            });
+            };
+            await StorageHandler.saveBookAsset(newBookId, imgAsset);
+
+            autoSyncCatalogEverywhere({ savedBook: imgBookRecord, asset: imgAsset });
 
             renderLobbyView(document.getElementById('lobby-search-input').value || '');
             if (currentView === 'shelf') {
               renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
             }
-            showToast('Gambar orisinal "' + cleanImgTitle + '" berhasil ditambahkan ke Etalase sebagai Flipbook 3D!');
+            showToast('Gambar orisinal "' + cleanImgTitle + '" berhasil ditambahkan & disinkronkan ke Etalase!');
           }
         };
       }
@@ -8124,7 +8200,7 @@
         }
         saveBooksToStorage();
 
-        await StorageHandler.saveBookAsset(bookId, {
+        const savedAsset = {
           bookMeta: savedBook,
           coverUrl: coverDataUrl,
           hasCustomCoverImage: savedBook.hasCustomCoverImage,
@@ -8133,7 +8209,10 @@
           editablePages: editablePages,
           isCustomPdf: isOriginalPdfOrImg,
           pdfDataUrl: currentUploadedPdfDataUrl || (existingAsset && existingAsset.pdfDataUrl) || null
-        });
+        };
+        await StorageHandler.saveBookAsset(bookId, savedAsset);
+
+        autoSyncCatalogEverywhere({ savedBook: savedBook, asset: savedAsset });
 
         renderStage('forward');
         renderThumbnailsGrid();
@@ -8141,7 +8220,7 @@
         if (currentView === 'shelf') renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
 
         const targetShelf = shelves.find((s) => s.id === targetShelfId);
-        showToast('Buku "' + config.title + '" berhasil disimpan permanen ke ' + (targetShelf ? targetShelf.name : 'etalase'));
+        showToast('Buku "' + config.title + '" berhasil disimpan & disinkronkan ke ' + (targetShelf ? targetShelf.name : 'etalase'));
       };
 
       // =========================================================
@@ -8679,7 +8758,7 @@
         crudIsNewBook = false;
         saveBooksToStorage();
 
-        await StorageHandler.saveBookAsset(finalBookRecord.id, {
+        const assetToSave = {
           bookMeta: finalBookRecord,
           coverUrl: finalCoverUrl,
           hasCustomCoverImage: finalBookRecord.hasCustomCoverImage,
@@ -8691,7 +8770,12 @@
           editablePages: finalBookRecord.editablePages,
           isCustomPdf: isOriginalPdfOrImg,
           pdfDataUrl: crudWorkingBook.pdfDataUrl || prevAsset.pdfDataUrl || ''
-        });
+        };
+
+        await StorageHandler.saveBookAsset(finalBookRecord.id, assetToSave);
+
+        // Otomatis sinkronkan seketika ke Database Server & Cloud tanpa perlu menekan tombol manual
+        autoSyncCatalogEverywhere({ savedBook: finalBookRecord, asset: assetToSave });
 
         populateCrudShelfSelectors();
         renderCrudBooksListSidebar();
@@ -8707,7 +8791,7 @@
         if (openReaderAfterSave) {
           closeCrudEtalaseModal();
         }
-        showToast('Buku "' + finalBookRecord.title + '" (' + finalBookRecord.pageCount + ' halaman) berhasil disimpan permanen!');
+        showToast('Buku "' + finalBookRecord.title + '" (' + finalBookRecord.pageCount + ' halaman) berhasil disimpan & disinkronkan!');
       }
 
       async function deleteBookFromEtalase(bookId) {
@@ -8731,9 +8815,18 @@
         if (!confirmed) {
           return;
         }
+        // Tandai secara permanen di daftar buku terhapus agar tidak bangkit kembali saat refresh
+        markBookAsDeleted(bookId);
         books = books.filter((b) => b.id !== bookId);
         saveBooksToStorage();
         await StorageHandler.deleteBookAsset(bookId);
+
+        // Otomatis sinkronkan penghapusan ke Server & Cloud DB seketika untuk semua akun
+        autoSyncCatalogEverywhere({
+          deletedBookId: bookId,
+          prevPageCount: (target && target.pageCount) || 1,
+          prevRec: target
+        });
 
         populateCrudShelfSelectors();
         renderLobbyView(document.getElementById('lobby-search-input').value || '');
@@ -8769,13 +8862,16 @@
         books.splice(idx + 1, 0, dupBook);
         saveBooksToStorage();
 
-        await StorageHandler.saveBookAsset(newId, {
+        const dupAsset = {
           bookMeta: dupBook,
           coverUrl: dupBook.coverUrl,
           pagesDataUrls: rendered,
           editablePages: clonedPages,
           isCustomPdf: false
-        });
+        };
+        await StorageHandler.saveBookAsset(newId, dupAsset);
+
+        autoSyncCatalogEverywhere({ savedBook: dupBook, asset: dupAsset });
 
         populateCrudShelfSelectors();
         renderLobbyView(document.getElementById('lobby-search-input').value || '');
@@ -8795,6 +8891,7 @@
         books[targetIdx] = books[idx];
         books[idx] = temp;
         saveBooksToStorage();
+        autoSyncCatalogEverywhere();
         renderCrudBooksListSidebar();
         renderLobbyView(document.getElementById('lobby-search-input').value || '');
         if (currentView === 'shelf') {
@@ -10053,6 +10150,46 @@
       // =========================================================
       async function hydrateFromPermanentStorage() {
         try {
+          // -1. Sinkronkan katalog & daftar buku terhapus dari Server Database (/api/catalog) terlebih dahulu
+          try {
+            const apiRes = await fetch('/api/catalog');
+            if (apiRes.ok) {
+              const serverCat = await apiRes.json();
+              if (serverCat && Array.isArray(serverCat.deletedBookIds)) {
+                serverCat.deletedBookIds.forEach((id) => markBookAsDeleted(id));
+              }
+              const activeDel = getDeletedBookIds();
+              books = books.filter((b) => b && b.id && !activeDel.has(String(b.id)));
+
+              if (serverCat && Array.isArray(serverCat.books) && serverCat.books.length > 0) {
+                const cleanServerBooks = serverCat.books.filter((b) => b && b.id && !activeDel.has(String(b.id)));
+                cleanServerBooks.forEach((sb) => {
+                  const bIdx = books.findIndex((b) => b.id === sb.id);
+                  if (bIdx >= 0) {
+                    books[bIdx] = Object.assign({}, sb, books[bIdx]);
+                  } else {
+                    books.push(sb);
+                  }
+                });
+                if (Array.isArray(serverCat.bookOrder)) {
+                  books.sort((a, b) => {
+                    const idxA = serverCat.bookOrder.indexOf(a.id);
+                    const idxB = serverCat.bookOrder.indexOf(b.id);
+                    if (idxA === -1 && idxB === -1) return 0;
+                    if (idxA === -1) return 1;
+                    if (idxB === -1) return -1;
+                    return idxA - idxB;
+                  });
+                }
+                saveBooksToStorage();
+              }
+              const syncBadge = document.getElementById('header-cloud-sync-badge-text');
+              if (syncBadge) syncBadge.textContent = 'Cloud DB (' + books.length + ' Buku)';
+            }
+          } catch (e) {
+            console.warn('Startup /api/catalog notice:', e);
+          }
+
           // 0. Hydrate & kunci data rak kustom dari localStorage (elibrary_racks_data) & IndexedDB
           const localRacks = StorageHandler.loadRacksDataPermanently();
           const idbRacksRecord = await StorageHandler.getRacksFromIDB();
@@ -10097,10 +10234,15 @@
           // 1. Hydrate seluruh koleksi buku & cover dari IndexedDB
           const storedAssets = await StorageHandler.getAllBookAssets();
           if (Array.isArray(storedAssets) && storedAssets.length > 0) {
+            const deletedIds = getDeletedBookIds();
             let catalogChanged = false;
             for (let aIdx = 0; aIdx < storedAssets.length; aIdx++) {
               const asset = storedAssets[aIdx];
               if (!asset || !asset.id) continue;
+              if (deletedIds.has(String(asset.id))) {
+                StorageHandler.deleteBookAsset(asset.id, true);
+                continue;
+              }
               const existingBook = books.find((b) => b.id === asset.id);
               const isPdfOrOriginal = isBookOriginalPdfOrImage(existingBook, asset);
 
@@ -10169,6 +10311,10 @@
                   asset.pagesDataUrls = rendered;
                 }
               } else if (asset.bookMeta) {
+                if (deletedIds.has(String(asset.id))) {
+                  StorageHandler.deleteBookAsset(asset.id, true);
+                  continue;
+                }
                 const hydratedBook = Object.assign({}, asset.bookMeta);
                 if (Array.isArray(asset.editablePages) && asset.editablePages.length > 0) {
                   hydratedBook.editablePages = asset.editablePages;
@@ -11411,6 +11557,10 @@
             try { firestoreBooksCount = JSON.parse(catalogDoc.booksMetaJson).length; } catch (e) {}
           }
 
+          if (serverCatalog && Array.isArray(serverCatalog.deletedBookIds)) {
+            serverCatalog.deletedBookIds.forEach((id) => markBookAsDeleted(id));
+          }
+
           if (serverCatalog && (serverBooksCount >= firestoreBooksCount || !catalogDoc)) {
             catalogDoc = {
               shelvesJson: JSON.stringify(serverCatalog.shelves),
@@ -11524,8 +11674,9 @@
                 const parsedBooksMeta = JSON.parse(catalogDoc.booksMetaJson);
                 if (Array.isArray(parsedBooksMeta) && parsedBooksMeta.length > 0) {
                   hasRemoteData = true;
+                  const currentDeleted = getDeletedBookIds();
                   parsedBooksMeta.forEach((bm) => {
-                    if (!bm || !bm.id) return;
+                    if (!bm || !bm.id || currentDeleted.has(String(bm.id))) return;
                     if (bm.isCustomPdf || bm.hasCustomCoverImage || String(bm.id).startsWith('book-pdf-')) {
                       candidateBookIdsToFetch.add(String(bm.id));
                     }
@@ -11566,13 +11717,15 @@
                       books.push(Object.assign({ coverUrl: fallbackCover }, bm));
                     }
                   });
+                  // Saring buku lokal bila ada yang termasuk dalam daftar terhapus
+                  books = books.filter((b) => b && b.id && !currentDeleted.has(String(b.id)));
                 }
               } catch (e) {}
             }
           }
 
           // Ambil dokumen buku kustom/PDF dari library_books/{bookId} atau server /api/books/{bookId}
-          const idsToFetch = Array.from(candidateBookIdsToFetch);
+          const idsToFetch = Array.from(candidateBookIdsToFetch).filter((bid) => !getDeletedBookIds().has(String(bid)));
           const fetchedBookDocs = await Promise.all(
             idsToFetch.map(async (bid) => {
               const safeId = String(bid).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
@@ -11589,13 +11742,13 @@
               return doc;
             })
           );
-          const cloudBooksDocs = fetchedBookDocs.filter((d) => Boolean(d && d.id));
+          const cloudBooksDocs = fetchedBookDocs.filter((d) => Boolean(d && d.id && !getDeletedBookIds().has(String(d.id))));
 
           if (cloudBooksDocs.length > 0) {
             hasRemoteData = true;
             for (let i = 0; i < cloudBooksDocs.length; i++) {
               const cb = cloudBooksDocs[i];
-              if (!cb || !cb.id) continue;
+              if (!cb || !cb.id || getDeletedBookIds().has(String(cb.id))) continue;
               if (normalizeBookLockState(cb)) {
                 needsCatalogCleanupPush = true;
               }
