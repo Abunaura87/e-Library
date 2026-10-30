@@ -1757,8 +1757,8 @@
 
         <!-- Kanvas Utama Buku 3D Flipbook (Clean Immersive Stage) -->
         <div id="reader-stage-container" class="relative flex-1 flex items-center justify-center px-2 py-1 sm:px-6 sm:py-2 overflow-hidden flipbook-stage select-none">
-          <button type="button" id="stage-prev-arrow" aria-label="Halaman Sebelumnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-xl z-20 mr-2 lg:mr-4 shrink-0 disabled:opacity-25 transition-transform hover:scale-110 active:scale-95">
-            <i data-lucide="chevron-left" class="w-6 h-6 text-[#D4AF37]"></i>
+          <button type="button" id="stage-prev-arrow" aria-label="Halaman Sebelumnya" class="no-print flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 rounded-full btn-emerald-gold shadow-xl z-25 absolute left-1.5 sm:static sm:left-auto mr-0 sm:mr-2 lg:mr-4 shrink-0 disabled:opacity-20 transition-all hover:scale-110 active:scale-95 bg-[#072A20]/80 sm:bg-[#0B3B2C] backdrop-blur-xs">
+            <i data-lucide="chevron-left" class="w-4 h-4 sm:w-6 sm:h-6 text-[#D4AF37]"></i>
           </button>
 
           <div id="book-3d-object" class="book-3d-shell relative flex items-center justify-center cursor-grab active:cursor-grabbing max-h-[92vh]">
@@ -1771,8 +1771,8 @@
             </div>
           </div>
 
-          <button type="button" id="stage-next-arrow" aria-label="Halaman Berikutnya" class="no-print hidden sm:flex items-center justify-center w-11 h-11 rounded-full btn-emerald-gold shadow-xl z-20 ml-2 lg:ml-4 shrink-0 disabled:opacity-25 transition-transform hover:scale-110 active:scale-95">
-            <i data-lucide="chevron-right" class="w-6 h-6 text-[#D4AF37]"></i>
+          <button type="button" id="stage-next-arrow" aria-label="Halaman Berikutnya" class="no-print flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 rounded-full btn-emerald-gold shadow-xl z-25 absolute right-1.5 sm:static sm:right-auto ml-0 sm:ml-2 lg:ml-4 shrink-0 disabled:opacity-20 transition-all hover:scale-110 active:scale-95 bg-[#072A20]/80 sm:bg-[#0B3B2C] backdrop-blur-xs">
+            <i data-lucide="chevron-right" class="w-4 h-4 sm:w-6 sm:h-6 text-[#D4AF37]"></i>
           </button>
         </div>
 
@@ -6080,12 +6080,52 @@
 
         visible.forEach((pNo, idx) => {
           const img = createPageImageElement(pNo, 'Halaman ' + pNo);
-          img.onclick = () => {
-            if (visible.length === 2 && idx === 0) goPrev();
-            else goNext();
+          img.onclick = (e) => {
+            if (visible.length === 2) {
+              if (idx === 0) goPrev();
+              else goNext();
+            } else {
+              // Mode 1 Halaman (Tunggal / Layar Ponsel):
+              // Sentuh sisi kiri halaman (< 48% lebar) -> Halaman Mundur
+              // Sentuh sisi kanan halaman (>= 48% lebar) -> Halaman Maju
+              const rect = img.getBoundingClientRect();
+              const clientX = (e && e.clientX !== undefined && e.clientX !== 0)
+                ? e.clientX
+                : ((e && e.pageX) || (rect.left + rect.width / 2));
+              const offsetX = clientX - rect.left;
+              if (offsetX < rect.width * 0.48) {
+                goPrev();
+              } else {
+                goNext();
+              }
+            }
           };
           mount.appendChild(img);
         });
+
+        // Pada mode 1 halaman (Tunggal / Layar HP), sediakan zona sentuh sisi kiri & kanan langsung di atas lembaran
+        // agar sentuhan jari pada separuh kiri buku 100% memicu halaman mundur
+        if (visible.length === 1) {
+          const leftTapOverlay = document.createElement('div');
+          leftTapOverlay.className = 'absolute inset-y-0 left-0 w-1/2 z-20 cursor-pointer select-none';
+          leftTapOverlay.setAttribute('aria-label', 'Ketuk untuk halaman mundur');
+          leftTapOverlay.title = 'Halaman Sebelumnya (Ketuk sisi kiri untuk mundur)';
+          leftTapOverlay.onclick = (e) => {
+            e.stopPropagation();
+            goPrev();
+          };
+          mount.appendChild(leftTapOverlay);
+
+          const rightTapOverlay = document.createElement('div');
+          rightTapOverlay.className = 'absolute inset-y-0 right-0 w-1/2 z-20 cursor-pointer select-none';
+          rightTapOverlay.setAttribute('aria-label', 'Ketuk untuk halaman maju');
+          rightTapOverlay.title = 'Halaman Berikutnya (Ketuk sisi kanan untuk maju)';
+          rightTapOverlay.onclick = (e) => {
+            e.stopPropagation();
+            goNext();
+          };
+          mount.appendChild(rightTapOverlay);
+        }
 
         // Sudut Lipatan Lembaran Kertas Reaktif & Interaktif (Corner Curl Hover & Flip)
         if (visible.length === 2) {
@@ -6107,14 +6147,14 @@
           if (visible[0] < total) {
             const cornerRight = document.createElement('div');
             cornerRight.className = 'page-corner-hint page-corner-hint-bottom-right';
-            cornerRight.title = 'Buka halaman berikutnya';
+            cornerRight.title = 'Buka halaman berikutnya (Maju)';
             cornerRight.onclick = (e) => { e.stopPropagation(); goNext(); };
             mount.appendChild(cornerRight);
           }
           if (visible[0] > 1) {
             const cornerLeft = document.createElement('div');
             cornerLeft.className = 'page-corner-hint page-corner-hint-bottom-left';
-            cornerLeft.title = 'Kembali ke halaman sebelumnya';
+            cornerLeft.title = 'Kembali ke halaman sebelumnya (Mundur)';
             cornerLeft.onclick = (e) => { e.stopPropagation(); goPrev(); };
             mount.appendChild(cornerLeft);
           }
@@ -6288,8 +6328,13 @@
         });
       }
 
+      let lastPageNavTimestamp = 0;
+
       function goNext() {
         if (isLocked || isPageTurning) return;
+        const now = Date.now();
+        if (now - lastPageNavTimestamp < 260) return;
+        lastPageNavTimestamp = now;
         const total = pagesDataUrls.length;
         if (currentPage >= total) return;
         const isSingle = readerPageMode === '1p' || (readerPageMode === 'auto' && window.innerWidth < 900);
@@ -6299,6 +6344,9 @@
 
       function goPrev() {
         if (isLocked || isPageTurning) return;
+        const now = Date.now();
+        if (now - lastPageNavTimestamp < 260) return;
+        lastPageNavTimestamp = now;
         if (currentPage <= 1) return;
         const isSingle = readerPageMode === '1p' || (readerPageMode === 'auto' && window.innerWidth < 900);
         const prevTarget = isSingle || currentPage <= 2 ? Math.max(1, currentPage - 1) : Math.max(1, currentPage - 2);
@@ -9580,15 +9628,73 @@
       });
 
       let dragStartX = null;
+      let dragStartY = null;
+      let dragStartTime = 0;
       const bookObj = document.getElementById('book-3d-object');
-      bookObj.addEventListener('pointerdown', (e) => { dragStartX = e.clientX; });
+      const readerStageEl = document.getElementById('reader-stage');
+
+      bookObj.addEventListener('pointerdown', (e) => {
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        dragStartTime = Date.now();
+      });
+
       bookObj.addEventListener('pointerup', (e) => {
         if (dragStartX === null) return;
-        const delta = e.clientX - dragStartX;
+        const deltaX = e.clientX - dragStartX;
+        const deltaY = (dragStartY !== null && e.clientY !== undefined) ? e.clientY - dragStartY : 0;
+        const elapsed = Date.now() - dragStartTime;
         dragStartX = null;
-        if (delta < -40) goNext();
-        else if (delta > 40) goPrev();
+        dragStartY = null;
+
+        // Gestur geser mendatar (horizontal drag)
+        if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15 && elapsed < 800) {
+          if (deltaX < 0) goNext();
+          else if (deltaX > 0) goPrev();
+        }
       });
+
+      // Dukungan Gestur Usap Layar Sentuh Mobile Asli (Mobile Touch Swipe)
+      if (readerStageEl) {
+        let touchStartX = null;
+        let touchStartY = null;
+        let touchStartTime = 0;
+
+        readerStageEl.addEventListener('touchstart', (e) => {
+          if (!e.touches || e.touches.length !== 1) return;
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
+        }, { passive: true });
+
+        readerStageEl.addEventListener('touchend', (e) => {
+          if (touchStartX === null || !e.changedTouches || e.changedTouches.length === 0) return;
+          const endX = e.changedTouches[0].clientX;
+          const endY = e.changedTouches[0].clientY;
+          const deltaX = endX - touchStartX;
+          const deltaY = endY - touchStartY;
+          const elapsed = Date.now() - touchStartTime;
+          touchStartX = null;
+          touchStartY = null;
+
+          // Abaikan jika menyentuh kontrol tombol/input dock bawah atau modal
+          const target = e.target;
+          if (target && (target.closest('button') || target.closest('input') || target.closest('form') || target.closest('#reader-floating-dock') || target.closest('#password-gate-modal'))) {
+            return;
+          }
+
+          // Cek apakah gestur swipe horizontal (geser mendatar)
+          if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15 && elapsed < 750) {
+            if (deltaX < 0) {
+              // Usap dari kanan ke kiri -> Halaman Maju
+              goNext();
+            } else if (deltaX > 0) {
+              // Usap dari kiri ke kanan -> Halaman Mundur!
+              goPrev();
+            }
+          }
+        }, { passive: true });
+      }
 
       // Proteksi Klik Kanan Kanvas
       document.getElementById('reader-stage').addEventListener('contextmenu', (e) => {
