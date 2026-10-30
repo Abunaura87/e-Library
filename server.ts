@@ -634,6 +634,8 @@ async function startServer() {
   const isProduction = process.env.NODE_ENV === 'production';
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
+  app.use(express.static(path.join(__dirname, 'public')));
+
   if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true, host: '0.0.0.0', port },
