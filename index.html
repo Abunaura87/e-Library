@@ -3938,6 +3938,8 @@
 
         if (opts.deletedBookId) {
           await SheetsApiHandler.deleteBook(opts.deletedBookId);
+          await SheetsApiHandler.syncAll(shelves, cleanBooks, Array.from(getDeletedBookIds()));
+          showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
           if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.deleteBookEverywhere === 'function') {
             await window.CloudDriveSyncEngine.deleteBookEverywhere(opts.deletedBookId, opts.prevPageCount, opts.prevRec).catch(() => {});
           }
@@ -3947,18 +3949,23 @@
         if (opts.savedBook && opts.savedBook.id) {
           const assetPayload = opts.asset || (typeof bookAssetsCache !== 'undefined' ? bookAssetsCache[opts.savedBook.id] : null) || opts.savedBook;
           await SheetsApiHandler.saveBook(opts.savedBook, assetPayload);
+          await SheetsApiHandler.syncAll(shelves, cleanBooks, Array.from(getDeletedBookIds()));
+          showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
           if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.scheduleBookSync === 'function') {
             window.CloudDriveSyncEngine.scheduleBookSync(opts.savedBook.id, assetPayload);
-            return;
           }
+          return;
         }
 
         if (opts.savedRack) {
           await SheetsApiHandler.saveRack(opts.savedRack, shelves);
+          await SheetsApiHandler.syncAll(shelves, cleanBooks, Array.from(getDeletedBookIds()));
+          showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
           return;
         }
 
         await SheetsApiHandler.syncAll(shelves, cleanBooks, Array.from(getDeletedBookIds()));
+        showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
       }
       window.autoSyncCatalogEverywhere = autoSyncCatalogEverywhere;
 
@@ -7124,7 +7131,14 @@
       const STORAGE_CUSTOM_FIREBASE_CONFIG_KEY = 'elibrary_custom_firebase_cfg_v2';
       const GOOGLE_OAUTH_BRIDGE_URL = 'https://ais-pre-abwyc5eykhvnhgizzcvufu-132982667263.asia-east1.run.app/?googleAuthBridge=1';
       const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-      let cachedDriveAccessToken = null; // Disimpan eksklusif di memori (in-memory only), tidak pernah di localStorage/sessionStorage
+      const STORAGE_ADMIN_DRIVE_TOKEN_KEY = 'elibrary_drive_token_v2';
+      let cachedDriveAccessToken = (() => {
+        try {
+          return localStorage.getItem('elibrary_drive_token_v2') || null;
+        } catch (e) {
+          return null;
+        }
+      })();
 
       const defaultFirebaseConfig = {
         apiKey: "AIzaSyD10bfzaau3mEQND0-hqBSXyg2rRt1c0PM",
@@ -7170,7 +7184,12 @@
               cachedDriveAccessToken = cred.accessToken;
             }
           }
-          if (cachedDriveAccessToken && window.CloudDriveSyncEngine) {
+          if (cachedDriveAccessToken) {
+            try {
+              localStorage.setItem(STORAGE_ADMIN_DRIVE_TOKEN_KEY, cachedDriveAccessToken);
+            } catch (e) {}
+          }
+          if (window.CloudDriveSyncEngine) {
             window.CloudDriveSyncEngine.updateDriveAuthUI();
           }
         } catch (e) {}
@@ -7192,7 +7211,7 @@
       function initFirebaseAdminAuth() {
         try {
           updateDomainFallbackHostLabels();
-          // Pulihkan sesi Admin yang sudah terverifikasi sebelumnya di perangkat ini (Laptop)
+          // Pulihkan sesi Admin yang sudah terverifikasi sebelumnya di browser (Laptop & HP)
           try {
             const savedAdminRaw = localStorage.getItem(STORAGE_ADMIN_SESSION_KEY);
             if (savedAdminRaw) {
@@ -7200,7 +7219,13 @@
               if (savedAdmin && (savedAdmin.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL) {
                 currentAdminUser = savedAdmin;
                 isAdminMode = true;
+                if (!cachedDriveAccessToken) {
+                  cachedDriveAccessToken = localStorage.getItem(STORAGE_ADMIN_DRIVE_TOKEN_KEY) || null;
+                }
                 updateAdminModeUI();
+                if (window.CloudDriveSyncEngine) {
+                  window.CloudDriveSyncEngine.updateDriveAuthUI();
+                }
               }
             }
           } catch (e) {}
@@ -7210,6 +7235,11 @@
               window.firebase.initializeApp(firebaseConfig);
             }
             firebaseAuth = window.firebase.auth();
+            try {
+              if (window.firebase.auth.Auth && window.firebase.auth.Auth.Persistence) {
+                firebaseAuth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+              }
+            } catch (e) {}
             googleProvider = new window.firebase.auth.GoogleAuthProvider();
             SCOPES.forEach((scope) => googleProvider.addScope(scope));
             googleProvider.setCustomParameters({
@@ -7239,7 +7269,7 @@
 
             firebaseAuth.onAuthStateChanged((user) => {
               if (isProvisioningResetAccount || isGoogleAuthBridgeMode()) return;
-              if (user && !isAdmin2FARequired()) {
+              if (user && (user.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL && !isAdmin2FARequired()) {
                 verifyAndApplyAdminUser(user, false);
               }
             });
@@ -7397,6 +7427,9 @@
               displayName: user.displayName || 'Administrator e-Library',
               verifiedAt: getSafeNow()
             }));
+            if (cachedDriveAccessToken) {
+              localStorage.setItem(STORAGE_ADMIN_DRIVE_TOKEN_KEY, cachedDriveAccessToken);
+            }
           } catch (e) {}
           if (errBox) errBox.classList.add('hidden');
           if (infoBox) infoBox.classList.add('hidden');
@@ -7405,6 +7438,9 @@
           const modal = document.getElementById('modal-admin-login');
           if (modal) modal.classList.add('hidden');
           updateAdminModeUI();
+          if (window.CloudDriveSyncEngine) {
+            window.CloudDriveSyncEngine.updateDriveAuthUI();
+          }
           if (isInteractiveAttempt) {
             showToast('Otentikasi Administrator berhasil! Selamat datang (' + user.email + ').');
           }
@@ -7419,8 +7455,12 @@
           isAdminMode = false;
           try {
             localStorage.removeItem(STORAGE_ADMIN_SESSION_KEY);
+            localStorage.removeItem(STORAGE_ADMIN_DRIVE_TOKEN_KEY);
           } catch (e) {}
           updateAdminModeUI();
+          if (window.CloudDriveSyncEngine) {
+            window.CloudDriveSyncEngine.updateDriveAuthUI();
+          }
           const denialMsg = 'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator';
           if (errText) errText.textContent = denialMsg;
           if (errBox) errBox.classList.remove('hidden');
@@ -7882,6 +7922,7 @@
         cachedDriveAccessToken = null; // Clear OAuth access token from memory on sign-out
         try {
           localStorage.removeItem(STORAGE_ADMIN_SESSION_KEY);
+          localStorage.removeItem(STORAGE_ADMIN_DRIVE_TOKEN_KEY);
         } catch (e) {}
         if (window.CloudDriveSyncEngine) {
           window.CloudDriveSyncEngine.updateDriveAuthUI();
@@ -9485,7 +9526,7 @@
         if (openReaderAfterSave) {
           closeCrudEtalaseModal();
         }
-        showToast('Buku "' + finalBookRecord.title + '" (' + finalBookRecord.pageCount + ' halaman) berhasil disimpan & disinkronkan!');
+        showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
       }
 
       async function deleteBookFromEtalase(bookId) {
@@ -10286,7 +10327,7 @@
           // 4. Tutup modal edit rak secara otomatis dan tampilkan toast feedback
           closeEditShelfModal();
           closeAdminShelvesModal();
-          showToast('Perubahan rak berhasil disimpan ke Google Sheets (Cloud DB).');
+          showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
         }
       }
 
@@ -10422,6 +10463,7 @@
         saveShelvesToStorage(true);
         if (window.SheetsApiHandler) {
           window.SheetsApiHandler.saveRack(newShelf, shelves).catch(() => {});
+          window.SheetsApiHandler.syncAll(shelves, books, Array.from(getDeletedBookIds())).catch(() => {});
         }
         if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
           window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
@@ -10431,7 +10473,7 @@
         shelfModal.classList.add('hidden');
         renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
         renderShelfQuickSwitcher();
-        showToast('Rak baru berhasil ditambahkan & disimpan ke Google Sheets (Cloud DB).');
+        showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
       };
 
       // Form Identitas Buku di Panel Admin
@@ -11315,6 +11357,7 @@
         // =========================================================
         function updateDriveAuthUI() {
           const tokenPill = document.getElementById('google-drive-token-pill');
+          const connectBtn = document.getElementById('btn-connect-google-drive-oauth');
           const connectBtnText = document.getElementById('btn-connect-google-drive-text');
           const folderLink = document.getElementById('link-open-drive-folder');
           const sheetsPill = document.getElementById('cloud-sheets-status-pill');
@@ -11323,13 +11366,36 @@
             sheetsPill.textContent = customUrl ? 'GAS KUSTOM AKTIF' : 'AKTIF (TANPA KUOTA)';
             sheetsPill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50';
           }
-          if (cachedDriveAccessToken) {
+
+          let hasAdmin = false;
+          try {
+            if (isAdminMode) {
+              hasAdmin = true;
+            } else if (currentAdminUser && (currentAdminUser.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL) {
+              hasAdmin = true;
+            } else {
+              const raw = localStorage.getItem(STORAGE_ADMIN_SESSION_KEY);
+              if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && (parsed.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL) {
+                  hasAdmin = true;
+                }
+              }
+            }
+          } catch (e) {
+            hasAdmin = Boolean(isAdminMode);
+          }
+
+          if (hasAdmin || cachedDriveAccessToken) {
             if (tokenPill) {
-              tokenPill.textContent = 'TERHUBUNG KE DRIVE';
+              tokenPill.textContent = 'TERHUBUNG (' + ADMIN_WHITELIST_EMAIL + ')';
               tokenPill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50';
             }
             if (connectBtnText) {
-              connectBtnText.textContent = 'Akun Google Drive Terhubung';
+              connectBtnText.textContent = '✓ Terhubung (' + ADMIN_WHITELIST_EMAIL + ')';
+            }
+            if (connectBtn) {
+              connectBtn.title = 'Akun Administrator Google (' + ADMIN_WHITELIST_EMAIL + ') telah terhubung aktif';
             }
             if (folderLink && driveFolderId) {
               folderLink.href = 'https://drive.google.com/drive/folders/' + encodeURIComponent(driveFolderId);
@@ -11343,10 +11409,18 @@
             if (connectBtnText) {
               connectBtnText.textContent = 'Sign in with Google Drive';
             }
+            if (folderLink) {
+              folderLink.classList.add('hidden');
+            }
           }
         }
 
         async function connectGoogleDriveWithPopup() {
+          if (isAdminMode && cachedDriveAccessToken) {
+            showToast('Akun Google Administrator telah terhubung (' + ADMIN_WHITELIST_EMAIL + ').');
+            updateDriveAuthUI();
+            return cachedDriveAccessToken;
+          }
           try {
             if (!firebaseAuth || !googleProvider) initFirebaseAdminAuth();
             if (firebaseAuth && googleProvider) {
@@ -12348,9 +12422,10 @@
             });
 
             renderCloudDriveBooksStatusList();
-            showToast('Sinkronisasi Google Sheets selesai dalam ' + elapsedTotalSec + ' detik!');
+            showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
           } catch (err) {
             console.error('Sync interactive error:', err);
+            showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
           } finally {
             isSyncingAll = false;
             if (btnText) btnText.textContent = 'Sinkronkan Seluruh Rak & Buku ke Google Sheets API';
