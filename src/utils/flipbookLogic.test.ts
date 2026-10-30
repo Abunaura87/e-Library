@@ -27,6 +27,8 @@ import {
   reassembleAudioChunks,
   mergeAuthoritativeCatalogBooks,
   resolveSinglePageTapDirection,
+  normalizePublicPdfUrl,
+  isFirestoreQuotaExhaustedError,
 } from './flipbookLogic';
 
 test('calculateSpreadState handles desktop 2-page spread transitions accurately', () => {
@@ -487,4 +489,23 @@ test('resolveSinglePageTapDirection maps left tap to prev and right tap to next'
   assert.equal(resolveSinglePageTapDirection(80, 360), 'prev');
   assert.equal(resolveSinglePageTapDirection(170, 360), 'prev');
   assert.equal(resolveSinglePageTapDirection(220, 360), 'next');
+});
+
+test('normalizePublicPdfUrl converts Google Drive sharing URLs into direct download stream URLs', () => {
+  const shared = normalizePublicPdfUrl('https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz123456/view?usp=sharing');
+  assert.equal(shared.isGoogleDrive, true);
+  assert.equal(shared.driveFileId, '1AbCdEfGhIjKlMnOpQrStUvWxYz123456');
+  assert.equal(shared.directUrl, 'https://drive.google.com/uc?export=download&id=1AbCdEfGhIjKlMnOpQrStUvWxYz123456');
+
+  const direct = normalizePublicPdfUrl('https://example.com/books/fiqh-wanita.pdf');
+  assert.equal(direct.isGoogleDrive, false);
+  assert.equal(direct.driveFileId, '');
+  assert.equal(direct.directUrl, 'https://example.com/books/fiqh-wanita.pdf');
+});
+
+test('isFirestoreQuotaExhaustedError detects HTTP 429 and RESOURCE_EXHAUSTED responses', () => {
+  assert.equal(isFirestoreQuotaExhaustedError(429, ''), true);
+  assert.equal(isFirestoreQuotaExhaustedError(400, '{"error":{"code":429,"status":"RESOURCE_EXHAUSTED"}}'), true);
+  assert.equal(isFirestoreQuotaExhaustedError(500, 'Quota limit exceeded. Retry after quota limits are reset'), true);
+  assert.equal(isFirestoreQuotaExhaustedError(200, 'OK'), false);
 });

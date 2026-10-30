@@ -1474,6 +1474,54 @@ export function resolveSinglePageTapDirection(
   return offsetX < safeWidth * 0.48 ? 'prev' : 'next';
 }
 
+/**
+ * Normalizes a public PDF URL or Google Drive sharing URL into a direct streamable URL
+ * and extracts the Google Drive file ID if present.
+ */
+export function normalizePublicPdfUrl(rawUrl: string): {
+  directUrl: string;
+  driveFileId: string;
+  isGoogleDrive: boolean;
+} {
+  const trimmed = String(rawUrl || '').trim();
+  if (!trimmed) {
+    return { directUrl: '', driveFileId: '', isGoogleDrive: false };
+  }
 
+  // Match Google Drive /file/d/FILE_ID/... or ?id=FILE_ID or /open?id=FILE_ID
+  const filePathMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
+  const queryIdMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+  const driveId = (filePathMatch && filePathMatch[1]) || (queryIdMatch && queryIdMatch[1]) || '';
 
+  if (driveId && (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com'))) {
+    return {
+      directUrl: `https://drive.google.com/uc?export=download&id=${driveId}`,
+      driveFileId: driveId,
+      isGoogleDrive: true,
+    };
+  }
 
+  return {
+    directUrl: trimmed,
+    driveFileId: '',
+    isGoogleDrive: false,
+  };
+}
+
+/**
+ * Detects whether a Firestore HTTP response or error message indicates quota exhaustion (429 / RESOURCE_EXHAUSTED).
+ */
+export function isFirestoreQuotaExhaustedError(
+  status: number,
+  errorText?: string
+): boolean {
+  if (Number(status) === 429) return true;
+  const msg = String(errorText || '');
+  return (
+    msg.includes('RESOURCE_EXHAUSTED') ||
+    msg.includes('Quota limit exceeded') ||
+    msg.includes('Quota exceeded') ||
+    msg.includes('"code": 429') ||
+    msg.includes('"code":429')
+  );
+}

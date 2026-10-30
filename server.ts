@@ -231,6 +231,33 @@ async function startServer() {
     }
   });
 
+  // Public PDF & Google Drive Direct Stream Proxy for PDF.js CORS compatibility
+  app.get('/api/pdf-proxy', async (req, res) => {
+    try {
+      const rawUrl = String(req.query.url || '').trim();
+      if (!rawUrl || (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://'))) {
+        return res.status(400).json({ error: 'Invalid PDF URL' });
+      }
+      const upstream = await fetch(rawUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; eLibraryPDFProxy/1.0)',
+          Accept: 'application/pdf,application/octet-stream,*/*'
+        },
+        redirect: 'follow'
+      });
+      if (!upstream.ok) {
+        return res.status(upstream.status).json({ error: `Upstream HTTP ${upstream.status}` });
+      }
+      const arrayBuf = await upstream.arrayBuffer();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(Buffer.from(arrayBuf));
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || 'Failed to proxy PDF' });
+    }
+  });
+
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', service: 'e-Library Cloud Database Sync Server' });
   });
