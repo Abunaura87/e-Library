@@ -1173,10 +1173,14 @@
         <span class="hidden md:inline">Bagikan</span>
       </button>
 
-      <span id="header-cloud-sync-badge" title="Database Cloud & Google Drive Tersinkronisasi Lintas Akun" class="hidden sm:inline-flex items-center gap-1 px-2 py-1.5 text-[10px] font-mono-tabular font-bold rounded-lg topbar-status-card-3d whitespace-nowrap select-none">
+      <span id="header-cloud-sync-badge" title="Database Cloud & Google Drive Tersinkronisasi Lintas Akun" class="hidden sm:inline-flex items-center gap-1 px-2 py-1.5 text-[10px] font-mono-tabular font-bold rounded-lg topbar-status-card-3d whitespace-nowrap select-none cursor-pointer">
         <i data-lucide="cloud-check" class="w-3 h-3 text-[#0F4C3A] shrink-0"></i>
         <span id="header-cloud-sync-badge-text">Cloud DB Aktif</span>
       </span>
+
+      <button type="button" id="header-secret-admin-btn" title="Pintu Rahasia Login Admin" aria-label="Pintu Rahasia Login Admin" class="btn-secret-admin-gate inline-flex items-center justify-center w-7 h-7 rounded-lg text-[#D4AF37]/45 hover:text-[#FEF08A] active:text-[#FEF08A] hover:bg-[#12543F]/60 active:scale-95 transition-all cursor-pointer shrink-0">
+        <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+      </button>
 
       <button type="button" id="header-cloud-drive-btn" title="Penyimpanan Database Google Drive & Sinkronisasi Cloud Lintas Akun (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
         <i data-lucide="hard-drive-upload" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
@@ -1349,7 +1353,7 @@
           <span class="text-[10px] sm:text-[11px] font-classical-label uppercase tracking-widest text-[#9E7B1C] font-bold block">
             Katalog Klasifikasi Perpustakaan Digital
           </span>
-          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight">
+          <h1 id="lobby-main-title" class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight select-none cursor-pointer" title="Ketuk 3x atau tahan untuk membuka Login Admin">
             e-Library
           </h1>
           <p class="text-[11px] sm:text-sm text-[#12543F] font-serif-editorial italic mt-0.5">
@@ -1396,12 +1400,12 @@
       </div>
 
       <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan & Gerbang Rahasia Admin -->
-      <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center gap-2 border-t border-[#D4AF37]/50 shadow-inner z-10">
+      <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center gap-1.5 border-t border-[#D4AF37]/50 shadow-inner z-10">
         <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-2 select-none">
-          © 2026 e-Library by @abunaura. All rights reserved.
+          © 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>. All rights reserved.
         </p>
-        <button type="button" id="btn-secret-admin-gate" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="opacity-30 hover:opacity-90 text-[#F3E5AB] hover:text-[#D4AF37] p-1 rounded transition-opacity">
-          <i data-lucide="lock" class="w-3 h-3"></i>
+        <button type="button" id="btn-secret-admin-gate" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="btn-secret-admin-gate opacity-45 hover:opacity-100 active:opacity-100 text-[#F3E5AB] hover:text-[#D4AF37] p-2 min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-lg transition-all cursor-pointer">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
         </button>
       </div>
     </section>
@@ -1478,11 +1482,14 @@
         </div>
       </div>
 
-      <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan -->
-      <div class="w-full py-3.5 sm:py-4 wood-plank-floor shrink-0 flex items-center justify-center border-t border-[#D4AF37]/50 shadow-inner">
-        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-4 select-none">
-          © 2026 e-Library by @abunaura. All rights reserved.
+      <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan & Gerbang Rahasia Admin -->
+      <div class="w-full py-3.5 sm:py-4 wood-plank-floor shrink-0 flex items-center justify-center gap-1.5 border-t border-[#D4AF37]/50 shadow-inner">
+        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-2 select-none">
+          © 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>. All rights reserved.
         </p>
+        <button type="button" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="btn-secret-admin-gate opacity-45 hover:opacity-100 active:opacity-100 text-[#F3E5AB] hover:text-[#D4AF37] p-2 min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-lg transition-all cursor-pointer">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+        </button>
       </div>
     </section>
 
@@ -1868,10 +1875,13 @@
         </div>
 
         <!-- Footer Hak Cipta Resmi Baku di Bagian Bawah Ruang Baca -->
-        <div class="no-print w-full py-1.5 bg-[#072A20] border-t border-[#D4AF37]/30 flex items-center justify-center shrink-0 z-20">
-          <p class="text-[10px] sm:text-[11px] font-classical-label text-[#F3E5AB]/90 tracking-wider text-center px-4 select-none">
-            © 2026 e-Library by @abunaura. All rights reserved.
+        <div class="no-print w-full py-1.5 bg-[#072A20] border-t border-[#D4AF37]/30 flex items-center justify-center gap-1.5 shrink-0 z-20">
+          <p class="text-[10px] sm:text-[11px] font-classical-label text-[#F3E5AB]/90 tracking-wider text-center px-2 select-none">
+            © 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>. All rights reserved.
           </p>
+          <button type="button" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="btn-secret-admin-gate opacity-45 hover:opacity-100 active:opacity-100 text-[#F3E5AB] hover:text-[#D4AF37] p-1.5 min-w-[28px] min-h-[28px] inline-flex items-center justify-center rounded-lg transition-all cursor-pointer">
+            <i data-lucide="lock" class="w-3 h-3"></i>
+          </button>
         </div>
 
         <!-- Laci Geser (Drawer Modal) Daftar Isi & Grid Thumbnail Halaman -->
@@ -7557,6 +7567,11 @@
           }
         });
 
+        const headerSecretAdminBtn = document.getElementById('header-secret-admin-btn');
+        if (headerSecretAdminBtn) {
+          headerSecretAdminBtn.classList.toggle('hidden', isAuthorized);
+        }
+
         const headerAdminText = document.getElementById('header-admin-text');
         if (headerAdminText && isAuthorized && currentAdminUser) {
           headerAdminText.textContent = 'Studio Admin';
@@ -8204,22 +8219,79 @@
         headerAdminLogoutBtn.onclick = exitAdminMode;
       }
 
-      const secretAdminGateBtn = document.getElementById('btn-secret-admin-gate');
-      if (secretAdminGateBtn) {
-        secretAdminGateBtn.onclick = () => {
-          requireAdminAuth(() => {
-            showToast('Mode Admin Aktif. Seluruh fitur konfigurasi kini ditampilkan.');
-          });
+      const openSecretAdminLoginFromMobileOrDesktop = () => {
+        requireAdminAuth(() => {
+          showToast('Mode Admin Aktif. Seluruh fitur konfigurasi kini ditampilkan.');
+        });
+      };
+
+      document.querySelectorAll('.btn-secret-admin-gate, .secret-admin-author-trigger').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openSecretAdminLoginFromMobileOrDesktop();
+        });
+      });
+
+      // Gesture Rahasia untuk HP (Ketuk 3x Cepat atau Tekan & Tahan 0.6 Detik pada Logo e-Library, Judul e-Library, atau Badge Cloud DB)
+      function attachSecretAdminTouchGesture(targetEl, allowSingleClickNavigate) {
+        if (!targetEl) return;
+        let tapCount = 0;
+        let tapResetTimer = null;
+        let longPressTimer = null;
+        let longPressTriggered = false;
+
+        const clearLongPress = () => {
+          if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          }
         };
+
+        targetEl.addEventListener('pointerdown', () => {
+          longPressTriggered = false;
+          clearLongPress();
+          longPressTimer = setTimeout(() => {
+            longPressTriggered = true;
+            tapCount = 0;
+            openSecretAdminLoginFromMobileOrDesktop();
+          }, 600);
+        });
+
+        targetEl.addEventListener('pointerup', clearLongPress);
+        targetEl.addEventListener('pointercancel', clearLongPress);
+        targetEl.addEventListener('pointerleave', clearLongPress);
+
+        targetEl.addEventListener('click', (e) => {
+          if (longPressTriggered) {
+            e.preventDefault();
+            e.stopPropagation();
+            longPressTriggered = false;
+            return;
+          }
+          tapCount += 1;
+          if (tapResetTimer) clearTimeout(tapResetTimer);
+          if (tapCount >= 3) {
+            tapCount = 0;
+            e.preventDefault();
+            e.stopPropagation();
+            openSecretAdminLoginFromMobileOrDesktop();
+            return;
+          }
+          tapResetTimer = setTimeout(() => {
+            tapCount = 0;
+          }, 900);
+          if (typeof allowSingleClickNavigate === 'function') {
+            allowSingleClickNavigate(e);
+          }
+        });
       }
 
       // Pintasan Keyboard Rahasia Admin (Ctrl + Shift + A)
       window.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
           e.preventDefault();
-          requireAdminAuth(() => {
-            showToast('Mode Admin Aktif.');
-          });
+          openSecretAdminLoginFromMobileOrDesktop();
         }
       });
 
@@ -8230,7 +8302,12 @@
         };
       }
 
-      document.getElementById('brand-home').onclick = (e) => { e.preventDefault(); switchViewTo('lobby'); };
+      attachSecretAdminTouchGesture(document.getElementById('brand-home'), (e) => {
+        e.preventDefault();
+        switchViewTo('lobby');
+      });
+      attachSecretAdminTouchGesture(document.getElementById('lobby-main-title'));
+      attachSecretAdminTouchGesture(document.getElementById('header-cloud-sync-badge'));
       document.getElementById('tab-lobby-btn').onclick = () => switchViewTo('lobby');
       document.getElementById('bc-lobby-btn').onclick = () => switchViewTo('lobby');
       document.getElementById('tab-shelf-btn').onclick = () => openShelfView(activeShelfId);
