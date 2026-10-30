@@ -6254,8 +6254,7 @@
           };
 
           await StorageHandler.saveBookAsset(autoBookId, pdfAsset);
-
-          autoSyncCatalogEverywhere({ savedBook: autoBookRecord, asset: pdfAsset });
+          saveBooksToStorage();
 
           renderLobbyView(document.getElementById('lobby-search-input').value || '');
           if (currentView === 'shelf') {
@@ -6767,6 +6766,11 @@
       }
 
       function persistState() {
+        try {
+          localStorage.setItem('elibrary_ui_active_page', String(currentPage || 1));
+          localStorage.setItem('elibrary_ui_active_book_id', String(activeBookId || ''));
+          localStorage.setItem('elibrary_ui_reader_theme', String(config.readerTheme || 'archival'));
+        } catch (e) {}
         const shareOutput = document.getElementById('share-url-output');
         if (shareOutput) {
           shareOutput.value = getCleanPublicUrl();
@@ -7108,9 +7112,6 @@
           updateAdminModeUI();
           if (isInteractiveAttempt) {
             showToast('Otentikasi Administrator berhasil! Selamat datang (' + user.email + ').');
-          }
-          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.bootAndHydrateMultiAccount === 'function') {
-            window.CloudDriveSyncEngine.bootAndHydrateMultiAccount();
           }
           if (typeof pendingAdminAction === 'function') {
             const action = pendingAdminAction;
@@ -7757,14 +7758,11 @@
         }, 650);
       }
 
-      function toggleLobbyLighting() {
-        const now = Date.now();
-        if (now - lastSwitchToggleTime < 180) return;
-        lastSwitchToggleTime = now;
-
-        isLobbyLightOn = !isLobbyLightOn;
-        playPullSwitchSound(isLobbyLightOn);
-        triggerPullChainAnimation();
+      function applyLobbyLightingUI(lightOn, showNotification) {
+        isLobbyLightOn = Boolean(lightOn);
+        try {
+          localStorage.setItem('elibrary_ui_lamp_on', isLobbyLightOn ? 'true' : 'false');
+        } catch (e) {}
 
         const lobby = document.getElementById('view-lobby');
         const shelfView = document.getElementById('view-shelf');
@@ -7785,7 +7783,6 @@
 
           syncCeilingLampsPosition(currentView);
 
-          // Kilatan berurutan (staggered ripple) dari lampu sakelar (#3 / idx 2) ke samping
           const bulbs = Array.from(document.querySelectorAll('.pendant-bulb'));
           const centerIdx = 2;
           bulbs.forEach((bulb, idx) => {
@@ -7796,7 +7793,9 @@
             }, dist * 55);
           });
 
-          showToast('Klik! Lampu perpustakaan dinyalakan.');
+          if (showNotification) {
+            showToast('Klik! Lampu perpustakaan dinyalakan.');
+          }
         } else {
           document.body.classList.remove('lights-on');
           document.body.classList.add('lights-off');
@@ -7810,9 +7809,30 @@
           }
           if (hintText) hintText.textContent = 'Tarik Sakelar';
           syncCeilingLampsPosition(currentView);
-          showToast('Klik! Lampu perpustakaan dimatikan (Mode Temaram).');
+          if (showNotification) {
+            showToast('Klik! Lampu perpustakaan dimatikan (Mode Temaram).');
+          }
         }
       }
+
+      function toggleLobbyLighting() {
+        const now = Date.now();
+        if (now - lastSwitchToggleTime < 180) return;
+        lastSwitchToggleTime = now;
+
+        const nextState = !isLobbyLightOn;
+        playPullSwitchSound(nextState);
+        triggerPullChainAnimation();
+        applyLobbyLightingUI(nextState, true);
+      }
+
+      // Pulihkan status lampu dari localStorage pengguna (tanpa pernah menulis/membaca Firestore)
+      try {
+        const savedLampState = localStorage.getItem('elibrary_ui_lamp_on');
+        if (savedLampState === 'true') {
+          applyLobbyLightingUI(true, false);
+        }
+      } catch (e) {}
 
       const pullChainAssembly = document.getElementById('pull-chain-assembly');
       const pullChainSvg = document.getElementById('pull-chain-svg');
@@ -10368,6 +10388,17 @@
         persistState();
       }
       document.getElementById('btn-stage-theme').onclick = toggleTheme;
+      try {
+        const savedReaderTheme = localStorage.getItem('elibrary_ui_reader_theme');
+        if (savedReaderTheme === 'dark' || savedReaderTheme === 'archival') {
+          config.readerTheme = savedReaderTheme;
+          const stage = document.getElementById('reader-stage');
+          if (stage) {
+            stage.className = 'relative flex-1 flex flex-col justify-between overflow-hidden select-none transition-colors duration-200 ' +
+              (config.readerTheme === 'dark' ? 'bg-[#072A20] text-[#F9F6EE]' : 'bg-[#EBE6DF] text-[#072A20]');
+          }
+        }
+      } catch (e) {}
 
       window.addEventListener('resize', () => renderStage('forward'));
 
@@ -11807,12 +11838,10 @@
             updateRealProgressUI({
               pct: 5,
               title: 'Mengunggah "' + bookTitle + '" ke Cloud & Google Drive...',
-              substep: 'Menyinkronkan katalog & sampul seketika...',
+              substep: 'Menyinkronkan katalog & sampul...',
               bytesText: 'Memproses...',
               isWorking: true
             });
-            // Publikasikan katalog seketika terlebih dahulu agar perangkat lain (HP) langsung melihat buku baru!
-            await pushCatalogToCloud(shelves, books);
             await pushBookAndPagesToCloud(bookId, record, {
               onBookProgress: (pct, substep, bytesText) => {
                 updateRealProgressUI({
@@ -12278,10 +12307,12 @@
             }
           }
 
-          // Ambil dokumen buku kustom/PDF dari library_books/{bookId} atau server /api/books/{bookId}
-          const idsToFetch = Array.from(candidateBookIdsToFetch).filter(
-            (bid) => bid !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(bid))
-          );
+          // Hanya ambil dokumen library_books/{bookId} apabila buku belum memiliki coverUrl di katalog utama
+          const idsToFetch = Array.from(candidateBookIdsToFetch).filter((bid) => {
+            if (!bid || bid === SYSTEM_SETTINGS_DOC_ID || getDeletedBookIds().has(String(bid))) return false;
+            const existingB = books.find((b) => b.id === bid);
+            return !existingB || !existingB.coverUrl;
+          });
           const fetchedBookDocs = await Promise.all(
             idsToFetch.map(async (bid) => {
               const safeId = String(bid).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
@@ -12433,7 +12464,11 @@
           };
         }
 
+        let hasBootHydratedOnce = false;
+
         async function bootAndHydrateMultiAccount() {
+          if (hasBootHydratedOnce) return;
+          hasBootHydratedOnce = true;
           const loadingIndicator = document.getElementById('catalog-cloud-loading-indicator');
           if (loadingIndicator) {
             loadingIndicator.classList.remove('hidden');
@@ -12861,7 +12896,8 @@
           fetchBookPagesFromCloudOrDrive: fetchBookPagesFromCloudOrDrive,
           updateDriveAuthUI: updateDriveAuthUI,
           openCloudDriveModal: openCloudDriveModal,
-          requestConfirmation: requestConfirmation
+          requestConfirmation: requestConfirmation,
+          notifyFirestoreQuotaFallbackOnce: notifyFirestoreQuotaFallbackOnce
         };
       })();
       window.CloudDriveSyncEngine = CloudDriveSyncEngine;
