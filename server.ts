@@ -19,15 +19,29 @@ if (!fs.existsSync(BOOKS_DIR)) {
   fs.mkdirSync(BOOKS_DIR, { recursive: true });
 }
 
-function getSafeServerTimestamp(clientTs?: any): number {
+function getSafeServerTimestamp(clientTs?: any, minTs?: number): number {
   const num = Number(clientTs) || 0;
-  if (num > 0 && num <= 1785000000000) return Math.floor(num);
   const now = Date.now();
-  return now > 1785000000000 ? 1000 + (now % 1000000) : now;
+  const base = num > 0 ? Math.floor(num) : now;
+  return minTs && base <= minTs ? minTs + 1 : base;
 }
 
 async function startServer() {
   const app = express();
+
+  // Global CORS support so external frontends (e.g. e-library-digital.vercel.app & mobile browsers)
+  // can seamlessly read and write to this centralized Cloud Run API server
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
+    }
+    next();
+  });
+
   app.use(express.json({ limit: '60mb' }));
 
   // Centralized catalog API for seamless cross-account & multi-user persistence
@@ -67,11 +81,15 @@ async function startServer() {
       }
 
       let existingDeleted: string[] = [];
+      let prevUpdatedAt = 0;
       if (fs.existsSync(CATALOG_FILE)) {
         try {
           const prev = JSON.parse(fs.readFileSync(CATALOG_FILE, 'utf-8'));
           if (prev && Array.isArray(prev.deletedBookIds)) {
             existingDeleted = prev.deletedBookIds;
+          }
+          if (prev && Number(prev.updatedAt) > 0) {
+            prevUpdatedAt = Number(prev.updatedAt);
           }
         } catch (e) {}
       }
@@ -101,6 +119,18 @@ async function startServer() {
         ? payload.bookOrder.filter((id: any) => id !== 'elibrary-system-settings' && !deletedSet.has(String(id)))
         : cleanBooks.map((b: any) => b.id);
 
+      // Ensure each book in cleanBooks also has a fallback file in BOOKS_DIR if not already present
+      cleanBooks.forEach((b: any) => {
+        if (!b || !b.id) return;
+        const safeId = String(b.id).replace(/[^a-zA-Z0-9_\-]/g, '-');
+        const bookPath = path.join(BOOKS_DIR, `${safeId}.json`);
+        if (!fs.existsSync(bookPath) && (Array.isArray(b.editablePages) || Array.isArray(b.pagesDataUrls) || b.coverUrl)) {
+          try {
+            fs.writeFileSync(bookPath, JSON.stringify(b, null, 2), 'utf-8');
+          } catch (e) {}
+        }
+      });
+
       if (payload.musicConfig && typeof payload.musicConfig === 'object') {
         try {
           let existingMusic: any = {};
@@ -111,7 +141,7 @@ async function startServer() {
             ...existingMusic,
             ...payload.musicConfig,
             audioDataUrl: payload.musicConfig.audioDataUrl || existingMusic.audioDataUrl || '',
-            updatedAt: getSafeServerTimestamp(payload.musicConfig.updatedAt || payload.updatedAt)
+            updatedAt: getSafeServerTimestamp(payload.musicConfig.updatedAt || payload.updatedAt, Number(existingMusic.updatedAt) || 0)
           };
           fs.writeFileSync(MUSIC_FILE, JSON.stringify(nextMusic, null, 2), 'utf-8');
         } catch (e) {}
@@ -122,7 +152,7 @@ async function startServer() {
         books: cleanBooks,
         bookOrder: cleanBookOrder,
         deletedBookIds: Array.from(deletedSet),
-        updatedAt: getSafeServerTimestamp(payload.updatedAt)
+        updatedAt: getSafeServerTimestamp(payload.updatedAt, prevUpdatedAt)
       };
       fs.writeFileSync(CATALOG_FILE, JSON.stringify(record, null, 2), 'utf-8');
       return res.json({ success: true, count: cleanBooks.length, updatedAt: record.updatedAt, deletedCount: deletedSet.size });

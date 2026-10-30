@@ -3148,13 +3148,11 @@
       function normalizeSafeTimestamp(ts) {
         const num = Number(ts);
         if (!Number.isFinite(num) || num <= 0) return 0;
-        if (num > 1785000000000) return 1000;
         return Math.floor(num);
       }
 
       function getSafeNow() {
-        const now = Date.now();
-        return now > 1785000000000 ? (1776000000000 + (now % 86400000)) : Math.floor(now);
+        return Math.floor(Date.now());
       }
 
       function getDeletedBookIds() {
@@ -3461,7 +3459,7 @@
           return null;
         },
 
-        async saveCustomAudio(audioDataUrl, fileName, mimeType) {
+        async saveCustomAudio(audioDataUrl, fileName, mimeType, _fromRemote) {
           const db = await this.openDB();
           const nowTs = getSafeNow();
           try {
@@ -3487,7 +3485,22 @@
               }
             });
           }
-          // State audio & musik disimpan HANYA di browser lokal (localStorage/IndexedDB), tidak pernah ditulis ke Firestore.
+          // Sinkronkan file audio latar kustom ke Server API (/api/music) agar HP juga mendapat musik latar yang diunggah di Laptop,
+          // tanpa pernah menulis ke Firestore!
+          if (!_fromRemote && audioDataUrl && typeof fetchCloudApi === 'function') {
+            fetchCloudApi('/api/music', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                theme: 'custom',
+                fileName: fileName || 'Musik Kustom',
+                mimeType: mimeType || 'audio/mpeg',
+                audioDataUrl: audioDataUrl,
+                isPlaying: true,
+                updatedAt: nowTs
+              })
+            }).catch(() => {});
+          }
           return savedOk;
         },
 
@@ -3538,11 +3551,26 @@
             const stamp = prefs.updatedAt !== undefined ? normalizeSafeTimestamp(prefs.updatedAt) : getSafeNow();
             localStorage.setItem(STORAGE_MUSIC_UPDATED_AT_KEY, String(stamp || getSafeNow()));
           } catch (e) {}
-          // Status musik/suara/UI disimpan HANYA di localStorage lokal pengguna, tidak pernah memicu write ke Firestore.
+          // Status musik/suara/UI disimpan di localStorage lokal pengguna, tidak pernah memicu write ke Firestore.
         },
 
-        saveMusicConfig(prefs) {
-          return this.saveMusicPreferences(prefs);
+        saveMusicConfig(prefs, _fromRemote) {
+          this.saveMusicPreferences(prefs);
+          if (!_fromRemote && prefs && typeof fetchCloudApi === 'function') {
+            const payload = {
+              theme: prefs.theme,
+              volume: prefs.volume,
+              customUrl: (prefs.customUrl && !String(prefs.customUrl).startsWith('data:') && !String(prefs.customUrl).startsWith('blob:')) ? prefs.customUrl : undefined,
+              fileName: prefs.fileName,
+              isPlaying: prefs.isPlaying,
+              updatedAt: getSafeNow()
+            };
+            fetchCloudApi('/api/music', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }).catch(() => {});
+          }
         },
 
         loadMusicConfig() {
@@ -3564,42 +3592,129 @@
       };
       window.StorageHandler = StorageHandler;
 
+      // =========================================================
+      // JEMBATAN CLOUD RUN API LINTAS DOMAIN (VERCEL <-> AI STUDIO CLOUD RUN)
+      // Memastikan saat dibuka di e-library-digital.vercel.app maupun di HP/Laptop,
+      // semua request /api/catalog, /api/books/:id, /api/music, dan /api/pdf-proxy
+      // otomatis terhubung ke Server Cloud Pusat!
+      // =========================================================
+      const CLOUD_API_FALLBACK_BASES = [
+        'https://ais-pre-abwyc5eykhvnhgizzcvufu-132982667263.asia-east1.run.app',
+        'https://ais-dev-abwyc5eykhvnhgizzcvufu-132982667263.asia-east1.run.app'
+      ];
+
+      function isStaticExternalHost() {
+        const h = (window.location && window.location.hostname) || '';
+        return Boolean(h && !h.includes('localhost') && !h.includes('127.0.0.1') && !h.includes('.run.app'));
+      }
+
+      function getCloudPdfProxyUrl(targetUrl) {
+        const encoded = encodeURIComponent(String(targetUrl || '').trim());
+        if (isStaticExternalHost()) {
+          return CLOUD_API_FALLBACK_BASES[0] + '/api/pdf-proxy?url=' + encoded;
+        }
+        return '/api/pdf-proxy?url=' + encoded;
+      }
+
+      async function fetchCloudApi(apiPath, options) {
+        const cleanPath = String(apiPath || '').startsWith('/') ? String(apiPath) : ('/' + String(apiPath || ''));
+        const opts = options || {};
+        const candidates = isStaticExternalHost()
+          ? CLOUD_API_FALLBACK_BASES.map((base) => base + cleanPath)
+          : [cleanPath, ...CLOUD_API_FALLBACK_BASES.map((base) => base + cleanPath)];
+
+        let lastRes = null;
+        let lastErr = null;
+        for (let i = 0; i < candidates.length; i++) {
+          const url = candidates[i];
+          try {
+            const res = await fetch(url, opts);
+            if (res.ok) return res;
+            lastRes = res;
+            if (res.status !== 404 && res.status !== 502 && res.status !== 503) {
+              return res;
+            }
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+        if (lastRes) return lastRes;
+        throw lastErr || new Error('Cloud API request failed: ' + cleanPath);
+      }
+      window.fetchCloudApi = fetchCloudApi;
+
       // Helper konversi otomatis link sharing Google Drive menjadi direct download/stream URL untuk PDF.js
       function normalizePublicPdfUrl(rawUrl) {
         const trimmed = String(rawUrl || '').trim();
-        if (!trimmed) return { directUrl: '', driveFileId: '', isGoogleDrive: false };
+        if (!trimmed) return { directUrl: '', proxyUrl: '', driveFileId: '', fileId: '', isGoogleDrive: false };
         const filePathMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
         const queryIdMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
         const driveId = (filePathMatch && filePathMatch[1]) || (queryIdMatch && queryIdMatch[1]) || '';
         if (driveId && (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com'))) {
+          const direct = 'https://drive.google.com/uc?export=download&id=' + driveId;
           return {
-            directUrl: 'https://drive.google.com/uc?export=download&id=' + driveId,
+            directUrl: direct,
+            proxyUrl: getCloudPdfProxyUrl(direct),
             driveFileId: driveId,
+            fileId: driveId,
             isGoogleDrive: true
           };
         }
-        return { directUrl: trimmed, driveFileId: '', isGoogleDrive: false };
+        return {
+          directUrl: trimmed,
+          proxyUrl: getCloudPdfProxyUrl(trimmed),
+          driveFileId: '',
+          fileId: '',
+          isGoogleDrive: false
+        };
       }
       window.normalizePublicPdfUrl = normalizePublicPdfUrl;
 
-      // Hanya dipanggil secara eksplisit saat Admin melakukan aksi simpan/hapus buku atau rak
+      // Dipanggil otomatis setiap kali Admin menambah, mengunggah PDF, menyunting, atau menghapus buku/rak
       async function autoSyncCatalogEverywhere(options) {
         const opts = options || {};
 
+        if (opts.deletedBookId) {
+          markBookAsDeleted(opts.deletedBookId);
+        }
+        if (opts.savedBook && opts.savedBook.id) {
+          unmarkBookAsDeleted(opts.savedBook.id);
+        }
+
         books = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id)));
+        const cleanBooks = books.slice();
 
         const syncBadgeText = document.getElementById('header-cloud-sync-badge-text');
         if (syncBadgeText) {
-          syncBadgeText.textContent = 'Cloud DB (' + books.length + ' Buku)';
+          syncBadgeText.textContent = 'Cloud DB (' + cleanBooks.length + ' Buku)';
         }
         const booksSummaryCount = document.getElementById('cloud-drive-books-summary-count');
         if (booksSummaryCount) {
-          booksSummaryCount.textContent = books.length + ' Buku Terdaftar';
+          booksSummaryCount.textContent = cleanBooks.length + ' Buku Terdaftar';
         }
 
+        // 1. Selalu kirim pembaruan katalog (shelves, books, deletedBookIds) ke Cloud Server API terlebih dahulu
+        // agar perangkat lain (HP / Vercel / Cloud Run) langsung melihat perubahan seketika!
+        const catalogSyncPromise = fetchCloudApi('/api/catalog', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            shelves: shelves,
+            books: cleanBooks,
+            bookOrder: cleanBooks.map((b) => b.id),
+            deletedBookIds: Array.from(getDeletedBookIds()),
+            updatedAt: getSafeNow(),
+            updatedBy: (typeof ADMIN_WHITELIST_EMAIL !== 'undefined' ? ADMIN_WHITELIST_EMAIL : 'marhaniza05@gmail.com')
+          })
+        }).catch((err) => {
+          console.warn('Auto-sync /api/catalog notice:', err);
+        });
+
         if (opts.deletedBookId) {
-          markBookAsDeleted(opts.deletedBookId);
-          fetch('/api/books/' + encodeURIComponent(opts.deletedBookId), { method: 'DELETE' }).catch(() => {});
+          await Promise.all([
+            catalogSyncPromise,
+            fetchCloudApi('/api/books/' + encodeURIComponent(opts.deletedBookId), { method: 'DELETE' }).catch(() => {})
+          ]);
           if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.deleteBookEverywhere === 'function') {
             await window.CloudDriveSyncEngine.deleteBookEverywhere(opts.deletedBookId, opts.prevPageCount, opts.prevRec).catch(() => {});
           }
@@ -3607,37 +3722,23 @@
         }
 
         if (opts.savedBook && opts.savedBook.id) {
-          unmarkBookAsDeleted(opts.savedBook.id);
           const safeId = String(opts.savedBook.id).replace(/[^a-zA-Z0-9_\-]/g, '-');
           const assetPayload = opts.asset || (typeof bookAssetsCache !== 'undefined' ? bookAssetsCache[opts.savedBook.id] : null) || opts.savedBook;
-          fetch('/api/books/' + safeId, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(assetPayload)
-          }).catch(() => {});
+          await Promise.all([
+            catalogSyncPromise,
+            fetchCloudApi('/api/books/' + safeId, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(assetPayload)
+            }).catch(() => {})
+          ]);
           if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.scheduleBookSync === 'function') {
             window.CloudDriveSyncEngine.scheduleBookSync(opts.savedBook.id, assetPayload);
             return;
           }
         }
 
-        const cleanBooks = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id)));
-        try {
-          await fetch('/api/catalog', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              shelves: shelves,
-              books: cleanBooks,
-              bookOrder: cleanBooks.map((b) => b.id),
-              deletedBookIds: Array.from(getDeletedBookIds()),
-              updatedAt: getSafeNow(),
-              updatedBy: (typeof ADMIN_WHITELIST_EMAIL !== 'undefined' ? ADMIN_WHITELIST_EMAIL : 'marhaniza05@gmail.com')
-            })
-          });
-        } catch (err) {
-          console.warn('Auto-sync /api/catalog notice:', err);
-        }
+        await catalogSyncPromise;
 
         if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
           window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, cleanBooks).catch(() => {});
@@ -6266,13 +6367,16 @@
           await StorageHandler.saveBookAsset(autoBookId, pdfAsset);
           saveBooksToStorage();
 
+          // Otomatis sinkronkan buku PDF yang baru diunggah ke Cloud DB & Server Pusat agar langsung muncul di HP!
+          await autoSyncCatalogEverywhere({ savedBook: autoBookRecord, asset: pdfAsset });
+
           renderLobbyView(document.getElementById('lobby-search-input').value || '');
           if (currentView === 'shelf') {
             renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
           }
           renderStage('forward');
           renderThumbnailsGrid();
-          showToast('Berhasil memuat ' + total + ' halaman PDF orisinal sebagai Flipbook 3D.');
+          showToast('Berhasil memuat & menyinkronkan ' + total + ' halaman PDF orisinal ke Cloud DB!');
         } catch (err) {
           errBox.textContent = 'Gagal memuat berkas PDF: Pastikan berkas PDF valid dan tautan Google Drive memiliki akses publik (Anyone with the link).';
           errBox.classList.remove('hidden');
@@ -10779,9 +10883,51 @@
             }
           }
 
-          // 2. Hydrate file audio kustom & preferensi musik dari IndexedDB + localStorage
-          const savedMusicCfg = StorageHandler.loadMusicConfig();
-          const savedCustomAudio = await StorageHandler.getCustomAudio();
+          // 2. Hydrate file audio kustom & preferensi musik dari IndexedDB + localStorage + Cloud Server API (/api/music)
+          let savedMusicCfg = StorageHandler.loadMusicConfig();
+          let savedCustomAudio = await StorageHandler.getCustomAudio();
+          try {
+            const musicRes = await fetchCloudApi('/api/music');
+            if (musicRes && musicRes.ok) {
+              const remoteMusic = await musicRes.json();
+              const remoteMusicTs = normalizeSafeTimestamp(remoteMusic && remoteMusic.updatedAt);
+              const localMusicTs = normalizeSafeTimestamp(savedMusicCfg && savedMusicCfg.updatedAt);
+              if (remoteMusic && (remoteMusicTs > localMusicTs || (!savedCustomAudio && remoteMusic.audioDataUrl))) {
+                if (remoteMusic.audioDataUrl) {
+                  await StorageHandler.saveCustomAudio(
+                    remoteMusic.audioDataUrl,
+                    remoteMusic.fileName || 'Musik Kustom',
+                    remoteMusic.mimeType || 'audio/mpeg',
+                    true
+                  );
+                  savedCustomAudio = {
+                    audioDataUrl: remoteMusic.audioDataUrl,
+                    fileName: remoteMusic.fileName || 'Musik Kustom',
+                    mimeType: remoteMusic.mimeType || 'audio/mpeg'
+                  };
+                }
+                if (remoteMusic.theme) {
+                  currentMusicTheme = remoteMusic.theme;
+                }
+                if (typeof remoteMusic.volume === 'number') {
+                  musicVolume = remoteMusic.volume;
+                }
+                if (remoteMusic.customUrl) {
+                  customMusicUrl = remoteMusic.customUrl;
+                }
+                StorageHandler.saveMusicPreferences({
+                  theme: currentMusicTheme,
+                  volume: musicVolume,
+                  customUrl: remoteMusic.customUrl || '',
+                  fileName: remoteMusic.fileName || '',
+                  isPlaying: savedMusicCfg ? savedMusicCfg.isPlaying : Boolean(remoteMusic.isPlaying),
+                  updatedAt: remoteMusicTs
+                });
+                savedMusicCfg = StorageHandler.loadMusicConfig();
+              }
+            }
+          } catch (e) {}
+
           if (savedCustomAudio && savedCustomAudio.audioDataUrl) {
             customMusicUrl = savedCustomAudio.audioDataUrl;
             const nameEl = document.getElementById('music-custom-file-name');
@@ -10799,6 +10945,8 @@
               armMobileAudioUnlockOnFirstTouch();
             }
           }
+          syncVolumeUI(Math.round(musicVolume * 100));
+          renderMusicThemesGrid();
           updateAmbientButtonsUI();
 
           // 3. Sinkronisasi Otomatis SATU KALI saat halaman pertama kali dibuka (Read-Only dari Cloud DB)
@@ -11587,9 +11735,9 @@
           );
           const safeStamp = getSafeNow();
 
-          // 1. Sinkronkan ke Database Server Pusat (/api/catalog)
+          // 1. Sinkronkan ke Database Server Pusat (/api/catalog) melalui fetchCloudApi lintas domain
           try {
-            await fetch('/api/catalog', {
+            await fetchCloudApi('/api/catalog', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -11785,7 +11933,7 @@
 
           await Promise.all([
             putFirestoreDocument('library_books', safeBookId, initialBookDoc).catch(() => false),
-            fetch('/api/books/' + safeBookId, {
+            fetchCloudApi('/api/books/' + safeBookId, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(initialBookDoc)
@@ -11806,7 +11954,7 @@
           const safeCoverUrl = initialSafeCoverUrl || (compressedPages[0] && compressedPages[0].dataUrl) || '';
 
           // Simpan bundel penuh (termasuk pagesDataUrls) ke server /api/books/:id agar perangkat lain bisa mengunduh 1x request
-          fetch('/api/books/' + safeBookId, {
+          fetchCloudApi('/api/books/' + safeBookId, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(Object.assign({}, initialBookDoc, {
@@ -11979,9 +12127,9 @@
           const bookId = book.id;
           const safeBookId = String(bookId).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
 
-          // 0. Coba unduh bundel penuh dari Server /api/books/{safeBookId} terlebih dahulu (1 request cepat!)
+          // 0. Coba unduh bundel penuh dari Server /api/books/{safeBookId} terlebih dahulu (1 request cepat lintas domain!)
           try {
-            const srvRes = await fetch('/api/books/' + encodeURIComponent(safeBookId));
+            const srvRes = await fetchCloudApi('/api/books/' + encodeURIComponent(safeBookId));
             if (srvRes.ok) {
               const srvJson = await srvRes.json();
               const srvPages = (Array.isArray(srvJson.originalPagesDataUrls) && srvJson.originalPagesDataUrls.length > 0)
@@ -12163,7 +12311,7 @@
 
           let serverCatalog = null;
           try {
-            const apiRes = await fetch('/api/catalog');
+            const apiRes = await fetchCloudApi('/api/catalog');
             if (apiRes.ok) {
               serverCatalog = await apiRes.json();
             }
@@ -12180,7 +12328,7 @@
 
           const pill = document.getElementById('cloud-firestore-status-pill');
           if (pill) {
-            if (isFirestoreQuotaExhausted) {
+            if (isFirestoreQuotaExhausted && !serverCatalog) {
               pill.textContent = 'CACHE LOKAL';
               pill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-amber-950 text-[#F3E5AB] border border-[#D4AF37]/60';
             } else {
@@ -12201,9 +12349,10 @@
 
           const srvUpdatedAt = normalizeSafeTimestamp(serverCatalog && serverCatalog.updatedAt);
           const fsUpdatedAt = normalizeSafeTimestamp(catalogDoc && catalogDoc.updatedAt);
+          const isStalePreQuotaSnapshot = fsUpdatedAt === 1776034391488;
 
-          // Gunakan serverCatalog hanya bila benar-benar lebih baru dari Firestore catalogDoc atau bila Firestore kosong
-          if (serverCatalog && (!catalogDoc || srvUpdatedAt > fsUpdatedAt)) {
+          // Gunakan serverCatalog apabila lebih baru/sama dengan Firestore, atau saat Firestore sedang terkena limit kuota harian
+          if (serverCatalog && (!catalogDoc || srvUpdatedAt >= fsUpdatedAt || isStalePreQuotaSnapshot || isFirestoreQuotaExhausted)) {
             catalogDoc = {
               shelvesJson: JSON.stringify(serverCatalog.shelves),
               booksMetaJson: JSON.stringify(serverCatalog.books),
@@ -12219,6 +12368,7 @@
           let needsCatalogCleanupPush = false;
           let bookOrderIds = [];
           const candidateBookIdsToFetch = new Set();
+          const unsyncedLocalBookIds = [];
 
           if (catalogDoc) {
             if (catalogDoc.driveFolderId) driveFolderId = catalogDoc.driveFolderId;
@@ -12317,7 +12467,11 @@
                   const remoteBookIdsSet = new Set();
 
                   parsedBooksMeta.forEach((bm) => {
-                    if (!bm || !bm.id || bm.id === SYSTEM_SETTINGS_DOC_ID || currentDeleted.has(String(bm.id))) return;
+                    if (!bm || !bm.id || bm.id === SYSTEM_SETTINGS_DOC_ID) return;
+                    if (currentDeleted.has(String(bm.id))) {
+                      needsCatalogCleanupPush = true;
+                      return;
+                    }
                     remoteBookIdsSet.add(String(bm.id));
                     if (bm.isCustomPdf || bm.hasCustomCoverImage || String(bm.id).startsWith('book-pdf-')) {
                       candidateBookIdsToFetch.add(String(bm.id));
@@ -12364,7 +12518,7 @@
 
                   // OTORITATIF SINKRONISASI KATALOG:
                   // Hapus buku default bawaan di perangkat pengunjung (HP) apabila buku tersebut sudah tidak ada di katalog Cloud!
-                  // Namun jika perangkat ini (Laptop) memiliki buku kustom baru di IndexedDB yang belum sempat terunggah ke Cloud, pertahankan & jadwalkan push!
+                  // Namun jika perangkat ini (Laptop) memiliki buku kustom baru di IndexedDB yang belum sempat terunggah ke Cloud, pertahankan & unggah otomatis ke Server API!
                   books = books.filter((b) => {
                     if (!b || !b.id || b.id === SYSTEM_SETTINGS_DOC_ID) return false;
                     if (currentDeleted.has(String(b.id))) return false;
@@ -12375,6 +12529,7 @@
                     );
                     if (hasLocalCustomAsset) {
                       needsCatalogCleanupPush = true;
+                      unsyncedLocalBookIds.push(String(b.id));
                       return true;
                     }
                     return false;
@@ -12395,12 +12550,12 @@
               const safeId = String(bid).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
               let doc = null;
               try {
-                doc = await getFirestoreDocument('library_books', safeId);
+                const sRes = await fetchCloudApi('/api/books/' + safeId);
+                if (sRes.ok) doc = await sRes.json();
               } catch (e) {}
               if (!doc) {
                 try {
-                  const sRes = await fetch('/api/books/' + safeId);
-                  if (sRes.ok) doc = await sRes.json();
+                  doc = await getFirestoreDocument('library_books', safeId);
                 } catch (e) {}
               }
               return doc;
@@ -12537,6 +12692,7 @@
           return {
             hasRemoteData: hasRemoteData,
             needsCatalogCleanupPush: needsCatalogCleanupPush,
+            unsyncedLocalBookIds: unsyncedLocalBookIds,
             cloudBooksDocs: cloudBooksDocs || []
           };
         }
@@ -12552,9 +12708,43 @@
             loadingIndicator.classList.add('inline-flex');
           }
           try {
-            // HANYA 1x Operasi Read (Membaca) saat halaman pertama kali dibuka.
-            // DILARANG melakukan auto-push/write ke Firestore saat halaman dimuat agar kuota tidak pernah habis!
-            await pullCatalogAndBooksFromCloud();
+            // 1. Tarik data terbaru dari Cloud Server & Firestore saat halaman pertama kali dibuka.
+            const pullRes = await pullCatalogAndBooksFromCloud();
+
+            // 2. Apabila perangkat Laptop Admin memiliki buku PDF kustom di IndexedDB atau penghapusan buku lokal
+            // yang belum tercatat di Server Cloud API (/api/catalog), selaraskan ke Server Cloud API secara otomatis
+            // (TANPA menyentuh write Firestore agar kuota Firestore 100% aman!)
+            if (pullRes && (pullRes.needsCatalogCleanupPush || (pullRes.unsyncedLocalBookIds && pullRes.unsyncedLocalBookIds.length > 0))) {
+              if (Array.isArray(pullRes.unsyncedLocalBookIds) && pullRes.unsyncedLocalBookIds.length > 0) {
+                await Promise.all(
+                  pullRes.unsyncedLocalBookIds.map(async (bid) => {
+                    const safeId = String(bid).replace(/[^a-zA-Z0-9_\-]/g, '-');
+                    const asset = bookAssetsCache[bid] || books.find((b) => b.id === bid);
+                    if (asset) {
+                      await fetchCloudApi('/api/books/' + safeId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(asset)
+                      }).catch(() => {});
+                    }
+                  })
+                );
+              }
+              const cleanBooks = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id)));
+              await fetchCloudApi('/api/catalog', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  shelves: shelves,
+                  books: cleanBooks,
+                  bookOrder: cleanBooks.map((b) => b.id),
+                  deletedBookIds: Array.from(getDeletedBookIds()),
+                  updatedAt: getSafeNow(),
+                  updatedBy: ADMIN_WHITELIST_EMAIL
+                })
+              }).catch(() => {});
+            }
+
             renderCloudDriveBooksStatusList();
           } catch (e) {
             console.warn('CloudDriveSyncEngine boot warning:', e);

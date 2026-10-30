@@ -25,6 +25,11 @@
           "description": "Serialized JSON array of ordered book IDs.",
           "maxLength": 60000
         },
+        "deletedBookIdsJson": {
+          "type": "string",
+          "description": "Serialized JSON array of permanently deleted book IDs.",
+          "maxLength": 60000
+        },
         "driveFolderId": {
           "type": "string",
           "description": "Google Drive folder ID where book files and database are stored.",
@@ -122,6 +127,11 @@
         "isCustomPdf": {
           "type": "boolean",
           "description": "Whether the book is an uploaded original PDF or image flipbook."
+        },
+        "pdfUrl": {
+          "type": "string",
+          "description": "Direct public PDF or Google Drive stream URL.",
+          "maxLength": 2000
         },
         "editablePagesJson": {
           "type": "string",
