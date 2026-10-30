@@ -1915,7 +1915,7 @@
           </div>
           <div>
             <h3 class="text-base sm:text-lg font-bold font-serif-editorial text-[#F3E5AB]">Kelola Rak Buku Klasikal (Admin)</h3>
-            <p class="text-[11px] text-[#F3E5AB]/75">Ubah nama rak, kode klasifikasi, deskripsi, atau tambahkan kotak rak baru.</p>
+            <p class="text-[11px] text-[#F3E5AB]/75">Ubah nama rak, kode klasifikasi, deskripsi, urutan kotak rak, atau tambahkan rak baru.</p>
           </div>
         </div>
         <button type="button" id="btn-close-admin-shelves-modal" class="text-[#F3E5AB] hover:text-white p-1 rounded-lg hover:bg-[#072A20]">
@@ -1925,7 +1925,7 @@
 
       <div class="py-3 flex items-center justify-between gap-3 shrink-0">
         <span id="admin-shelves-count-label" class="text-xs font-mono-tabular text-[#D4AF37]">8 Kotak Rak Terpasang</span>
-        <button type="button" id="btn-admin-add-new-shelf" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] transition-colors shadow-xs">
+        <button type="button" id="btn-admin-add-new-shelf" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] transition-colors shadow-xs cursor-pointer">
           <i data-lucide="plus" class="w-3.5 h-3.5 text-[#072A20]"></i>
           <span>+ Tambah Rak Baru</span>
         </button>
@@ -1936,11 +1936,17 @@
         <!-- Rendered by JS -->
       </div>
 
-      <div class="pt-3 border-t border-[#D4AF37]/40 flex items-center justify-between text-xs text-[#F3E5AB]/70 shrink-0">
-        <span>Perubahan tersimpan otomatis di penyimpanan lokal browser.</span>
-        <button type="button" id="btn-done-admin-shelves" class="px-4 py-1.5 font-bold rounded-lg bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]">
-          Selesai
-        </button>
+      <div class="pt-3 border-t border-[#D4AF37]/40 flex flex-wrap items-center justify-between gap-2 text-xs text-[#F3E5AB]/70 shrink-0">
+        <span>Tersimpan permanen di <code class="text-[#D4AF37]">elibrary_racks_data</code> &amp; Cloud DB.</span>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-sync-shelves-cloud-now" class="px-3.5 py-1.5 font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors">
+            <i data-lucide="cloud-upload" class="w-3.5 h-3.5 text-[#072A20]"></i>
+            <span>Simpan &amp; Sinkronkan ke Cloud DB</span>
+          </button>
+          <button type="button" id="btn-done-admin-shelves" class="px-4 py-1.5 font-bold rounded-lg bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37] cursor-pointer">
+            Selesai
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1951,29 +1957,35 @@
       <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="edit-3" class="w-4 h-4 text-[#D4AF37]"></i>
-          <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Sunting Nama & Detail Rak</h3>
+          <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Sunting Nama &amp; Detail Rak</h3>
         </div>
-        <button type="button" id="btn-close-edit-shelf-modal" class="text-[#F3E5AB] hover:text-white p-1">
+        <button type="button" id="btn-close-edit-shelf-modal" class="text-[#F3E5AB] hover:text-white p-1 cursor-pointer">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
       <form id="form-edit-shelf" class="space-y-3.5">
         <input id="edit-shelf-id" type="hidden" />
-        <div>
-          <label for="edit-shelf-code" class="block text-xs font-medium text-[#F3E5AB] mb-1">Kode Klasikal</label>
-          <input id="edit-shelf-code" type="text" required class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white" />
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label for="edit-shelf-code" class="block text-xs font-medium text-[#F3E5AB] mb-1">Kode Klasikal</label>
+            <input id="edit-shelf-code" type="text" required class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]" />
+          </div>
+          <div>
+            <label for="edit-shelf-order" class="block text-xs font-medium text-[#F3E5AB] mb-1">Urutan Kotak</label>
+            <select id="edit-shelf-order" class="w-full px-2.5 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-[#F3E5AB] font-mono-tabular focus:outline-none focus:border-[#D4AF37]"></select>
+          </div>
         </div>
         <div>
           <label for="edit-shelf-name" class="block text-xs font-medium text-[#F3E5AB] mb-1">Nama Klasifikasi / Label Rak</label>
-          <input id="edit-shelf-name" type="text" required class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white" />
+          <input id="edit-shelf-name" type="text" required class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]" />
         </div>
         <div>
           <label for="edit-shelf-desc" class="block text-xs font-medium text-[#F3E5AB] mb-1">Deskripsi Detail Rak</label>
-          <textarea id="edit-shelf-desc" rows="3" class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white leading-relaxed"></textarea>
+          <textarea id="edit-shelf-desc" rows="3" class="w-full px-3 py-2 text-xs bg-[#072A20] border border-[#D4AF37]/70 rounded-lg text-white leading-relaxed focus:outline-none focus:border-[#D4AF37]"></textarea>
         </div>
         <div class="flex items-center justify-end gap-2 pt-2">
-          <button type="button" id="btn-cancel-edit-shelf" class="px-3.5 py-2 text-xs font-medium text-[#F3E5AB]/80 hover:text-white">Batal</button>
-          <button type="submit" class="px-4 py-2 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg">
+          <button type="button" id="btn-cancel-edit-shelf" class="px-3.5 py-2 text-xs font-medium text-[#F3E5AB]/80 hover:text-white cursor-pointer">Batal</button>
+          <button type="submit" id="btn-submit-edit-shelf" class="px-4 py-2 text-xs font-bold bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] rounded-lg shadow-md cursor-pointer">
             Simpan Perubahan
           </button>
         </div>
@@ -3088,18 +3100,21 @@
       }
 
       const STORAGE_SHELVES_KEY = 'elibrary_cubby_shelves_v4';
+      const STORAGE_RACKS_DATA_KEY = 'elibrary_racks_data';
+      const STORAGE_RACKS_META_KEY = 'elibrary_racks_meta_v1';
       const STORAGE_BOOKS_KEY = 'elibrary_cubby_books_v4';
       const STORAGE_MUSIC_PLAYING_KEY = 'elibrary_music_playing_v2';
       const STORAGE_CUSTOM_FILENAME_KEY = 'elibrary_custom_music_filename_v2';
 
       // =========================================================
       // MODUL HELPER PENYIMPANAN PERMANEN (INDEXEDDB + LOCALSTORAGE)
-      // Menyimpan PDF Biner/Halaman, Cover, & File Audio secara Permanen
+      // Menyimpan Rak (elibrary_racks_data), PDF Biner/Halaman, Cover, & File Audio secara Permanen
       // =========================================================
       const IDB_NAME = 'eLibraryPermanentDB';
       const IDB_VERSION = 1;
       const STORE_BOOKS = 'books_assets';
       const STORE_AUDIO = 'audio_assets';
+      const IDB_RACKS_MASTER_KEY = '__elibrary_racks_master_data__';
       const bookAssetsCache = {}; // Memori cache cepat hasil hidrasi IndexedDB
 
       const StorageHandler = {
@@ -3229,6 +3244,7 @@
         },
 
         async getBookAsset(bookId) {
+          if (!bookId || bookId === IDB_RACKS_MASTER_KEY) return null;
           if (bookAssetsCache[bookId]) return bookAssetsCache[bookId];
           const db = await this.openDB();
           if (!db) return null;
@@ -3255,9 +3271,10 @@
               const tx = db.transaction([STORE_BOOKS], 'readonly');
               const req = tx.objectStore(STORE_BOOKS).getAll();
               req.onsuccess = () => {
-                const list = req.result || [];
+                const rawList = req.result || [];
+                const list = rawList.filter((item) => item && item.id && item.id !== IDB_RACKS_MASTER_KEY);
                 list.forEach((item) => {
-                  if (item && item.id) bookAssetsCache[item.id] = item;
+                  bookAssetsCache[item.id] = item;
                 });
                 resolve(list);
               };
@@ -3266,6 +3283,113 @@
               resolve([]);
             }
           });
+        },
+
+        async saveRacksToIDB(shelvesData, metaObj) {
+          const db = await this.openDB();
+          if (!db) return false;
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_BOOKS], 'readwrite');
+              tx.objectStore(STORE_BOOKS).put({
+                id: IDB_RACKS_MASTER_KEY,
+                shelves: shelvesData,
+                meta: metaObj || this.getRacksMeta(),
+                updatedAt: Date.now()
+              });
+              tx.oncomplete = () => resolve(true);
+              tx.onerror = () => resolve(false);
+            } catch (e) {
+              resolve(false);
+            }
+          });
+        },
+
+        async getRacksFromIDB() {
+          const db = await this.openDB();
+          if (!db) return null;
+          return new Promise((resolve) => {
+            try {
+              const tx = db.transaction([STORE_BOOKS], 'readonly');
+              const req = tx.objectStore(STORE_BOOKS).get(IDB_RACKS_MASTER_KEY);
+              req.onsuccess = () => resolve(req.result || null);
+              req.onerror = () => resolve(null);
+            } catch (e) {
+              resolve(null);
+            }
+          });
+        },
+
+        getRacksMeta() {
+          try {
+            const raw = localStorage.getItem(STORAGE_RACKS_META_KEY);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && typeof parsed === 'object') return parsed;
+            }
+          } catch (e) {}
+          return { updatedAt: 0, isModifiedByAdmin: false };
+        },
+
+        saveRacksDataPermanently(shelvesData, isModifiedByAdmin, skipCloudSync) {
+          if (!Array.isArray(shelvesData) || shelvesData.length === 0) return;
+          const nowTs = Date.now();
+          const normalizedShelves = shelvesData.map((s, idx) => ({
+            ...s,
+            orderIndex: idx,
+            updatedAt: isModifiedByAdmin ? (s.updatedAt || nowTs) : (s.updatedAt || 0),
+            isCustomEdited: Boolean(s.isCustomEdited || isModifiedByAdmin)
+          }));
+          const jsonStr = JSON.stringify(normalizedShelves);
+          try {
+            localStorage.setItem(STORAGE_RACKS_DATA_KEY, jsonStr);
+          } catch (e) {}
+          try {
+            localStorage.setItem(STORAGE_SHELVES_KEY, jsonStr);
+          } catch (e) {}
+
+          let currentMeta = this.getRacksMeta();
+          if (isModifiedByAdmin) {
+            currentMeta = {
+              updatedAt: nowTs,
+              isModifiedByAdmin: true,
+              rackCount: normalizedShelves.length
+            };
+            try {
+              localStorage.setItem(STORAGE_RACKS_META_KEY, JSON.stringify(currentMeta));
+            } catch (e) {}
+          }
+
+          this.saveRacksToIDB(normalizedShelves, currentMeta);
+
+          if (!skipCloudSync && window.CloudDriveSyncEngine) {
+            window.CloudDriveSyncEngine.scheduleCatalogSync(normalizedShelves, books);
+          }
+        },
+
+        loadRacksDataPermanently() {
+          try {
+            const primaryRaw = localStorage.getItem(STORAGE_RACKS_DATA_KEY);
+            if (primaryRaw) {
+              const parsedPrimary = JSON.parse(primaryRaw);
+              if (Array.isArray(parsedPrimary) && parsedPrimary.length > 0) {
+                return parsedPrimary;
+              }
+            }
+          } catch (e) {}
+          try {
+            const legacyRaw = localStorage.getItem(STORAGE_SHELVES_KEY);
+            if (legacyRaw) {
+              const parsedLegacy = JSON.parse(legacyRaw);
+              if (Array.isArray(parsedLegacy) && parsedLegacy.length > 0) {
+                try {
+                  localStorage.setItem(STORAGE_RACKS_DATA_KEY, JSON.stringify(parsedLegacy));
+                } catch (err) {}
+                return parsedLegacy;
+              }
+            }
+          } catch (e) {}
+          return null;
         },
 
         async saveCustomAudio(audioDataUrl, fileName, mimeType) {
@@ -3307,10 +3431,10 @@
           });
         },
 
-        saveCatalogMetadata(shelvesData, booksData, skipCloudSync) {
-          try {
-            localStorage.setItem(STORAGE_SHELVES_KEY, JSON.stringify(shelvesData));
-          } catch (e) {}
+        saveCatalogMetadata(shelvesData, booksData, skipCloudSync, isModifiedByAdmin) {
+          if (Array.isArray(shelvesData) && shelvesData.length > 0) {
+            this.saveRacksDataPermanently(shelvesData, Boolean(isModifiedByAdmin), true);
+          }
           try {
             localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(booksData));
           } catch (e) {
@@ -4838,12 +4962,49 @@
         return changed;
       }
 
+      function isShelfEqualToDefaultTemplate(shelfObj) {
+        if (!shelfObj || !shelfObj.id) return false;
+        const def = DEFAULT_SHELVES.find((d) => d.id === shelfObj.id);
+        if (!def) return false;
+        return (
+          String(shelfObj.code || '').trim() === String(def.code || '').trim() &&
+          String(shelfObj.name || '').trim() === String(def.name || '').trim() &&
+          String(shelfObj.description || '').trim() === String(def.description || '').trim()
+        );
+      }
+
+      function isShelvesListEqualToDefaultTemplate(shelvesList) {
+        if (!Array.isArray(shelvesList) || shelvesList.length !== DEFAULT_SHELVES.length) return false;
+        for (let i = 0; i < DEFAULT_SHELVES.length; i++) {
+          const s = shelvesList[i];
+          const d = DEFAULT_SHELVES[i];
+          if (!s || s.id !== d.id) return false;
+          if (s.isCustomEdited) return false;
+          if (!isShelfEqualToDefaultTemplate(s)) return false;
+        }
+        return true;
+      }
+
       function initShelvesAndBooks() {
         try {
-          const savedShelves = localStorage.getItem(STORAGE_SHELVES_KEY);
-          shelves = savedShelves ? JSON.parse(savedShelves) : DEFAULT_SHELVES;
+          const loadedRacks = StorageHandler.loadRacksDataPermanently();
+          if (Array.isArray(loadedRacks) && loadedRacks.length > 0) {
+            shelves = loadedRacks.map((s, idx) => ({
+              ...s,
+              orderIndex: idx,
+              isCustomEdited: Boolean(s.isCustomEdited || !isShelfEqualToDefaultTemplate(s))
+            }));
+            if (!isShelvesListEqualToDefaultTemplate(shelves)) {
+              StorageHandler.saveRacksDataPermanently(shelves, true, true);
+            } else {
+              StorageHandler.saveRacksDataPermanently(shelves, false, true);
+            }
+          } else {
+            shelves = DEFAULT_SHELVES.map((s, idx) => ({ ...s, orderIndex: idx }));
+            StorageHandler.saveRacksDataPermanently(shelves, false, true);
+          }
         } catch (e) {
-          shelves = DEFAULT_SHELVES;
+          shelves = DEFAULT_SHELVES.map((s, idx) => ({ ...s, orderIndex: idx }));
         }
 
         try {
@@ -5034,12 +5195,13 @@
         populateShelfDropdown();
       }
 
-      function saveShelvesToStorage() {
-        StorageHandler.saveCatalogMetadata(shelves, books);
+      function saveShelvesToStorage(isModifiedByAdmin = true) {
+        StorageHandler.saveRacksDataPermanently(shelves, isModifiedByAdmin !== false, false);
+        StorageHandler.saveCatalogMetadata(shelves, books, false, isModifiedByAdmin !== false);
       }
 
       function saveBooksToStorage() {
-        StorageHandler.saveCatalogMetadata(shelves, books);
+        StorageHandler.saveCatalogMetadata(shelves, books, false, false);
       }
 
       function populateShelfDropdown() {
@@ -8828,43 +8990,93 @@
         document.getElementById('modal-admin-shelves-crud').classList.add('hidden');
       }
 
+      function reorderShelfBox(shelfId, direction) {
+        const currIdx = shelves.findIndex((s) => s.id === shelfId);
+        if (currIdx < 0) return;
+        const targetIdx = direction === 'up' ? currIdx - 1 : currIdx + 1;
+        if (targetIdx < 0 || targetIdx >= shelves.length) return;
+
+        const nowTs = Date.now();
+        const temp = shelves[targetIdx];
+        shelves[targetIdx] = shelves[currIdx];
+        shelves[currIdx] = temp;
+        shelves.forEach((s, idx) => {
+          s.orderIndex = idx;
+          s.updatedAt = nowTs;
+          s.isCustomEdited = true;
+        });
+
+        saveShelvesToStorage(true);
+        if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
+          window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
+        }
+        populateShelfDropdown();
+        if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
+        renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+        renderShelfQuickSwitcher();
+        renderAdminShelvesList();
+        showToast('Perubahan rak berhasil disimpan secara lokal dan disinkronkan ke Cloud DB');
+      }
+
       function renderAdminShelvesList() {
         const list = document.getElementById('admin-shelves-list');
+        if (!list) return;
         list.innerHTML = '';
-        document.getElementById('admin-shelves-count-label').textContent = shelves.length + ' Kotak Rak Terpasang';
+        const countLabel = document.getElementById('admin-shelves-count-label');
+        if (countLabel) countLabel.textContent = shelves.length + ' Kotak Rak Terpasang';
 
         shelves.forEach((s, idx) => {
           const sBooks = books.filter((b) => b.shelfId === s.id);
+          const boxNumberLabel = 'KOTAK #' + String(idx + 1).padStart(2, '0');
           const row = document.createElement('div');
           row.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-[#072A20] border border-[#D4AF37]/50 hover:border-[#D4AF37] transition-all';
           row.innerHTML =
             '<div class="min-w-0 flex-1">' +
-              '<div class="flex items-center gap-2 mb-1">' +
+              '<div class="flex items-center flex-wrap gap-1.5 mb-1">' +
+                '<span class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#12543F] border border-[#D4AF37]/70 text-[#FEF08A]">' +
+                  boxNumberLabel +
+                '</span>' +
                 '<span class="text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-[#0B3B2C] border border-[#D4AF37]/60 text-[#F3E5AB]">' +
-                  s.code +
+                  escapeHtml(s.code) +
                 '</span>' +
                 '<span class="text-[10px] font-mono-tabular text-[#D4AF37]">' +
                   sBooks.length + ' Koleksi Buku' +
                 '</span>' +
               '</div>' +
               '<h4 class="text-sm font-bold font-serif-editorial text-white truncate">' +
-                s.name +
+                escapeHtml(s.name) +
               '</h4>' +
               '<p class="text-xs text-[#E6E1D6]/80 line-clamp-1 mt-0.5">' +
-                s.description +
+                escapeHtml(s.description) +
               '</p>' +
             '</div>' +
-            '<div class="flex items-center gap-2 shrink-0">' +
-              '<button type="button" class="btn-edit-shelf-action px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 flex items-center gap-1.5 transition-colors shadow-2xs" data-shelf-id="' + s.id + '">' +
+            '<div class="flex items-center gap-1.5 shrink-0">' +
+              '<button type="button" class="btn-move-shelf-up px-2 py-1.5 text-xs font-bold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/50 transition-colors ' + (idx === 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer') + '" data-shelf-id="' + s.id + '" title="Geser Urutan Kotak Rak ke Atas">↑</button>' +
+              '<button type="button" class="btn-move-shelf-down px-2 py-1.5 text-xs font-bold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/50 transition-colors ' + (idx === shelves.length - 1 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer') + '" data-shelf-id="' + s.id + '" title="Geser Urutan Kotak Rak ke Bawah">↓</button>' +
+              '<button type="button" class="btn-edit-shelf-action px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer" data-shelf-id="' + s.id + '">' +
                 '<i data-lucide="edit-3" class="w-3.5 h-3.5 text-[#D4AF37]"></i>' +
                 '<span>Ubah Nama</span>' +
               '</button>' +
-              '<button type="button" class="btn-delete-shelf-action p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-200 border border-red-800/60 flex items-center gap-1 transition-colors ' + (shelves.length <= 1 ? 'opacity-30 cursor-not-allowed' : '') + '" data-shelf-id="' + s.id + '" title="Hapus Kotak Rak Ini">' +
+              '<button type="button" class="btn-delete-shelf-action p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-semibold rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-200 border border-red-800/60 flex items-center gap-1 transition-colors ' + (shelves.length <= 1 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer') + '" data-shelf-id="' + s.id + '" title="Hapus Kotak Rak Ini">' +
                 '<i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-400"></i>' +
                 '<span class="hidden sm:inline">Hapus</span>' +
               '</button>' +
             '</div>';
           list.appendChild(row);
+        });
+
+        list.querySelectorAll('.btn-move-shelf-up').forEach((btn) => {
+          btn.onclick = () => {
+            const sid = btn.getAttribute('data-shelf-id');
+            reorderShelfBox(sid, 'up');
+          };
+        });
+
+        list.querySelectorAll('.btn-move-shelf-down').forEach((btn) => {
+          btn.onclick = () => {
+            const sid = btn.getAttribute('data-shelf-id');
+            reorderShelfBox(sid, 'down');
+          };
         });
 
         list.querySelectorAll('.btn-edit-shelf-action').forEach((btn) => {
@@ -8885,12 +9097,26 @@
       }
 
       function openEditShelfModal(shelfId) {
-        const shelf = shelves.find((s) => s.id === shelfId);
+        const currIdx = shelves.findIndex((s) => s.id === shelfId);
+        const shelf = currIdx >= 0 ? shelves[currIdx] : null;
         if (!shelf) return;
         document.getElementById('edit-shelf-id').value = shelf.id;
         document.getElementById('edit-shelf-code').value = shelf.code;
         document.getElementById('edit-shelf-name').value = shelf.name;
         document.getElementById('edit-shelf-desc').value = shelf.description;
+
+        const orderSelect = document.getElementById('edit-shelf-order');
+        if (orderSelect) {
+          orderSelect.innerHTML = '';
+          shelves.forEach((s, idx) => {
+            const opt = document.createElement('option');
+            opt.value = String(idx);
+            opt.textContent = 'KOTAK #' + String(idx + 1).padStart(2, '0') + (s.id === shelf.id ? ' (Posisi Saat Ini)' : ' — ' + s.code);
+            if (idx === currIdx) opt.selected = true;
+            orderSelect.appendChild(opt);
+          });
+        }
+
         document.getElementById('modal-edit-shelf').classList.remove('hidden');
       }
 
@@ -8904,15 +9130,43 @@
         const code = document.getElementById('edit-shelf-code').value.trim();
         const name = document.getElementById('edit-shelf-name').value.trim();
         const desc = document.getElementById('edit-shelf-desc').value.trim();
+        const orderSelect = document.getElementById('edit-shelf-order');
+        const targetOrderIdx = orderSelect ? parseInt(orderSelect.value, 10) : -1;
 
-        const shelf = shelves.find((s) => s.id === id);
-        if (shelf) {
+        const currIdx = shelves.findIndex((s) => s.id === id);
+        if (currIdx >= 0) {
+          const shelf = shelves[currIdx];
+          const nowTs = Date.now();
           shelf.code = code || shelf.code;
           shelf.name = name || shelf.name;
           shelf.description = desc || shelf.description;
-          saveShelvesToStorage();
+          shelf.updatedAt = nowTs;
+          shelf.isCustomEdited = true;
+
+          if (!isNaN(targetOrderIdx) && targetOrderIdx >= 0 && targetOrderIdx < shelves.length && targetOrderIdx !== currIdx) {
+            const [movedShelf] = shelves.splice(currIdx, 1);
+            shelves.splice(targetOrderIdx, 0, movedShelf);
+          }
+
+          shelves.forEach((s, idx) => {
+            s.orderIndex = idx;
+            if (s.isCustomEdited) {
+              s.updatedAt = s.updatedAt || nowTs;
+            }
+          });
+
+          // 1. Simpan permanen ke localStorage (elibrary_racks_data & elibrary_cubby_shelves_v4) + IndexedDB
+          saveShelvesToStorage(true);
+
+          // 2. Kirim payload rak terbaru ke Cloud DB & Google Drive DB secara langsung
+          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
+            window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
+          }
+
+          // 3. Render ulang seluruh komponen tampilan kartu rak di dashboard seketika tanpa refresh
           populateShelfDropdown();
-          renderLobbyView(document.getElementById('lobby-search-input').value);
+          if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
+          renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
           renderShelfQuickSwitcher();
           renderAdminShelvesList();
 
@@ -8924,8 +9178,10 @@
             document.getElementById('tab-shelf-label').textContent = shelf.code;
           }
 
+          // 4. Tutup modal edit rak secara otomatis dan tampilkan toast feedback
           closeEditShelfModal();
-          showToast('Nama rak berhasil diubah menjadi "' + shelf.name + '"');
+          closeAdminShelvesModal();
+          showToast('Perubahan rak berhasil disimpan secara lokal dan disinkronkan ke Cloud DB');
         }
       }
 
@@ -8951,21 +9207,31 @@
           });
           saveBooksToStorage();
 
-          shelves = shelves.filter((s) => s.id !== shelfId);
-          saveShelvesToStorage();
+          const nowTs = Date.now();
+          shelves = shelves.filter((s) => s.id !== shelfId).map((s, idx) => ({
+            ...s,
+            orderIndex: idx,
+            updatedAt: nowTs,
+            isCustomEdited: true
+          }));
+          saveShelvesToStorage(true);
+          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
+            window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
+          }
           populateShelfDropdown();
+          if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
 
           if (activeShelfId === shelfId) {
             activeShelfId = fallbackShelf.id;
           }
 
           renderAdminShelvesList();
-          renderLobbyView(document.getElementById('lobby-search-input').value);
+          renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
           renderShelfQuickSwitcher();
           if (currentView === 'shelf') {
             openShelfView(activeShelfId);
           }
-          showToast('Kotak rak "' + shelf.name + '" berhasil dihapus.');
+          showToast('Perubahan rak berhasil disimpan secara lokal dan disinkronkan ke Cloud DB');
         }
       }
 
@@ -8974,7 +9240,36 @@
         requireAdminAuth(() => openAdminShelvesModal());
       };
       document.getElementById('btn-close-admin-shelves-modal').onclick = closeAdminShelvesModal;
-      document.getElementById('btn-done-admin-shelves').onclick = closeAdminShelvesModal;
+      document.getElementById('btn-done-admin-shelves').onclick = () => {
+        saveShelvesToStorage(true);
+        if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
+          window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
+        }
+        renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+        renderShelfQuickSwitcher();
+        closeAdminShelvesModal();
+      };
+      const btnSyncShelvesCloudNow = document.getElementById('btn-sync-shelves-cloud-now');
+      if (btnSyncShelvesCloudNow) {
+        btnSyncShelvesCloudNow.onclick = async () => {
+          const nowTs = Date.now();
+          shelves.forEach((s, idx) => {
+            s.orderIndex = idx;
+            s.updatedAt = s.updatedAt || nowTs;
+            s.isCustomEdited = true;
+          });
+          saveShelvesToStorage(true);
+          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
+            await window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
+          }
+          populateShelfDropdown();
+          if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
+          renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+          renderShelfQuickSwitcher();
+          closeAdminShelvesModal();
+          showToast('Perubahan rak berhasil disimpan secara lokal dan disinkronkan ke Cloud DB');
+        };
+      }
       document.getElementById('btn-admin-add-new-shelf').onclick = () => {
         closeAdminShelvesModal();
         shelfModal.classList.remove('hidden');
@@ -9000,23 +9295,32 @@
         const code = document.getElementById('new-shelf-code').value.trim();
         const name = document.getElementById('new-shelf-name').value.trim();
         const desc = document.getElementById('new-shelf-desc').value.trim() || 'Koleksi publikasi dan literatur terpilih.';
+        const nowTs = Date.now();
 
         const newShelf = {
-          id: 'rak-' + Date.now(),
+          id: 'rak-' + nowTs,
           code: code || ('KLASIKAL ' + ((shelves.length + 1) * 100)),
           name: name,
           description: desc,
           accent: '#0B3B2C',
           colSpan: 'lg:col-span-4',
-          bookStyle: 'standing-row'
+          bookStyle: 'standing-row',
+          orderIndex: shelves.length,
+          updatedAt: nowTs,
+          isCustomEdited: true
         };
 
         shelves.push(newShelf);
-        saveShelvesToStorage();
+        saveShelvesToStorage(true);
+        if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
+          window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
+        }
         populateShelfDropdown();
+        if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
         shelfModal.classList.add('hidden');
-        renderLobbyView('');
-        showToast('Kotak Rak Klasikal "' + name + '" berhasil ditambahkan.');
+        renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+        renderShelfQuickSwitcher();
+        showToast('Perubahan rak berhasil disimpan secara lokal dan disinkronkan ke Cloud DB');
       };
 
       // Form Identitas Buku di Panel Admin
@@ -9544,6 +9848,39 @@
       // =========================================================
       async function hydrateFromPermanentStorage() {
         try {
+          // 0. Hydrate & kunci data rak kustom dari localStorage (elibrary_racks_data) & IndexedDB
+          const localRacks = StorageHandler.loadRacksDataPermanently();
+          const idbRacksRecord = await StorageHandler.getRacksFromIDB();
+          if (
+            idbRacksRecord &&
+            Array.isArray(idbRacksRecord.shelves) &&
+            idbRacksRecord.shelves.length > 0
+          ) {
+            const idbIsCustom = Boolean(
+              (idbRacksRecord.meta && idbRacksRecord.meta.isModifiedByAdmin) ||
+              !isShelvesListEqualToDefaultTemplate(idbRacksRecord.shelves)
+            );
+            const localIsCustom = Boolean(
+              Array.isArray(localRacks) && !isShelvesListEqualToDefaultTemplate(localRacks)
+            );
+            const idbUpdatedAt = Number((idbRacksRecord.meta && idbRacksRecord.meta.updatedAt) || idbRacksRecord.updatedAt || 0);
+            const localMeta = StorageHandler.getRacksMeta();
+            const localUpdatedAt = Number(localMeta.updatedAt || 0);
+
+            if ((idbIsCustom && !localIsCustom) || (idbIsCustom && idbUpdatedAt > localUpdatedAt)) {
+              shelves = idbRacksRecord.shelves.map((s, idx) => ({
+                ...s,
+                orderIndex: idx,
+                isCustomEdited: Boolean(s.isCustomEdited || !isShelfEqualToDefaultTemplate(s))
+              }));
+              StorageHandler.saveRacksDataPermanently(shelves, true, true);
+              populateShelfDropdown();
+              if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
+              renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+              renderShelfQuickSwitcher();
+            }
+          }
+
           // 1. Hydrate seluruh koleksi buku & cover dari IndexedDB
           const storedAssets = await StorageHandler.getAllBookAssets();
           if (Array.isArray(storedAssets) && storedAssets.length > 0) {
@@ -9944,7 +10281,12 @@
           return false;
         }
 
+        let firestoreWriteQuotaExceeded = false;
+
         async function putFirestoreDocument(collectionName, docId, dataObj) {
+          if (firestoreWriteQuotaExceeded) {
+            return false;
+          }
           const safeId = encodeURIComponent(docId);
           const url = FIRESTORE_BASE_URL + '/' + collectionName + '/' + safeId;
           const fields = {};
@@ -9958,6 +10300,10 @@
               body: JSON.stringify({ fields: fields })
             });
             if (!res.ok) {
+              if (res.status === 429) {
+                firestoreWriteQuotaExceeded = true;
+                return false;
+              }
               const errBody = await res.text();
               handleFirestoreError(new Error(errBody || res.statusText), 'write', collectionName + '/' + docId);
               return false;
@@ -10756,6 +11102,31 @@
 
         // Tarik katalog rak & koleksi buku dari Cloud Firestore saat aplikasi dibuka di akun/perangkat mana pun
         async function pullCatalogAndBooksFromCloud() {
+          // Pastikan rak lokal dari elibrary_racks_data telah dimuat sebagai sumber kebenaran lokal sebelum merge
+          const persistedLocalRacks = StorageHandler.loadRacksDataPermanently();
+          if (Array.isArray(persistedLocalRacks) && persistedLocalRacks.length > 0) {
+            const persistedIsCustom = !isShelvesListEqualToDefaultTemplate(persistedLocalRacks) ||
+              persistedLocalRacks.some((s) => s && s.isCustomEdited);
+            if (persistedIsCustom && isShelvesListEqualToDefaultTemplate(shelves)) {
+              shelves = persistedLocalRacks.map((s, idx) => ({
+                ...s,
+                orderIndex: idx,
+                isCustomEdited: Boolean(s.isCustomEdited || !isShelfEqualToDefaultTemplate(s))
+              }));
+            }
+          }
+
+          const localRacksMeta = StorageHandler.getRacksMeta();
+          const localHasCustomEdits = Boolean(
+            localRacksMeta.isModifiedByAdmin ||
+            !isShelvesListEqualToDefaultTemplate(shelves) ||
+            shelves.some((s) => s && (s.isCustomEdited || !isShelfEqualToDefaultTemplate(s)))
+          );
+          const localRacksUpdatedAt = Math.max(
+            Number(localRacksMeta.updatedAt) || 0,
+            ...shelves.map((s) => Number((s && s.updatedAt) || 0))
+          );
+
           const catalogDoc = await getFirestoreDocument('library_catalog', 'main');
 
           const pill = document.getElementById('cloud-firestore-status-pill');
@@ -10774,18 +11145,81 @@
             if (catalogDoc.driveCatalogFileId) driveCatalogFileId = catalogDoc.driveCatalogFileId;
             updateDriveAuthUI();
 
+            const remoteCatalogUpdatedAt = Number(catalogDoc.updatedAt) || 0;
+
             if (catalogDoc.shelvesJson) {
               try {
                 const remoteShelves = JSON.parse(catalogDoc.shelvesJson);
                 if (Array.isArray(remoteShelves) && remoteShelves.length > 0) {
-                  const mergedShelves = [...remoteShelves];
-                  shelves.forEach((localShelf) => {
-                    if (!mergedShelves.some((rs) => rs.id === localShelf.id)) {
-                      mergedShelves.push(localShelf);
-                    }
-                  });
-                  shelves = mergedShelves;
-                  hasRemoteData = true;
+                  const remoteIsDefaultTemplate = isShelvesListEqualToDefaultTemplate(remoteShelves);
+                  const remoteMaxShelfUpdatedAt = Math.max(
+                    remoteCatalogUpdatedAt,
+                    ...remoteShelves.map((rs) => Number((rs && rs.updatedAt) || 0))
+                  );
+
+                  if (localHasCustomEdits && (remoteIsDefaultTemplate || localRacksUpdatedAt >= remoteMaxShelfUpdatedAt)) {
+                    // JANGAN menimpa rak kustom yang baru diedit Admin dengan data template awal atau data cloud yang lebih lama!
+                    const preservedShelves = shelves.map((ls, idx) => ({
+                      ...ls,
+                      orderIndex: idx,
+                      isCustomEdited: Boolean(ls.isCustomEdited || !isShelfEqualToDefaultTemplate(ls))
+                    }));
+                    remoteShelves.forEach((rs) => {
+                      if (rs && rs.id && !preservedShelves.some((ps) => ps.id === rs.id)) {
+                        // Hanya tambahkan rak baru dari remote jika bukan sekadar duplikat default yang sengaja dihapus
+                        if (!DEFAULT_SHELVES.some((ds) => ds.id === rs.id)) {
+                          preservedShelves.push(rs);
+                        }
+                      }
+                    });
+                    shelves = preservedShelves;
+                    StorageHandler.saveRacksDataPermanently(shelves, true, true);
+                    needsCatalogCleanupPush = true;
+                    hasRemoteData = true;
+                  } else {
+                    // Gabungkan secara cerdas per-rak: jangan pernah menimpa rak lokal yang telah dikustomisasi dengan rak default template
+                    const mergedShelves = remoteShelves.map((rs, idx) => {
+                      const localMatch = shelves.find((ls) => ls && ls.id === rs.id);
+                      if (localMatch) {
+                        const localShelfIsCustom = Boolean(localMatch.isCustomEdited || !isShelfEqualToDefaultTemplate(localMatch));
+                        const remoteShelfIsDefault = isShelfEqualToDefaultTemplate(rs);
+                        const localShelfTs = Number(localMatch.updatedAt || localRacksUpdatedAt || 0);
+                        const remoteShelfTs = Number(rs.updatedAt || remoteCatalogUpdatedAt || 0);
+                        if (localShelfIsCustom && (remoteShelfIsDefault || localShelfTs >= remoteShelfTs)) {
+                          needsCatalogCleanupPush = true;
+                          return {
+                            ...rs,
+                            ...localMatch,
+                            orderIndex: idx,
+                            isCustomEdited: true
+                          };
+                        }
+                      }
+                      return {
+                        ...rs,
+                        orderIndex: idx,
+                        isCustomEdited: Boolean(rs.isCustomEdited || !isShelfEqualToDefaultTemplate(rs))
+                      };
+                    });
+
+                    shelves.forEach((localShelf) => {
+                      if (localShelf && localShelf.id && !mergedShelves.some((ms) => ms.id === localShelf.id)) {
+                        if (localShelf.isCustomEdited || !DEFAULT_SHELVES.some((ds) => ds.id === localShelf.id)) {
+                          mergedShelves.push({
+                            ...localShelf,
+                            orderIndex: mergedShelves.length,
+                            isCustomEdited: true
+                          });
+                          needsCatalogCleanupPush = true;
+                        }
+                      }
+                    });
+
+                    shelves = mergedShelves;
+                    const mergedHasCustom = !isShelvesListEqualToDefaultTemplate(shelves);
+                    StorageHandler.saveRacksDataPermanently(shelves, mergedHasCustom, true);
+                    hasRemoteData = true;
+                  }
                 }
               } catch (e) {}
             }
@@ -10794,11 +11228,6 @@
                 const parsedOrder = JSON.parse(catalogDoc.bookOrderJson);
                 if (Array.isArray(parsedOrder)) {
                   bookOrderIds = parsedOrder;
-                  parsedOrder.forEach((id) => {
-                    if (id && String(id).startsWith('book-pdf-')) {
-                      candidateBookIdsToFetch.add(String(id));
-                    }
-                  });
                 }
               } catch (e) {}
             }
@@ -10952,14 +11381,19 @@
             });
           }
 
+          const finalRackIsCustom = Boolean(
+            localHasCustomEdits || !isShelvesListEqualToDefaultTemplate(shelves)
+          );
+          StorageHandler.saveCatalogMetadata(shelves, books, true, finalRackIsCustom);
+          populateShelfDropdown();
+          populateCrudShelfSelectors();
+          renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+          renderShelfQuickSwitcher();
+          if (currentView === 'shelf') {
+            renderShelfBooksGrid((document.getElementById('shelf-search-input') && document.getElementById('shelf-search-input').value) || '');
+          }
+
           if (hasRemoteData) {
-            StorageHandler.saveCatalogMetadata(shelves, books, true);
-            populateShelfDropdown();
-            populateCrudShelfSelectors();
-            renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
-            if (currentView === 'shelf') {
-              renderShelfBooksGrid((document.getElementById('shelf-search-input') && document.getElementById('shelf-search-input').value) || '');
-            }
             // Jika pengguna sedang berada di Ruang Baca (misal membuka tautan buku di akun lain),
             // segera sinkronkan status kunci buku agar modal kata sandi langsung tertutup bila buku tidak dikunci!
             const currentOpenBook = books.find((b) => b.id === (config.activeBookId || activeBookId));
@@ -10997,8 +11431,10 @@
             const localAssets = await StorageHandler.getAllBookAssets();
             const unsyncedAssets = localAssets.filter((a) => a && a.id && !cloudIds.has(a.id));
 
-            if (isAdminMode && unsyncedAssets.length > 0) {
+            if (pullResult.needsCatalogCleanupPush || (isAdminMode && unsyncedAssets.length > 0)) {
               await pushCatalogToCloud(shelves, books);
+            }
+            if (isAdminMode && unsyncedAssets.length > 0) {
               for (let i = 0; i < unsyncedAssets.length; i++) {
                 await pushBookAndPagesToCloud(unsyncedAssets[i].id, unsyncedAssets[i]);
               }
@@ -11339,6 +11775,18 @@
             requireAdminAuth(() => openCloudDriveModal());
           });
         }
+        const headerCloudSyncBadge = document.getElementById('header-cloud-sync-badge');
+        if (headerCloudSyncBadge) {
+          headerCloudSyncBadge.style.cursor = 'pointer';
+          headerCloudSyncBadge.addEventListener('click', async () => {
+            if (isAdminMode) {
+              openCloudDriveModal();
+            } else {
+              await pullCatalogAndBooksFromCloud();
+              showToast('Katalog rak & buku telah diselaraskan dengan Cloud DB.');
+            }
+          });
+        }
         const closeBtn = document.getElementById('btn-close-cloud-drive-modal');
         if (closeBtn) closeBtn.addEventListener('click', closeCloudDriveModal);
         const closeFooterBtn = document.getElementById('btn-close-cloud-drive-footer');
@@ -11363,21 +11811,24 @@
           pullBtn.addEventListener('click', async () => {
             updateRealProgressUI({
               pct: 25,
-              title: 'Memuat ulang katalog rak & buku dari Cloud Database...',
-              substep: 'Mengambil dokumen terbaru...',
-              bytesText: 'Mengunduh...',
+              title: 'Menyelaraskan katalog rak & buku dua arah dengan Cloud Database...',
+              substep: 'Memeriksa pembaruan rak & koleksi buku...',
+              bytesText: 'Menyelaraskan...',
               isWorking: true
             });
-            await pullCatalogAndBooksFromCloud();
+            const pullRes = await pullCatalogAndBooksFromCloud();
+            if (pullRes && pullRes.needsCatalogCleanupPush) {
+              await pushCatalogToCloud(shelves, books);
+            }
             renderCloudDriveBooksStatusList();
             updateRealProgressUI({
               pct: 100,
-              title: 'Katalog berhasil diperbarui dari Cloud Database (' + books.length + ' buku).',
-              substep: 'Seluruh rak & buku telah tersinkron',
+              title: 'Katalog berhasil diselaraskan dengan Cloud Database (' + shelves.length + ' rak, ' + books.length + ' buku).',
+              substep: 'Seluruh rak kustom & buku tetap terjaga dan tersinkron',
               bytesText: '100% Selesai',
               isWorking: false
             });
-            showToast('Katalog perpustakaan berhasil dimuat ulang dari Cloud Database.');
+            showToast('Perubahan rak berhasil disimpan secara lokal dan disinkronkan ke Cloud DB');
           });
         }
 
