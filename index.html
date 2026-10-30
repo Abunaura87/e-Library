@@ -3151,6 +3151,16 @@
               ? assetPayload.pagesDataUrls
               : null);
 
+          const rawPwdFlag = Boolean(
+            meta.passwordProtected !== undefined ? meta.passwordProtected : assetPayload.passwordProtected
+          );
+          const rawPwdStr = String(
+            meta.password !== undefined ? meta.password : (assetPayload.password || '')
+          ).trim();
+          const isLegacyDefaultPwd = rawPwdStr === 'buku2026' || rawPwdStr === 'rahasia2026';
+          const effectivePwdProtected = Boolean(rawPwdFlag && rawPwdStr.length > 0 && !isLegacyDefaultPwd);
+          const effectivePwd = effectivePwdProtected ? rawPwdStr : '';
+
           const record = {
             id: bookId,
             bookMeta: meta,
@@ -3162,8 +3172,8 @@
             spineColor: meta.spineColor || assetPayload.spineColor || meta.accent || prevRecord.spineColor || '#0B3B2C',
             shelfId: meta.shelfId || assetPayload.shelfId || prevRecord.shelfId || 'rak-01',
             pageCount: (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls.length) || meta.pageCount || assetPayload.pageCount || prevRecord.pageCount || 1,
-            passwordProtected: Boolean(meta.passwordProtected !== undefined ? meta.passwordProtected : assetPayload.passwordProtected),
-            password: meta.password || assetPayload.password || '',
+            passwordProtected: effectivePwdProtected,
+            password: effectivePwd,
             coverUrl: assetPayload.coverUrl || meta.coverUrl || (assetPayload.pagesDataUrls && assetPayload.pagesDataUrls[0] ? assetPayload.pagesDataUrls[0].dataUrl : prevRecord.coverUrl || ''),
             hasCustomCoverImage: Boolean(meta.hasCustomCoverImage || assetPayload.hasCustomCoverImage || prevRecord.hasCustomCoverImage || isPdfFlag),
             pagesDataUrls: assetPayload.pagesDataUrls || prevRecord.pagesDataUrls || [],
@@ -4807,6 +4817,27 @@
         });
       }
 
+      // Helper Normalisasi Status Kunci Buku:
+      // Memastikan buku tidak pernah terkunci secara tidak sengaja oleh sandi bawaan lama ('buku2026' / 'rahasia2026')
+      // dan hanya terkunci apabila Admin benar-benar mencentang Kunci Buku beserta kata sandi aktif.
+      function normalizeBookLockState(bookObj) {
+        if (!bookObj || typeof bookObj !== 'object') return false;
+        let changed = false;
+        const rawPwd = String(bookObj.password || '').trim();
+        const isLegacyPresetLock = rawPwd === 'buku2026' || rawPwd === 'rahasia2026';
+        if (isLegacyPresetLock || !bookObj.passwordProtected || !rawPwd) {
+          if (bookObj.passwordProtected || bookObj.password) {
+            changed = true;
+          }
+          bookObj.passwordProtected = false;
+          bookObj.password = '';
+        } else {
+          bookObj.passwordProtected = true;
+          bookObj.password = rawPwd;
+        }
+        return changed;
+      }
+
       function initShelvesAndBooks() {
         try {
           const savedShelves = localStorage.getItem(STORAGE_SHELVES_KEY);
@@ -4855,8 +4886,8 @@
               author: 'Lembaga Filologi & Sejarah Islam',
               description: 'Inventarisasi naskah kuno pegon, jawi, dan tradisi intelektual ulama kepulauan abad ke-17 hingga ke-19.',
               pageCount: 7,
-              passwordProtected: true,
-              password: 'buku2026',
+              passwordProtected: false,
+              password: '',
               accent: '#14532D',
               spineColor: '#14532D',
               coverUrl: generateCanvasPageDataUrl('Khazanah Manuskrip Nusantara', 'Inventarisasi Filologi Naskah Pesantren Klasik', 'KLASIKAL 200', 'Lembaga Filologi', 'Kajian komparatif naskah aksara Jawi dan Pegon dari berbagai pusat keilmuan pulau Jawa dan Sumatra.', true, 7, 0, '#14532D')
@@ -4961,9 +4992,12 @@
           saveBooksToStorage();
         }
 
-        // Pastikan setiap buku non-PDF memiliki editablePages dan coverUrl yang selaras dengan judul bukunya sendiri
+        // Pastikan setiap buku non-PDF memiliki editablePages, coverUrl, dan status kunci yang bersih & konsisten
         let booksFixed = false;
         books.forEach((b) => {
+          if (normalizeBookLockState(b)) {
+            booksFixed = true;
+          }
           if (!Array.isArray(b.editablePages) || b.editablePages.length === 0) {
             b.editablePages = buildEditablePagesForBook(b);
             booksFixed = true;
@@ -5399,15 +5433,17 @@
       // =========================================================
       // RENDER TAHAP 3: BUKA BUKU DI RUANG BACA 3D FLIPBOOK
       // =========================================================
-      function openBookInReader(book) {
+      async function openBookInReader(book) {
+        if (!book) return;
+        normalizeBookLockState(book);
         activeBookId = book.id;
         config.activeBookId = book.id;
         config.title = book.title;
         config.author = book.author;
         config.description = book.description;
         config.shelfId = book.shelfId;
-        config.passwordProtected = Boolean(book.passwordProtected);
-        config.password = book.password || '';
+        config.passwordProtected = Boolean(book.passwordProtected && book.password);
+        config.password = config.passwordProtected ? String(book.password || '').trim() : '';
         config.pdfUrl = book.pdfUrl || '';
 
         inpTitle.value = config.title;
@@ -5418,10 +5454,10 @@
         document.getElementById('password-config-row').classList.toggle('hidden', !config.passwordProtected);
         document.getElementById('select-shelf-target').value = config.shelfId;
 
-        if (config.passwordProtected && config.password) {
-          isLocked = true;
-        } else {
-          isLocked = false;
+        isLocked = Boolean(config.passwordProtected && config.password);
+        const pwdGateModal = document.getElementById('password-gate-modal');
+        if (pwdGateModal) {
+          pwdGateModal.classList.toggle('hidden', !isLocked);
         }
 
         // Periksa apakah buku ini memiliki lembaran PDF/gambar orisinal tersimpan di IndexedDB (StorageHandler)
@@ -7419,7 +7455,12 @@
           requireAdminAuth(() => {
             const sidebar = document.getElementById('admin-sidebar');
             if (sidebar.classList.contains('hidden')) {
-              switchViewTo('reader');
+              const targetBook = books.find((b) => b.id === (config.activeBookId || activeBookId)) || books[0];
+              if (targetBook && currentView !== 'reader') {
+                openBookInReader(targetBook);
+              } else {
+                switchViewTo('reader');
+              }
               sidebar.classList.remove('hidden');
               showToast('Panel Konfigurasi Admin dibuka.');
             } else {
@@ -8023,6 +8064,7 @@
 
       function populateCrudMetadataFormFromWorking() {
         if (!crudWorkingBook) return;
+        normalizeBookLockState(crudWorkingBook);
         document.getElementById('crud-current-book-id-label').textContent = crudWorkingBook.id;
         document.getElementById('crud-inp-title').value = crudWorkingBook.title;
         document.getElementById('crud-inp-author').value = crudWorkingBook.author;
@@ -8031,7 +8073,7 @@
         document.getElementById('crud-inp-accent').value = crudWorkingBook.accent || '#0B3B2C';
         document.getElementById('crud-inp-desc').value = crudWorkingBook.description;
         document.getElementById('crud-chk-password').checked = Boolean(crudWorkingBook.passwordProtected);
-        document.getElementById('crud-inp-password').value = crudWorkingBook.password || '';
+        document.getElementById('crud-inp-password').value = crudWorkingBook.passwordProtected ? (crudWorkingBook.password || '') : '';
         updateCrudMetadataLivePreview();
       }
 
@@ -8044,8 +8086,10 @@
         crudWorkingBook.accent = document.getElementById('crud-inp-accent').value || '#0B3B2C';
         crudWorkingBook.spineColor = crudWorkingBook.accent;
         crudWorkingBook.description = document.getElementById('crud-inp-desc').value.trim() || '';
-        crudWorkingBook.passwordProtected = document.getElementById('crud-chk-password').checked;
-        crudWorkingBook.password = document.getElementById('crud-inp-password').value.trim();
+        const isChkPwd = document.getElementById('crud-chk-password').checked;
+        const rawCrudPwd = document.getElementById('crud-inp-password').value.trim();
+        crudWorkingBook.passwordProtected = Boolean(isChkPwd && rawCrudPwd.length > 0);
+        crudWorkingBook.password = isChkPwd ? rawCrudPwd : '';
 
         // JANGAN mengubah halaman 1 jika buku berasal dari PDF/Gambar orisinal!
         if (
@@ -9003,16 +9047,52 @@
       chkPrint.onchange = (e) => { config.allowPrint = e.target.checked; renderStage('forward'); };
       chkSound.onchange = (e) => { config.enableSound = e.target.checked; renderStage('forward'); };
       chkThumbs.onchange = (e) => { config.showThumbnails = e.target.checked; renderStage('forward'); };
+      // Sinkronkan perubahan status Kunci Buku dari Panel Studio Admin langsung ke Katalog, IndexedDB, & Cloud DB
+      function syncActiveBookLockFromAdminSidebar() {
+        const targetId = config.activeBookId || activeBookId;
+        const rawPwd = String(config.password || '').trim();
+        const isProtected = Boolean(config.passwordProtected && rawPwd.length > 0);
+        if (!isProtected) {
+          isLocked = false;
+          const gateModal = document.getElementById('password-gate-modal');
+          if (gateModal) gateModal.classList.add('hidden');
+        }
+        if (targetId) {
+          const bIdx = books.findIndex((b) => b.id === targetId);
+          if (bIdx >= 0) {
+            books[bIdx].passwordProtected = isProtected;
+            books[bIdx].password = isProtected ? rawPwd : '';
+            saveBooksToStorage();
+            const cached = bookAssetsCache[targetId];
+            if (cached) {
+              cached.passwordProtected = isProtected;
+              cached.password = isProtected ? rawPwd : '';
+              if (cached.bookMeta) {
+                cached.bookMeta.passwordProtected = isProtected;
+                cached.bookMeta.password = isProtected ? rawPwd : '';
+              }
+              StorageHandler.saveBookAsset(targetId, cached);
+            }
+          }
+        }
+        persistState();
+      }
+
       chkPassword.onchange = (e) => {
-        config.passwordProtected = e.target.checked;
-        if (config.passwordProtected && !config.password) {
-          config.password = 'rahasia2026';
-          inpPassword.value = config.password;
+        config.passwordProtected = Boolean(e.target.checked);
+        if (!config.passwordProtected) {
+          config.password = '';
+          inpPassword.value = '';
+          isLocked = false;
         }
         document.getElementById('password-config-row').classList.toggle('hidden', !config.passwordProtected);
-        persistState();
+        syncActiveBookLockFromAdminSidebar();
+        renderStage('forward');
       };
-      inpPassword.oninput = (e) => { config.password = e.target.value; persistState(); };
+      inpPassword.oninput = (e) => {
+        config.password = e.target.value;
+        syncActiveBookLockFromAdminSidebar();
+      };
 
       document.getElementById('btn-test-lock').onclick = () => {
         isLocked = true;
@@ -10283,23 +10363,26 @@
             await syncMasterCatalogToGoogleDrive(activeShelves, activeBooks, onByteProgress);
           }
 
-          const slimBooksMeta = activeBooks.map((b) => ({
-            id: String(b.id || '').slice(0, 120),
-            shelfId: String(b.shelfId || 'rak-01').slice(0, 120),
-            title: String(b.title || 'Buku Koleksi').slice(0, 480),
-            author: String(b.author || 'Anonim').slice(0, 280),
-            description: String(b.description || '').slice(0, 1500),
-            kicker: String(b.kicker || '').slice(0, 200),
-            accent: String(b.accent || '#0B3B2C').slice(0, 32),
-            spineColor: String(b.spineColor || b.accent || '#0B3B2C').slice(0, 32),
-            pageCount: Math.max(1, Math.min(2000, parseInt(b.pageCount, 10) || 1)),
-            passwordProtected: Boolean(b.passwordProtected),
-            password: String(b.password || '').slice(0, 180),
-            hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
-            isCustomPdf: Boolean(b.isCustomPdf),
-            driveFileId: String(b.driveFileId || '').slice(0, 250),
-            drivePdfFileId: String(b.drivePdfFileId || '').slice(0, 250)
-          }));
+          const slimBooksMeta = activeBooks.map((b) => {
+            normalizeBookLockState(b);
+            return {
+              id: String(b.id || '').slice(0, 120),
+              shelfId: String(b.shelfId || 'rak-01').slice(0, 120),
+              title: String(b.title || 'Buku Koleksi').slice(0, 480),
+              author: String(b.author || 'Anonim').slice(0, 280),
+              description: String(b.description || '').slice(0, 1500),
+              kicker: String(b.kicker || '').slice(0, 200),
+              accent: String(b.accent || '#0B3B2C').slice(0, 32),
+              spineColor: String(b.spineColor || b.accent || '#0B3B2C').slice(0, 32),
+              pageCount: Math.max(1, Math.min(2000, parseInt(b.pageCount, 10) || 1)),
+              passwordProtected: Boolean(b.passwordProtected && b.password),
+              password: b.passwordProtected ? String(b.password || '').slice(0, 180) : '',
+              hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
+              isCustomPdf: Boolean(b.isCustomPdf),
+              driveFileId: String(b.driveFileId || '').slice(0, 250),
+              drivePdfFileId: String(b.drivePdfFileId || '').slice(0, 250)
+            };
+          });
 
           const payload = {
             id: 'main',
@@ -10673,10 +10756,7 @@
 
         // Tarik katalog rak & koleksi buku dari Cloud Firestore saat aplikasi dibuka di akun/perangkat mana pun
         async function pullCatalogAndBooksFromCloud() {
-          const [catalogDoc, cloudBooksDocs] = await Promise.all([
-            getFirestoreDocument('library_catalog', 'main'),
-            listFirestoreDocuments('library_books', 100)
-          ]);
+          const catalogDoc = await getFirestoreDocument('library_catalog', 'main');
 
           const pill = document.getElementById('cloud-firestore-status-pill');
           if (pill) {
@@ -10685,7 +10765,9 @@
           }
 
           let hasRemoteData = false;
+          let needsCatalogCleanupPush = false;
           let bookOrderIds = [];
+          const candidateBookIdsToFetch = new Set();
 
           if (catalogDoc) {
             if (catalogDoc.driveFolderId) driveFolderId = catalogDoc.driveFolderId;
@@ -10710,7 +10792,14 @@
             if (catalogDoc.bookOrderJson) {
               try {
                 const parsedOrder = JSON.parse(catalogDoc.bookOrderJson);
-                if (Array.isArray(parsedOrder)) bookOrderIds = parsedOrder;
+                if (Array.isArray(parsedOrder)) {
+                  bookOrderIds = parsedOrder;
+                  parsedOrder.forEach((id) => {
+                    if (id && String(id).startsWith('book-pdf-')) {
+                      candidateBookIdsToFetch.add(String(id));
+                    }
+                  });
+                }
               } catch (e) {}
             }
             if (catalogDoc.booksMetaJson) {
@@ -10720,9 +10809,44 @@
                   hasRemoteData = true;
                   parsedBooksMeta.forEach((bm) => {
                     if (!bm || !bm.id) return;
+                    if (bm.isCustomPdf || bm.hasCustomCoverImage || String(bm.id).startsWith('book-pdf-')) {
+                      candidateBookIdsToFetch.add(String(bm.id));
+                    }
+                    if (normalizeBookLockState(bm)) {
+                      needsCatalogCleanupPush = true;
+                    }
                     const exIdx = books.findIndex((b) => b.id === bm.id);
-                    if (exIdx === -1) {
-                      books.push(Object.assign({ coverUrl: '' }, bm));
+                    if (exIdx >= 0) {
+                      const localB = books[exIdx];
+                      books[exIdx] = Object.assign({}, localB, {
+                        shelfId: bm.shelfId || localB.shelfId || 'rak-01',
+                        title: bm.title || localB.title || 'Buku Koleksi',
+                        author: bm.author || localB.author || 'Anonim',
+                        description: bm.description !== undefined ? bm.description : (localB.description || ''),
+                        kicker: bm.kicker !== undefined ? bm.kicker : (localB.kicker || ''),
+                        accent: bm.accent || localB.accent || '#0B3B2C',
+                        spineColor: bm.spineColor || bm.accent || localB.spineColor || '#0B3B2C',
+                        pageCount: bm.pageCount || localB.pageCount || 1,
+                        passwordProtected: Boolean(bm.passwordProtected && bm.password),
+                        password: bm.passwordProtected ? String(bm.password || '').trim() : '',
+                        hasCustomCoverImage: Boolean(bm.hasCustomCoverImage || bm.isCustomPdf || localB.hasCustomCoverImage),
+                        isCustomPdf: Boolean(bm.isCustomPdf || localB.isCustomPdf),
+                        driveFileId: bm.driveFileId || localB.driveFileId || '',
+                        drivePdfFileId: bm.drivePdfFileId || localB.drivePdfFileId || ''
+                      });
+                    } else {
+                      const fallbackCover = generateCanvasPageDataUrl(
+                        bm.title || 'Buku Koleksi',
+                        (bm.description || '').slice(0, 68),
+                        bm.kicker || 'KOLEKSI PUSTAKA 3D',
+                        bm.author || 'Anonim',
+                        bm.description || '',
+                        true,
+                        bm.pageCount || 6,
+                        0,
+                        bm.accent || '#0B3B2C'
+                      );
+                      books.push(Object.assign({ coverUrl: fallbackCover }, bm));
                     }
                   });
                 }
@@ -10730,11 +10854,25 @@
             }
           }
 
-          if (Array.isArray(cloudBooksDocs) && cloudBooksDocs.length > 0) {
+          // Ambil dokumen buku kustom/PDF dari library_books/{bookId} menggunakan getFirestoreDocument paralel
+          // (sesuai aturan allow get: if isValidId(bookId) di firestore.rules)
+          const idsToFetch = Array.from(candidateBookIdsToFetch);
+          const fetchedBookDocs = await Promise.all(
+            idsToFetch.map((bid) => {
+              const safeId = String(bid).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
+              return getFirestoreDocument('library_books', safeId);
+            })
+          );
+          const cloudBooksDocs = fetchedBookDocs.filter((d) => Boolean(d && d.id));
+
+          if (cloudBooksDocs.length > 0) {
             hasRemoteData = true;
             for (let i = 0; i < cloudBooksDocs.length; i++) {
               const cb = cloudBooksDocs[i];
               if (!cb || !cb.id) continue;
+              if (normalizeBookLockState(cb)) {
+                needsCatalogCleanupPush = true;
+              }
               let parsedEditablePages = [];
               if (cb.editablePagesJson) {
                 try {
@@ -10766,8 +10904,8 @@
                 accent: cb.accent || '#0B3B2C',
                 spineColor: cb.spineColor || cb.accent || '#0B3B2C',
                 pageCount: cb.pageCount || 1,
-                passwordProtected: Boolean(cb.passwordProtected),
-                password: cb.password || '',
+                passwordProtected: Boolean(cb.passwordProtected && cb.password),
+                password: cb.passwordProtected ? String(cb.password || '').trim() : '',
                 coverUrl: fallbackCover,
                 hasCustomCoverImage: Boolean(cb.hasCustomCoverImage || cb.isCustomPdf),
                 isCustomPdf: Boolean(cb.isCustomPdf),
@@ -10783,7 +10921,7 @@
               if (existingIdx >= 0) {
                 const localBook = books[existingIdx];
                 books[existingIdx] = Object.assign({}, localBook, remoteBookObj, {
-                  coverUrl: remoteBookObj.coverUrl || localBook.coverUrl,
+                  coverUrl: cb.coverUrl || localBook.coverUrl || fallbackCover,
                   editablePages:
                     Array.isArray(localBook.editablePages) && localBook.editablePages.some((p) => p.customImageDataUrl)
                       ? localBook.editablePages
@@ -10799,6 +10937,9 @@
               }
             }
           }
+
+          // Pastikan seluruh buku di memori telah ternormalisasi status kuncinya
+          books.forEach((b) => normalizeBookLockState(b));
 
           if (bookOrderIds.length > 0) {
             books.sort((a, b) => {
@@ -10819,13 +10960,33 @@
             if (currentView === 'shelf') {
               renderShelfBooksGrid((document.getElementById('shelf-search-input') && document.getElementById('shelf-search-input').value) || '');
             }
+            // Jika pengguna sedang berada di Ruang Baca (misal membuka tautan buku di akun lain),
+            // segera sinkronkan status kunci buku agar modal kata sandi langsung tertutup bila buku tidak dikunci!
+            const currentOpenBook = books.find((b) => b.id === (config.activeBookId || activeBookId));
+            if (currentOpenBook) {
+              config.passwordProtected = Boolean(currentOpenBook.passwordProtected && currentOpenBook.password);
+              config.password = config.passwordProtected ? String(currentOpenBook.password || '').trim() : '';
+              if (chkPassword) chkPassword.checked = config.passwordProtected;
+              if (inpPassword) inpPassword.value = config.password;
+              const pwdRow = document.getElementById('password-config-row');
+              if (pwdRow) pwdRow.classList.toggle('hidden', !config.passwordProtected);
+              if (!config.passwordProtected) {
+                isLocked = false;
+                const pwdGateModal = document.getElementById('password-gate-modal');
+                if (pwdGateModal) pwdGateModal.classList.add('hidden');
+              }
+            }
             const syncBadgeText = document.getElementById('header-cloud-sync-badge-text');
             if (syncBadgeText) {
               syncBadgeText.textContent = 'Cloud DB (' + books.length + ' Buku)';
             }
           }
 
-          return { hasRemoteData: hasRemoteData, cloudBooksDocs: cloudBooksDocs || [] };
+          return {
+            hasRemoteData: hasRemoteData,
+            needsCatalogCleanupPush: needsCatalogCleanupPush,
+            cloudBooksDocs: cloudBooksDocs || []
+          };
         }
 
         async function bootAndHydrateMultiAccount() {
@@ -10836,11 +10997,7 @@
             const localAssets = await StorageHandler.getAllBookAssets();
             const unsyncedAssets = localAssets.filter((a) => a && a.id && !cloudIds.has(a.id));
 
-            const hasCustomLocalShelf = shelves.some(
-              (s) => !DEFAULT_SHELVES.some((ds) => ds.id === s.id && ds.name === s.name)
-            );
-
-            if (!pullResult.hasRemoteData || unsyncedAssets.length > 0 || hasCustomLocalShelf) {
+            if (isAdminMode && unsyncedAssets.length > 0) {
               await pushCatalogToCloud(shelves, books);
               for (let i = 0; i < unsyncedAssets.length; i++) {
                 await pushBookAndPagesToCloud(unsyncedAssets[i].id, unsyncedAssets[i]);
