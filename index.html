@@ -519,6 +519,25 @@
       }
     }
 
+    /* Skeleton Shimmer Halus Saat Lembaran PDF Sedang Dirender On-Demand */
+    #pages-spread-Mount [data-page-skeleton="true"] {
+      max-height: 92vh !important;
+    }
+    @keyframes skeletonShimmerAnim {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .skeleton-shimmer-sweep {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.16) 50%, transparent 100%);
+      animation: skeletonShimmerAnim 1.6s infinite ease-in-out;
+      pointer-events: none;
+    }
+
     /* Transisi Halus Bar Navigasi Atas & Bawah Ruang Baca (Manual Toggle Only) */
     #reader-top-strip {
       transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
@@ -6136,10 +6155,60 @@
           pwdGateModal.classList.toggle('hidden', !isLocked);
         }
 
-        // Periksa apakah buku ini memiliki lembaran PDF/gambar orisinal tersimpan di IndexedDB (StorageHandler)
+        // =========================================================
+        // ARSITEKTUR RENDER PROGRESIF / ON-DEMAND UNTUK DOKUMEN PDF
+        // =========================================================
         const cachedAsset = bookAssetsCache[book.id];
         const isOriginalBook = isBookOriginalPdfOrImage(book, cachedAsset);
+        const hasPdfSource = Boolean(
+          book.pdfUrl ||
+          (cachedAsset && cachedAsset.pdfUrl) ||
+          (cachedAsset && cachedAsset.pdfDataUrl) ||
+          book.isCustomPdf ||
+          book.drivePdfFileId ||
+          book.driveFileId ||
+          String(book.id || '').startsWith('book-pdf-')
+        );
 
+        // 1. Jika buku memiliki berkas PDF asli (Direct URL, Google Drive, atau Upload Lokal):
+        // Buka instan (< 1 detik) tanpa eager-loop render ratusan halaman di awal dan TANPA template hijau dummy!
+        if (hasPdfSource) {
+          rawPdfBlobUrl = (cachedAsset && cachedAsset.pdfDataUrl) || null;
+          currentPage = 1;
+          document.getElementById('source-badge').textContent = 'Dokumen Orisinal Flipbook 3D';
+
+          // Tentukan jumlah halaman total secara persisten (misal 297 hal)
+          const totalPages = Math.max(1, parseInt(book.pageCount, 10) || (cachedAsset && cachedAsset.pageCount) || 1);
+          book.pageCount = totalPages;
+          config.pageCount = totalPages;
+
+          // Buat array placeholder halaman on-demand secara instan
+          const placeholderPages = [];
+          for (let i = 1; i <= totalPages; i++) {
+            const cachedPageData = readerPageRenderCache.get(`${book.id}-${i}`);
+            placeholderPages.push({
+              pageNumber: i,
+              title: i === 1 ? 'Sampul Depan' : ('Halaman ' + i),
+              dataUrl: cachedPageData || (i === 1 && book.coverUrl && !book.coverUrl.includes('canvas') ? book.coverUrl : null),
+              isOriginalPdfPage: true
+            });
+          }
+          pagesDataUrls = placeholderPages;
+
+          renderStage('forward');
+          renderThumbnailsGrid();
+          switchViewTo('reader');
+
+          // Muat dokumen PDF secara progresif on-demand tanpa jeda
+          loadPdfDocumentForReader(book).then((pdfDoc) => {
+            if (pdfDoc && activeBookId === book.id) {
+              document.getElementById('source-badge').textContent = 'Dokumen Orisinal Flipbook 3D';
+            }
+          });
+          return;
+        }
+
+        // 2. Fallback untuk buku non-PDF (konten teks kustom editable / monograf bawaan)
         if (cachedAsset && Array.isArray(cachedAsset.originalPagesDataUrls) && cachedAsset.originalPagesDataUrls.length > 0) {
           pagesDataUrls = cachedAsset.originalPagesDataUrls;
           rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
@@ -6159,7 +6228,7 @@
           pagesDataUrls = renderEditablePagesToDataUrls(book, cachedAsset.editablePages);
           rawPdfBlobUrl = cachedAsset.pdfDataUrl || null;
           currentPage = 1;
-          document.getElementById('source-badge').textContent = isOriginalBook ? 'Dokumen Orisinal Flipbook 3D' : 'Konten Halaman Kustom';
+          document.getElementById('source-badge').textContent = 'Konten Halaman Kustom';
           renderStage('forward');
           renderThumbnailsGrid();
         } else if (cachedAsset && cachedAsset.pagesDataUrls && cachedAsset.pagesDataUrls.length > 0) {
@@ -6172,66 +6241,240 @@
         } else if (Array.isArray(book.editablePages) && book.editablePages.length > 0) {
           pagesDataUrls = renderEditablePagesToDataUrls(book, book.editablePages);
           currentPage = 1;
-          document.getElementById('source-badge').textContent = isOriginalBook ? 'Dokumen Orisinal Flipbook 3D' : 'Konten Halaman Kustom';
+          document.getElementById('source-badge').textContent = 'Konten Halaman Kustom';
           renderStage('forward');
           renderThumbnailsGrid();
         } else if (book.id === 'book-arch') {
           renderDefaultMonographPages();
         } else {
           generateBookPagesForReader(book);
-          // Cek secara asinkron di cache IndexedDB lokal, lalu stream otomatis dari Link Google Drive (pdfUrl) / Cloud API bila dibuka oleh pengunjung publik
-          StorageHandler.getBookAsset(book.id).then(async (dbAsset) => {
-            if (dbAsset && activeBookId === book.id) {
-              const srcPages =
-                (Array.isArray(dbAsset.originalPagesDataUrls) && dbAsset.originalPagesDataUrls.length > 0
-                  ? dbAsset.originalPagesDataUrls
-                  : dbAsset.pagesDataUrls) || [];
-              if (srcPages.length > 0 && (!book.pdfUrl || srcPages.length >= (book.pageCount || 1))) {
-                pagesDataUrls = srcPages;
-                rawPdfBlobUrl = dbAsset.pdfDataUrl || null;
-                document.getElementById('source-badge').textContent = 'Dokumen Orisinal Flipbook 3D';
-                renderStage('forward');
-                renderThumbnailsGrid();
-                return;
-              }
-            }
-            if (window.CloudDriveSyncEngine) {
-              document.getElementById('source-badge').textContent = book.pdfUrl
-                ? 'Memuat Stream PDF dari Google Drive / Cloud...'
-                : 'Memuat Halaman dari Google Sheets & Drive...';
-              const cloudPages = await window.CloudDriveSyncEngine.fetchBookPagesFromCloudOrDrive(book);
-              if (cloudPages && cloudPages.length > 0 && activeBookId === book.id) {
-                pagesDataUrls = cloudPages;
-                currentPage = 1;
-                document.getElementById('source-badge').textContent = book.pdfUrl
-                  ? 'Stream PDF Google Drive Aktif'
-                  : 'Database Google Sheets & Drive';
-                renderStage('forward');
-                renderThumbnailsGrid();
-              }
-            }
-          });
-        }
-
-        // Jika buku memiliki Link PDF Publik / Google Drive (pdfUrl) atau unggahan PDF yang halamannya belum di-cache di perangkat pengunjung, stream langsung menggunakan PDF.js
-        if (
-          window.CloudDriveSyncEngine &&
-          (book.pdfUrl || book.isCustomPdf || book.hasStoredPages || String(book.id).startsWith('book-pdf-') || book.driveFileId) &&
-          (!cachedAsset || !cachedAsset.pagesDataUrls || cachedAsset.pagesDataUrls.length < (book.pageCount || 1))
-        ) {
-          window.CloudDriveSyncEngine.fetchBookPagesFromCloudOrDrive(book).then((cloudPages) => {
-            if (cloudPages && cloudPages.length > 0 && activeBookId === book.id) {
-              pagesDataUrls = cloudPages;
-              document.getElementById('source-badge').textContent = book.pdfUrl
-                ? 'Stream PDF Google Drive Aktif'
-                : 'Database Google Sheets & Drive';
-              renderStage('forward');
-              renderThumbnailsGrid();
-            }
-          });
         }
 
         switchViewTo('reader');
+      }
+
+      window.openBookInReader = openBookInReader;
+      window.getBooks = () => books;
+      window.getPagesDataUrls = () => pagesDataUrls;
+
+      // =========================================================
+      // KONTROLER DAN CACHE ON-DEMAND STREAMING PDF.JS
+      // =========================================================
+      let activeReaderPdfDoc = null;
+      let activeReaderPdfBookId = null;
+      const readerPageRenderCache = new Map();
+      const pendingPageRenderPromises = new Map();
+
+      async function loadPdfDocumentForReader(book) {
+        if (!book) return null;
+        const bookId = book.id;
+        if (activeReaderPdfDoc && activeReaderPdfBookId === bookId) {
+          return activeReaderPdfDoc;
+        }
+
+        // Tentukan sumber PDF
+        let pdfSource = null;
+        const cachedAsset = bookAssetsCache[bookId] || (await StorageHandler.getBookAsset(bookId).catch(() => null));
+        if (cachedAsset && cachedAsset.pdfDataUrl) {
+          pdfSource = { data: cachedAsset.pdfDataUrl };
+        } else if (cachedAsset && cachedAsset.pdfUrl) {
+          pdfSource = { url: cachedAsset.pdfUrl };
+        } else if (book.pdfUrl) {
+          pdfSource = { url: book.pdfUrl };
+        } else if (book.drivePdfFileId || book.driveFileId) {
+          const fid = book.drivePdfFileId || book.driveFileId;
+          pdfSource = { url: 'https://drive.google.com/file/d/' + fid + '/view' };
+        }
+
+        if (!pdfSource) return null;
+
+        try {
+          const opened = await openPdfWithCorsFallback(pdfSource);
+          if (!opened || !opened.pdf) return null;
+          const pdf = opened.pdf;
+          activeReaderPdfDoc = pdf;
+          activeReaderPdfBookId = bookId;
+
+          const numPages = pdf.numPages;
+          if (book.pageCount !== numPages) {
+            book.pageCount = numPages;
+            config.pageCount = numPages;
+          }
+
+          // Sinkronkan panjang array pagesDataUrls dengan jumlah halaman asli dokumen PDF
+          if (!Array.isArray(pagesDataUrls) || pagesDataUrls.length !== numPages) {
+            const newPages = [];
+            for (let i = 1; i <= numPages; i++) {
+              const cachedUrl = readerPageRenderCache.get(`${bookId}-${i}`);
+              newPages.push({
+                pageNumber: i,
+                title: i === 1 ? 'Sampul Depan' : ('Halaman ' + i),
+                dataUrl: cachedUrl || (i === 1 && book.coverUrl && !book.coverUrl.includes('canvas') ? book.coverUrl : null),
+                isOriginalPdfPage: true
+              });
+            }
+            pagesDataUrls = newPages;
+          }
+
+          updateReaderControlsState(getVisiblePages(), numPages);
+          renderThumbnailsGrid();
+
+          // Render segera halaman aktif yang terlihat di layar
+          await renderVisiblePagesOnDemand(book);
+
+          // Prefetch halaman berikutnya secara senyap di background
+          prefetchPages(book, [currentPage + 1, currentPage + 2]);
+
+          return pdf;
+        } catch (err) {
+          console.warn('Gagal memuat dokumen PDF di Ruang Baca:', err);
+          return null;
+        }
+      }
+
+      async function renderPdfPageOnDemand(book, pageNum) {
+        if (!book || pageNum < 1) return null;
+        const bookId = book.id;
+        const cacheKey = `${bookId}-${pageNum}`;
+
+        if (readerPageRenderCache.has(cacheKey)) {
+          const dataUrl = readerPageRenderCache.get(cacheKey);
+          if (pagesDataUrls[pageNum - 1]) {
+            pagesDataUrls[pageNum - 1].dataUrl = dataUrl;
+          }
+          return dataUrl;
+        }
+
+        if (pendingPageRenderPromises.has(cacheKey)) {
+          return pendingPageRenderPromises.get(cacheKey);
+        }
+
+        const renderPromise = (async () => {
+          try {
+            let pdf = activeReaderPdfDoc;
+            if (!pdf || activeReaderPdfBookId !== bookId) {
+              pdf = await loadPdfDocumentForReader(book);
+            }
+            if (!pdf || pageNum > pdf.numPages) return null;
+
+            const page = await pdf.getPage(pageNum);
+            const vp1 = page.getViewport({ scale: 1 });
+
+            // Optimasi Skala Viewport & GPU Memory untuk Layar Mobile
+            // Di ponsel (window.innerWidth < 768px), sesuaikan target rendering width
+            const isMobile = window.innerWidth < 768;
+            const targetRenderWidth = isMobile
+              ? Math.min(window.innerWidth - 20, 520)
+              : Math.min(window.innerWidth * 0.46, 750);
+
+            // devicePixelRatio adaptif (clamped max 2.0 agar teks tajam tanpa membebani GPU/RAM ponsel)
+            const dpr = Math.min(window.devicePixelRatio || 1.5, 2.0);
+            const scale = (targetRenderWidth / vp1.width) * dpr;
+
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(viewport.width);
+            canvas.height = Math.round(viewport.height);
+            const ctx = canvas.getContext('2d', { alpha: false });
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+            readerPageRenderCache.set(cacheKey, dataUrl);
+
+            if (pagesDataUrls[pageNum - 1]) {
+              pagesDataUrls[pageNum - 1].dataUrl = dataUrl;
+            }
+
+            if (pageNum === 1 && (!book.coverUrl || !book.hasCustomCoverImage || book.coverUrl.includes('canvas'))) {
+              book.coverUrl = dataUrl;
+              book.hasCustomCoverImage = true;
+            }
+
+            updatePageElementInDOM(pageNum, dataUrl);
+            return dataUrl;
+          } catch (err) {
+            console.warn('Gagal on-demand render halaman PDF ' + pageNum, err);
+            return null;
+          } finally {
+            pendingPageRenderPromises.delete(cacheKey);
+          }
+        })();
+
+        pendingPageRenderPromises.set(cacheKey, renderPromise);
+        return renderPromise;
+      }
+
+      function updatePageElementInDOM(pageNum, dataUrl) {
+        const visible = getVisiblePages();
+        if (!visible.includes(pageNum)) return;
+
+        const el = document.querySelector(`[data-page-no="${pageNum}"]`);
+        if (!el) return;
+
+        if (el.tagName.toLowerCase() === 'img') {
+          el.src = dataUrl;
+          return;
+        }
+
+        // Jika sebelumnya adalah skeleton shimmer, ganti dengan elemen img asli beresolusi tinggi
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.alt = 'Halaman ' + pageNum;
+        img.setAttribute('data-page-no', String(pageNum));
+
+        const isSingle = readerPageMode === '1p' || (window.innerWidth < 900 && readerPageMode !== '2p');
+        const sizeClasses = isFullPageFit
+          ? 'h-[82vh] sm:h-[86vh] lg:h-[89vh] max-h-[92vh] max-w-[95vw] w-auto'
+          : (isSingle
+              ? 'h-[68vh] sm:h-[76vh] lg:h-[82vh] max-h-[85vh] max-w-[92vw] w-auto'
+              : 'h-[62vh] sm:h-[72vh] lg:h-[80vh] max-h-[83vh] max-w-[48vw] w-auto');
+        img.className = 'block ' + sizeClasses + ' object-contain select-none shadow-2xl rounded-xs transition-opacity duration-300';
+        img.onclick = el.onclick;
+
+        if (el.parentNode) {
+          el.parentNode.replaceChild(img, el);
+        }
+      }
+
+      async function renderVisiblePagesOnDemand(book) {
+        const curBook = book || books.find((b) => b.id === activeBookId);
+        if (!curBook) return;
+        const visible = getVisiblePages();
+        for (let i = 0; i < visible.length; i++) {
+          const pNo = visible[i];
+          if (pagesDataUrls[pNo - 1] && !pagesDataUrls[pNo - 1].dataUrl) {
+            renderPdfPageOnDemand(curBook, pNo);
+          }
+        }
+      }
+
+      function prefetchPages(book, pageNums) {
+        const curBook = book || books.find((b) => b.id === activeBookId);
+        if (!curBook || !activeReaderPdfDoc) return;
+        const total = activeReaderPdfDoc.numPages;
+        const queue = pageNums.filter((p) => p >= 1 && p <= total && !readerPageRenderCache.has(`${curBook.id}-${p}`));
+        if (queue.length === 0) return;
+
+        const runNext = () => {
+          if (queue.length === 0) return;
+          const nextP = queue.shift();
+          renderPdfPageOnDemand(curBook, nextP).then(() => {
+            if ('requestIdleCallback' in window) {
+              window.requestIdleCallback(runNext, { timeout: 1000 });
+            } else {
+              setTimeout(runNext, 60);
+            }
+          });
+        };
+
+        if ('requestIdleCallback' in window) {
+          window.requestIdleCallback(runNext, { timeout: 1000 });
+        } else {
+          setTimeout(runNext, 60);
+        }
       }
 
       function generateBookPagesForReader(book) {
@@ -6456,29 +6699,31 @@
           const pdf = opened.pdf;
           const normUrlInfo = opened.normalized;
           const total = pdf.numPages;
-          const dpr = Math.min(window.devicePixelRatio || 2, 2.5);
+          const dpr = Math.min(window.devicePixelRatio || 1.5, 2.0);
+          bar.style.width = '100%';
+          progText.textContent = 'Menyiapkan ' + total + ' Halaman Dokumen PDF Asli...';
+
+          // Render hanya halaman 1 secara instan untuk sampul etalase
+          const page1 = await pdf.getPage(1);
+          const vp1 = page1.getViewport({ scale: 1 });
+          const scale = (650 / vp1.width) * dpr;
+          const viewport = page1.getViewport({ scale });
+
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(viewport.width);
+          canvas.height = Math.round(viewport.height);
+          const ctx = canvas.getContext('2d', { alpha: false });
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page1.render({ canvasContext: ctx, viewport }).promise;
+          const coverDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
           const rendered = [];
-
           for (let i = 1; i <= total; i++) {
-            bar.style.width = Math.round((i / total) * 100) + '%';
-            progText.textContent = 'Merender Halaman Asli PDF ' + i + ' dari ' + total;
-            const page = await pdf.getPage(i);
-            const vp1 = page.getViewport({ scale: 1 });
-            const scale = (650 / vp1.width) * dpr;
-            const viewport = page.getViewport({ scale });
-
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            await page.render({ canvasContext: ctx, viewport }).promise;
-
             rendered.push({
               pageNumber: i,
               title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
-              dataUrl: canvas.toDataURL('image/jpeg', 0.91),
+              dataUrl: i === 1 ? coverDataUrl : null,
               isOriginalPdfPage: true
             });
           }
@@ -6501,8 +6746,9 @@
             : 'book-pdf-' + Date.now();
           activeBookId = autoBookId;
           config.activeBookId = autoBookId;
-
-          const coverDataUrl = rendered.length > 0 ? rendered[0].dataUrl : '';
+          activeReaderPdfDoc = pdf;
+          activeReaderPdfBookId = autoBookId;
+          readerPageRenderCache.set(`${autoBookId}-1`, coverDataUrl);
           const pdfEditablePages = rendered.map((r, idx) => ({
             pageNumber: idx + 1,
             kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
@@ -6618,18 +6864,42 @@
 
       function createPageImageElement(pNo, altText) {
         const item = pagesDataUrls[pNo - 1];
-        const img = document.createElement('img');
-        if (item) img.src = item.dataUrl;
-        img.alt = altText || ('Halaman ' + pNo);
         const isSingle = readerPageMode === '1p' || (window.innerWidth < 900 && readerPageMode !== '2p');
-        if (isFullPageFit) {
-          img.className = 'block h-[82vh] sm:h-[86vh] lg:h-[89vh] max-h-[92vh] max-w-[95vw] w-auto object-contain select-none shadow-2xl rounded-xs';
-        } else if (isSingle) {
-          img.className = 'block h-[68vh] sm:h-[76vh] lg:h-[82vh] max-h-[85vh] max-w-[92vw] w-auto object-contain select-none shadow-2xl rounded-xs';
-        } else {
-          img.className = 'block h-[62vh] sm:h-[72vh] lg:h-[80vh] max-h-[83vh] max-w-[48vw] w-auto object-contain select-none shadow-2xl rounded-xs';
+        const sizeClasses = isFullPageFit
+          ? 'h-[82vh] sm:h-[86vh] lg:h-[89vh] max-h-[92vh] max-w-[95vw] w-auto'
+          : (isSingle
+              ? 'h-[68vh] sm:h-[76vh] lg:h-[82vh] max-h-[85vh] max-w-[92vw] w-auto'
+              : 'h-[62vh] sm:h-[72vh] lg:h-[80vh] max-h-[83vh] max-w-[48vw] w-auto');
+
+        if (item && item.dataUrl) {
+          const img = document.createElement('img');
+          img.src = item.dataUrl;
+          img.alt = altText || ('Halaman ' + pNo);
+          img.setAttribute('data-page-no', String(pNo));
+          img.className = 'block ' + sizeClasses + ' object-contain select-none shadow-2xl rounded-xs';
+          return img;
         }
-        return img;
+
+        // Jika halaman asli PDF belum selesai dirender, tampilkan container skeleton shimmer elegan (BUKAN template hijau)
+        const container = document.createElement('div');
+        container.setAttribute('data-page-no', String(pNo));
+        container.setAttribute('data-page-skeleton', 'true');
+        container.className = 'relative flex flex-col items-center justify-center ' + sizeClasses + ' aspect-[3/4] bg-[#F7F4EB] border border-[#D4AF37]/50 shadow-2xl rounded-xs overflow-hidden select-none';
+
+        container.innerHTML =
+          '<div class="skeleton-shimmer-sweep"></div>' +
+          '<div class="relative z-10 flex flex-col items-center justify-center gap-2.5 p-4 text-center">' +
+            '<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#D4AF37]/40 border-t-[#0B3B2C] animate-spin"></div>' +
+            '<p class="text-xs sm:text-sm font-serif-editorial font-bold text-[#072A20] tracking-wide">Memuat Dokumen Asli</p>' +
+            '<p class="text-[10px] sm:text-xs font-mono-tabular text-[#9E7B1C] font-semibold">Halaman ' + pNo + ' dari ' + (pagesDataUrls.length || 1) + '</p>' +
+          '</div>';
+
+        const curBook = books.find((b) => b.id === activeBookId);
+        if (curBook) {
+          renderPdfPageOnDemand(curBook, pNo);
+        }
+
+        return container;
       }
 
       function updateReaderControlsState(visible, total) {
@@ -6764,6 +7034,12 @@
         document.getElementById('book-3d-object').style.transform = 'scale(' + zoomLevel + ')';
 
         updateReaderControlsState(visible, total);
+
+        const curBook = books.find((b) => b.id === activeBookId);
+        if (curBook) {
+          renderVisiblePagesOnDemand(curBook);
+          prefetchPages(curBook, [currentPage + 1, currentPage + 2, currentPage - 1]);
+        }
       }
 
       // Animasi Membuka Lembaran Kertas 3D Halus dengan Slow Motion Physics
@@ -6913,8 +7189,11 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'flex flex-col items-start p-2.5 rounded-lg border border-[#D4AF37]/40 bg-[#0B3B2C]/80 hover:border-[#D4AF37] text-left transition-all';
+          const thumbMediaHtml = p.dataUrl
+            ? '<img src="' + p.dataUrl + '" alt="Thumbnail ' + p.pageNumber + '" class="w-full aspect-[3/4] object-contain bg-[#072A20] rounded mb-2 border border-[#D4AF37]/25" />'
+            : '<div class="w-full aspect-[3/4] flex flex-col items-center justify-center bg-[#072A20] rounded mb-2 border border-[#D4AF37]/25 text-[10px] text-[#F3E5AB]/70 gap-1.5"><i data-lucide="file-text" class="w-4 h-4 text-[#D4AF37]"></i><span>Hal ' + p.pageNumber + '</span></div>';
           btn.innerHTML =
-            '<img src="' + p.dataUrl + '" alt="Thumbnail ' + p.pageNumber + '" class="w-full aspect-[3/4] object-contain bg-[#072A20] rounded mb-2 border border-[#D4AF37]/25" />' +
+            thumbMediaHtml +
             '<span class="text-[11px] font-mono-tabular text-[#D4AF37]">Halaman ' + p.pageNumber + '</span>' +
             '<span class="text-xs font-serif-editorial font-bold text-[#F3E5AB] truncate w-full">' + p.title + '</span>';
           btn.onclick = () => {
@@ -6925,6 +7204,7 @@
           };
           grid.appendChild(btn);
         });
+        if (window.lucide) window.lucide.createIcons();
       }
 
       let lastPageNavTimestamp = 0;
@@ -11989,24 +12269,42 @@
               const opened = await openPdfWithCorsFallback({ url: streamUrl });
               const pdf = opened.pdf;
               const total = pdf.numPages;
-              const dpr = Math.min(window.devicePixelRatio || 2, 2.2);
-              const renderedFromUrl = [];
-              for (let i = 1; i <= total; i++) {
-                const page = await pdf.getPage(i);
-                const vp1 = page.getViewport({ scale: 1 });
-                const scale = (650 / vp1.width) * dpr;
-                const viewport = page.getViewport({ scale });
+              book.pageCount = total;
+              activeReaderPdfDoc = pdf;
+              activeReaderPdfBookId = bookId;
+
+              // Render HANYA Halaman 1 sebagai Sampul / Cover
+              const isCoverCached = readerPageRenderCache.has(`${bookId}-1`);
+              let coverDataUrl = isCoverCached ? readerPageRenderCache.get(`${bookId}-1`) : null;
+              if (!coverDataUrl) {
+                const page1 = await pdf.getPage(1);
+                const vp1 = page1.getViewport({ scale: 1 });
+                const isMobile = window.innerWidth < 768;
+                const targetWidth = isMobile ? Math.min(window.innerWidth - 20, 520) : 650;
+                const dpr = Math.min(window.devicePixelRatio || 1.5, 2.0);
+                const scale = (targetWidth / vp1.width) * dpr;
+                const viewport = page1.getViewport({ scale });
                 const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                const ctx = canvas.getContext('2d');
+                canvas.width = Math.round(viewport.width);
+                canvas.height = Math.round(viewport.height);
+                const ctx = canvas.getContext('2d', { alpha: false });
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                await page.render({ canvasContext: ctx, viewport }).promise;
+                await page1.render({ canvasContext: ctx, viewport }).promise;
+                coverDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+                readerPageRenderCache.set(`${bookId}-1`, coverDataUrl);
+              }
+
+              book.coverUrl = coverDataUrl;
+              book.hasCustomCoverImage = true;
+
+              // Inisialisasi placeholder array secara instan tanpa membebani RAM
+              const renderedFromUrl = [];
+              for (let i = 1; i <= total; i++) {
                 renderedFromUrl.push({
                   pageNumber: i,
                   title: i === 1 ? 'Sampul Depan' : 'Halaman ' + i,
-                  dataUrl: canvas.toDataURL('image/jpeg', 0.9),
+                  dataUrl: i === 1 ? coverDataUrl : (readerPageRenderCache.get(`${bookId}-${i}`) || null),
                   isOriginalPdfPage: true
                 });
               }
