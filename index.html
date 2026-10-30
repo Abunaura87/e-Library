@@ -3106,19 +3106,34 @@
       const STORAGE_DELETED_BOOKS_KEY = 'elibrary_deleted_books_v1';
       const STORAGE_MUSIC_PLAYING_KEY = 'elibrary_music_playing_v2';
       const STORAGE_CUSTOM_FILENAME_KEY = 'elibrary_custom_music_filename_v2';
+      const STORAGE_MUSIC_UPDATED_AT_KEY = 'elibrary_music_updated_at_v2';
+      const STORAGE_ADMIN_SESSION_KEY = 'elibrary_admin_session_v1';
+      const SYSTEM_SETTINGS_DOC_ID = 'elibrary-system-settings';
+
+      function normalizeSafeTimestamp(ts) {
+        const num = Number(ts);
+        if (!Number.isFinite(num) || num <= 0) return 0;
+        if (num > 1785000000000) return 1000;
+        return Math.floor(num);
+      }
+
+      function getSafeNow() {
+        const now = Date.now();
+        return now > 1785000000000 ? (1776000000000 + (now % 86400000)) : Math.floor(now);
+      }
 
       function getDeletedBookIds() {
         try {
           const raw = localStorage.getItem(STORAGE_DELETED_BOOKS_KEY);
           const arr = raw ? JSON.parse(raw) : [];
-          return new Set(Array.isArray(arr) ? arr : []);
+          return new Set(Array.isArray(arr) ? arr.map(String) : []);
         } catch (e) {
           return new Set();
         }
       }
 
       function markBookAsDeleted(bookId) {
-        if (!bookId) return;
+        if (!bookId || bookId === SYSTEM_SETTINGS_DOC_ID) return;
         const set = getDeletedBookIds();
         set.add(String(bookId));
         try {
@@ -3274,7 +3289,7 @@
         },
 
         async getBookAsset(bookId) {
-          if (!bookId || bookId === IDB_RACKS_MASTER_KEY) return null;
+          if (!bookId || bookId === IDB_RACKS_MASTER_KEY || bookId === SYSTEM_SETTINGS_DOC_ID) return null;
           if (bookAssetsCache[bookId]) return bookAssetsCache[bookId];
           const db = await this.openDB();
           if (!db) return null;
@@ -3302,7 +3317,7 @@
               const req = tx.objectStore(STORE_BOOKS).getAll();
               req.onsuccess = () => {
                 const rawList = req.result || [];
-                const list = rawList.filter((item) => item && item.id && item.id !== IDB_RACKS_MASTER_KEY);
+                const list = rawList.filter((item) => item && item.id && item.id !== IDB_RACKS_MASTER_KEY && item.id !== SYSTEM_SETTINGS_DOC_ID);
                 list.forEach((item) => {
                   bookAssetsCache[item.id] = item;
                 });
@@ -3422,28 +3437,36 @@
           return null;
         },
 
-        async saveCustomAudio(audioDataUrl, fileName, mimeType) {
+        async saveCustomAudio(audioDataUrl, fileName, mimeType, skipCloudSync) {
           const db = await this.openDB();
+          const nowTs = getSafeNow();
           try {
             if (fileName) localStorage.setItem(STORAGE_CUSTOM_FILENAME_KEY, fileName);
+            localStorage.setItem(STORAGE_MUSIC_UPDATED_AT_KEY, String(nowTs));
           } catch (e) {}
-          if (!db) return false;
-          return new Promise((resolve) => {
-            try {
-              const tx = db.transaction([STORE_AUDIO], 'readwrite');
-              tx.objectStore(STORE_AUDIO).put({
-                id: 'custom_bg_music',
-                audioDataUrl: audioDataUrl,
-                fileName: fileName || 'Musik Kustom',
-                mimeType: mimeType || 'audio/mpeg',
-                updatedAt: Date.now()
-              });
-              tx.oncomplete = () => resolve(true);
-              tx.onerror = () => resolve(false);
-            } catch (e) {
-              resolve(false);
-            }
-          });
+          let savedOk = false;
+          if (db) {
+            savedOk = await new Promise((resolve) => {
+              try {
+                const tx = db.transaction([STORE_AUDIO], 'readwrite');
+                tx.objectStore(STORE_AUDIO).put({
+                  id: 'custom_bg_music',
+                  audioDataUrl: audioDataUrl,
+                  fileName: fileName || 'Musik Kustom',
+                  mimeType: mimeType || 'audio/mpeg',
+                  updatedAt: nowTs
+                });
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => resolve(false);
+              } catch (e) {
+                resolve(false);
+              }
+            });
+          }
+          if (!skipCloudSync && window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.scheduleMusicSync === 'function') {
+            window.CloudDriveSyncEngine.scheduleMusicSync();
+          }
+          return savedOk;
         },
 
         async getCustomAudio() {
@@ -3465,12 +3488,15 @@
           if (Array.isArray(shelvesData) && shelvesData.length > 0) {
             this.saveRacksDataPermanently(shelvesData, Boolean(isModifiedByAdmin), true);
           }
+          const cleanBooksData = (Array.isArray(booksData) ? booksData : []).filter(
+            (b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id))
+          );
           try {
-            localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(booksData));
+            localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(cleanBooksData));
           } catch (e) {
             // Jika kuota localStorage penuh karena coverUrl besar, simpan versi ringkas karena coverUrl penuh sudah ada di IndexedDB
             try {
-              const slimBooks = booksData.map((b) => ({
+              const slimBooks = cleanBooksData.map((b) => ({
                 ...b,
                 coverUrl: bookAssetsCache[b.id] ? '' : b.coverUrl
               }));
@@ -3478,11 +3504,11 @@
             } catch (err) {}
           }
           if (!skipCloudSync && window.CloudDriveSyncEngine) {
-            window.CloudDriveSyncEngine.scheduleCatalogSync(shelvesData, booksData);
+            window.CloudDriveSyncEngine.scheduleCatalogSync(shelvesData, cleanBooksData);
           }
         },
 
-        saveMusicPreferences(prefs) {
+        saveMusicPreferences(prefs, skipCloudSync) {
           try {
             if (prefs.theme !== undefined) localStorage.setItem(STORAGE_MUSIC_THEME_KEY, prefs.theme);
             if (prefs.volume !== undefined) localStorage.setItem(STORAGE_MUSIC_VOL_KEY, String(prefs.volume));
@@ -3491,21 +3517,29 @@
             }
             if (prefs.fileName !== undefined) localStorage.setItem(STORAGE_CUSTOM_FILENAME_KEY, prefs.fileName);
             if (prefs.isPlaying !== undefined) localStorage.setItem(STORAGE_MUSIC_PLAYING_KEY, prefs.isPlaying ? 'true' : 'false');
+            const stamp = prefs.updatedAt !== undefined ? normalizeSafeTimestamp(prefs.updatedAt) : getSafeNow();
+            localStorage.setItem(STORAGE_MUSIC_UPDATED_AT_KEY, String(stamp || getSafeNow()));
           } catch (e) {}
+          if (!skipCloudSync && window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.scheduleMusicSync === 'function') {
+            window.CloudDriveSyncEngine.scheduleMusicSync();
+          }
         },
 
-        saveMusicConfig(prefs) {
-          return this.saveMusicPreferences(prefs);
+        saveMusicConfig(prefs, skipCloudSync) {
+          return this.saveMusicPreferences(prefs, skipCloudSync);
         },
 
         loadMusicConfig() {
           try {
+            const rawTheme = localStorage.getItem(STORAGE_MUSIC_THEME_KEY) || 'library';
+            const rawVol = parseFloat(localStorage.getItem(STORAGE_MUSIC_VOL_KEY) || '0.50');
             return {
-              theme: localStorage.getItem(STORAGE_MUSIC_THEME_KEY) || 'classical',
-              volume: parseFloat(localStorage.getItem(STORAGE_MUSIC_VOL_KEY) || '0.45'),
+              theme: rawTheme,
+              volume: Number.isFinite(rawVol) ? rawVol : 0.50,
               customUrl: localStorage.getItem(STORAGE_CUSTOM_URL_KEY) || '',
               fileName: localStorage.getItem(STORAGE_CUSTOM_FILENAME_KEY) || '',
-              isPlaying: localStorage.getItem(STORAGE_MUSIC_PLAYING_KEY) === 'true'
+              isPlaying: localStorage.getItem(STORAGE_MUSIC_PLAYING_KEY) === 'true',
+              updatedAt: normalizeSafeTimestamp(localStorage.getItem(STORAGE_MUSIC_UPDATED_AT_KEY) || 0)
             };
           } catch (e) {
             return null;
@@ -3516,6 +3550,9 @@
 
       async function autoSyncCatalogEverywhere(options) {
         const opts = options || {};
+
+        // Filter out system settings doc & deleted books
+        books = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id)));
 
         // Update UI badge instantly
         const syncBadgeText = document.getElementById('header-cloud-sync-badge-text');
@@ -3552,7 +3589,7 @@
         }
 
         // Send updated catalog to /api/catalog
-        const cleanBooks = books.filter((b) => b && b.id && !getDeletedBookIds().has(String(b.id)));
+        const cleanBooks = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id)));
         try {
           await fetch('/api/catalog', {
             method: 'POST',
@@ -3562,7 +3599,8 @@
               books: cleanBooks,
               bookOrder: cleanBooks.map((b) => b.id),
               deletedBookIds: Array.from(getDeletedBookIds()),
-              updatedAt: Date.now(),
+              musicConfig: StorageHandler.loadMusicConfig(),
+              updatedAt: getSafeNow(),
               updatedBy: (typeof ADMIN_WHITELIST_EMAIL !== 'undefined' ? ADMIN_WHITELIST_EMAIL : 'marhaniza05@gmail.com')
             })
           });
@@ -3988,35 +4026,39 @@
         if (savedUrl) customMusicUrl = savedUrl;
       } catch(e) {}
 
-      function startLibraryAmbience() {
+      function startLibraryAmbience(fromRemoteSync) {
         const ctx = getOrCreateAudioContext();
-        if (!ctx) return;
+        if (!ctx && currentMusicTheme !== 'custom') return;
 
         stopLibraryAmbienceNodes();
 
-        // Master Gain Node dengan kurva volume responsif
-        ambientMasterGain = ctx.createGain();
-        const effectiveGain = Math.max(0.0001, musicVolume * 0.45);
-        ambientMasterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        ambientMasterGain.gain.exponentialRampToValueAtTime(effectiveGain, ctx.currentTime + 0.6);
-        ambientMasterGain.connect(ctx.destination);
+        if (ctx) {
+          // Master Gain Node dengan kurva volume responsif
+          ambientMasterGain = ctx.createGain();
+          const effectiveGain = Math.max(0.0001, musicVolume * 0.45);
+          ambientMasterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+          ambientMasterGain.gain.exponentialRampToValueAtTime(effectiveGain, ctx.currentTime + 0.6);
+          ambientMasterGain.connect(ctx.destination);
 
-        // Bunyikan nada lonceng penyambutan singkat
-        playAmbienceWelcomeChime(ctx);
+          if (!fromRemoteSync) {
+            // Bunyikan nada lonceng penyambutan singkat
+            playAmbienceWelcomeChime(ctx);
+          }
+        }
 
         // Rute ke tema musik yang dipilih
-        if (currentMusicTheme === 'library') {
+        if (currentMusicTheme === 'library' && ctx) {
           startThemeLibrary(ctx, ambientMasterGain);
-        } else if (currentMusicTheme === 'rain') {
+        } else if (currentMusicTheme === 'rain' && ctx) {
           startThemeRain(ctx, ambientMasterGain);
-        } else if (currentMusicTheme === 'piano') {
+        } else if (currentMusicTheme === 'piano' && ctx) {
           startThemePiano(ctx, ambientMasterGain);
-        } else if (currentMusicTheme === 'morning') {
+        } else if (currentMusicTheme === 'morning' && ctx) {
           startThemeMorning(ctx, ambientMasterGain);
-        } else if (currentMusicTheme === 'fireplace') {
+        } else if (currentMusicTheme === 'fireplace' && ctx) {
           startThemeFireplace(ctx, ambientMasterGain);
         } else if (currentMusicTheme === 'custom') {
-          startThemeCustom();
+          startThemeCustom(fromRemoteSync);
         }
 
         isAmbientPlaying = true;
@@ -4025,7 +4067,7 @@
           volume: musicVolume,
           customUrl: customMusicUrl,
           isPlaying: true
-        });
+        }, Boolean(fromRemoteSync));
         updateAmbientButtonsUI();
       }
 
@@ -4408,18 +4450,56 @@
         ambientTimers.push(emberTimer);
       }
 
+      let pendingGestureAudioUnlock = false;
+      function armMobileAudioUnlockOnFirstTouch() {
+        if (pendingGestureAudioUnlock) return;
+        pendingGestureAudioUnlock = true;
+        const unlockHandler = () => {
+          pendingGestureAudioUnlock = false;
+          document.removeEventListener('pointerdown', unlockHandler, true);
+          document.removeEventListener('touchstart', unlockHandler, true);
+          document.removeEventListener('click', unlockHandler, true);
+          try {
+            const ctx = getOrCreateAudioContext();
+            if (ctx && ctx.state === 'suspended') {
+              ctx.resume().catch(() => {});
+            }
+          } catch (e) {}
+          const savedCfg = StorageHandler.loadMusicConfig();
+          if (isAmbientPlaying || (savedCfg && savedCfg.isPlaying)) {
+            startLibraryAmbience(true);
+          }
+        };
+        document.addEventListener('pointerdown', unlockHandler, true);
+        document.addEventListener('touchstart', unlockHandler, true);
+        document.addEventListener('click', unlockHandler, true);
+      }
+
       // --- TEMA 6: KUSTOM / MUSIK SENDIRI ---
-      function startThemeCustom() {
+      function startThemeCustom(fromRemoteSync) {
         const streamUrl = customMusicUrl || 'https://commondatastorage.googleapis.com/codeskulptor-demos/riceracer_assets/music/menu.ogg';
         if (!customAudioElement) {
           customAudioElement = new Audio();
           customAudioElement.loop = true;
-          customAudioElement.crossOrigin = 'anonymous';
+          if (!String(streamUrl).startsWith('data:') && !String(streamUrl).startsWith('blob:')) {
+            customAudioElement.crossOrigin = 'anonymous';
+          }
+        } else {
+          if (String(streamUrl).startsWith('data:') || String(streamUrl).startsWith('blob:')) {
+            customAudioElement.removeAttribute('crossorigin');
+          } else {
+            customAudioElement.crossOrigin = 'anonymous';
+          }
         }
-        customAudioElement.src = streamUrl;
+        if (customAudioElement.src !== streamUrl) {
+          customAudioElement.src = streamUrl;
+        }
         customAudioElement.volume = musicVolume;
         customAudioElement.play().catch(() => {
-          showToast('Klik untuk mengizinkan pemutaran audio kustom di browser.');
+          armMobileAudioUnlockOnFirstTouch();
+          if (!fromRemoteSync) {
+            showToast('Sentuh layar untuk mulai memutar musik latar.');
+          }
         });
       }
 
@@ -4443,14 +4523,14 @@
         }
       }
 
-      function stopLibraryAmbience() {
+      function stopLibraryAmbience(fromRemoteSync) {
         isAmbientPlaying = false;
         StorageHandler.saveMusicPreferences({
           theme: currentMusicTheme,
           volume: musicVolume,
           customUrl: customMusicUrl,
           isPlaying: false
-        });
+        }, Boolean(fromRemoteSync));
         if (!ambientMasterGain || !audioCtx) {
           stopLibraryAmbienceNodes();
           updateAmbientButtonsUI();
@@ -4717,6 +4797,84 @@
       function closeMusicSettingsModal() {
         const modal = document.getElementById('modal-music-settings');
         if (modal) modal.classList.add('hidden');
+      }
+
+      async function applyRemoteMusicConfig(remoteCfg, remoteAudioDataUrl) {
+        if (!remoteCfg || typeof remoteCfg !== 'object') return;
+        const nextTheme = remoteCfg.theme && MUSIC_THEMES[remoteCfg.theme] ? remoteCfg.theme : currentMusicTheme;
+        const nextVol = remoteCfg.volume !== undefined && !isNaN(parseFloat(remoteCfg.volume))
+          ? Math.max(0, Math.min(1, parseFloat(remoteCfg.volume)))
+          : musicVolume;
+        const nextPlaying = Boolean(remoteCfg.isPlaying);
+        const nextStamp = normalizeSafeTimestamp(remoteCfg.updatedAt) || getSafeNow();
+
+        let sourceChanged = false;
+        if (remoteAudioDataUrl && typeof remoteAudioDataUrl === 'string' && remoteAudioDataUrl.startsWith('data:')) {
+          if (customMusicUrl !== remoteAudioDataUrl) {
+            customMusicUrl = remoteAudioDataUrl;
+            sourceChanged = true;
+          }
+          await StorageHandler.saveCustomAudio(
+            remoteAudioDataUrl,
+            remoteCfg.fileName || 'Musik Latar Perpustakaan',
+            remoteCfg.mimeType || 'audio/mpeg',
+            true
+          );
+          const nameEl = document.getElementById('music-custom-file-name');
+          if (nameEl) {
+            nameEl.textContent = 'File tersimpan permanen: ' + (remoteCfg.fileName || 'Musik Latar Perpustakaan');
+          }
+        } else if (remoteCfg.customUrl && !String(remoteCfg.customUrl).startsWith('data:')) {
+          if (customMusicUrl !== remoteCfg.customUrl) {
+            customMusicUrl = remoteCfg.customUrl;
+            sourceChanged = true;
+          }
+          try {
+            localStorage.setItem(STORAGE_CUSTOM_URL_KEY, customMusicUrl);
+          } catch (e) {}
+          const urlInp = document.getElementById('music-custom-url-input');
+          if (urlInp) urlInp.value = customMusicUrl;
+        }
+
+        const themeChanged = currentMusicTheme !== nextTheme;
+        currentMusicTheme = nextTheme;
+        musicVolume = nextVol;
+
+        StorageHandler.saveMusicPreferences({
+          theme: currentMusicTheme,
+          volume: musicVolume,
+          customUrl: (!String(customMusicUrl).startsWith('data:')) ? customMusicUrl : '',
+          fileName: remoteCfg.fileName || localStorage.getItem(STORAGE_CUSTOM_FILENAME_KEY) || '',
+          isPlaying: nextPlaying,
+          updatedAt: nextStamp
+        }, true);
+
+        syncVolumeUI(Math.round(musicVolume * 100));
+        renderMusicThemesGrid();
+
+        if (nextPlaying) {
+          if (!isAmbientPlaying || themeChanged || sourceChanged) {
+            startLibraryAmbience(true);
+            if (audioCtx && audioCtx.state === 'suspended') {
+              armMobileAudioUnlockOnFirstTouch();
+            }
+          } else {
+            if (ambientMasterGain && audioCtx) {
+              try {
+                const now = audioCtx.currentTime;
+                ambientMasterGain.gain.cancelScheduledValues(now);
+                ambientMasterGain.gain.linearRampToValueAtTime(Math.max(0.0001, musicVolume * 0.45), now + 0.08);
+              } catch (e) {}
+            }
+            if (customAudioElement) {
+              customAudioElement.volume = musicVolume;
+            }
+          }
+        } else if (isAmbientPlaying) {
+          stopLibraryAmbience(true);
+        }
+
+        updateAmbientButtonsUI();
       }
 
       // Helper Pembungkus Baris Kanvas Anti-Tabrakan
@@ -5315,8 +5473,25 @@
           ];
 
           if (Array.isArray(savedBooks)) {
-            // Jaga persis buku pilihan pengguna dan saring semua buku yang telah dihapus
-            books = savedBooks.filter((b) => b && b.id && !deletedIds.has(String(b.id)));
+            const cleanSavedBooks = savedBooks.filter(
+              (b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !deletedIds.has(String(b.id))
+            );
+            // Jika pengguna telah menghapus buku bawaan atau mengunggah buku kustom di perangkat ini,
+            // tandai otomatis buku default16Books yang sudah tidak ada di savedBooks sebagai terhapus
+            // agar tidak muncul lagi saat refresh atau saat sinkronisasi!
+            const savedIdsSet = new Set(cleanSavedBooks.map((b) => String(b.id)));
+            const hasUserCustomization =
+              cleanSavedBooks.length < default16Books.length ||
+              cleanSavedBooks.some((b) => b.isCustomPdf || !default16Books.some((d) => d.id === b.id));
+            if (hasUserCustomization && cleanSavedBooks.length > 0) {
+              default16Books.forEach((defBook) => {
+                if (!savedIdsSet.has(String(defBook.id))) {
+                  markBookAsDeleted(defBook.id);
+                }
+              });
+            }
+            const updatedDeletedIds = getDeletedBookIds();
+            books = cleanSavedBooks.filter((b) => b && b.id && !updatedDeletedIds.has(String(b.id)));
           } else {
             // Hanya gunakan default saat aplikasi pertama kali diakses
             books = default16Books.filter((b) => !deletedIds.has(String(b.id)));
@@ -6668,6 +6843,19 @@
       function initFirebaseAdminAuth() {
         try {
           updateDomainFallbackHostLabels();
+          // Pulihkan sesi Admin yang sudah terverifikasi sebelumnya di perangkat ini (Laptop)
+          try {
+            const savedAdminRaw = localStorage.getItem(STORAGE_ADMIN_SESSION_KEY);
+            if (savedAdminRaw) {
+              const savedAdmin = JSON.parse(savedAdminRaw);
+              if (savedAdmin && (savedAdmin.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL) {
+                currentAdminUser = savedAdmin;
+                isAdminMode = true;
+                updateAdminModeUI();
+              }
+            }
+          } catch (e) {}
+
           if (window.firebase && window.firebase.initializeApp) {
             if (!window.firebase.apps || window.firebase.apps.length === 0) {
               window.firebase.initializeApp(firebaseConfig);
@@ -6854,6 +7042,13 @@
         if (userEmail === ADMIN_WHITELIST_EMAIL) {
           currentAdminUser = user;
           isAdminMode = true;
+          try {
+            localStorage.setItem(STORAGE_ADMIN_SESSION_KEY, JSON.stringify({
+              email: ADMIN_WHITELIST_EMAIL,
+              displayName: user.displayName || 'Administrator e-Library',
+              verifiedAt: getSafeNow()
+            }));
+          } catch (e) {}
           if (errBox) errBox.classList.add('hidden');
           if (infoBox) infoBox.classList.add('hidden');
           const passInp = document.getElementById('admin-password-input');
@@ -6864,6 +7059,9 @@
           if (isInteractiveAttempt) {
             showToast('Otentikasi Administrator berhasil! Selamat datang (' + user.email + ').');
           }
+          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.bootAndHydrateMultiAccount === 'function') {
+            window.CloudDriveSyncEngine.bootAndHydrateMultiAccount();
+          }
           if (typeof pendingAdminAction === 'function') {
             const action = pendingAdminAction;
             pendingAdminAction = null;
@@ -6873,6 +7071,9 @@
           // Whitelist Ditolak: Bukan marhaniza05@gmail.com -> Tolak & Paksa SignOut Otomatis
           currentAdminUser = null;
           isAdminMode = false;
+          try {
+            localStorage.removeItem(STORAGE_ADMIN_SESSION_KEY);
+          } catch (e) {}
           updateAdminModeUI();
           const denialMsg = 'Akses Ditolak: Akun Anda tidak memiliki izin sebagai Administrator';
           if (errText) errText.textContent = denialMsg;
@@ -7328,6 +7529,9 @@
         isAdminMode = false;
         currentAdminUser = null;
         cachedDriveAccessToken = null; // Clear OAuth access token from memory on sign-out
+        try {
+          localStorage.removeItem(STORAGE_ADMIN_SESSION_KEY);
+        } catch (e) {}
         if (window.CloudDriveSyncEngine) {
           window.CloudDriveSyncEngine.updateDriveAuthUI();
         }
@@ -10150,45 +10354,13 @@
       // =========================================================
       async function hydrateFromPermanentStorage() {
         try {
-          // -1. Sinkronkan katalog & daftar buku terhapus dari Server Database (/api/catalog) terlebih dahulu
-          try {
-            const apiRes = await fetch('/api/catalog');
-            if (apiRes.ok) {
-              const serverCat = await apiRes.json();
-              if (serverCat && Array.isArray(serverCat.deletedBookIds)) {
-                serverCat.deletedBookIds.forEach((id) => markBookAsDeleted(id));
-              }
-              const activeDel = getDeletedBookIds();
-              books = books.filter((b) => b && b.id && !activeDel.has(String(b.id)));
-
-              if (serverCat && Array.isArray(serverCat.books) && serverCat.books.length > 0) {
-                const cleanServerBooks = serverCat.books.filter((b) => b && b.id && !activeDel.has(String(b.id)));
-                cleanServerBooks.forEach((sb) => {
-                  const bIdx = books.findIndex((b) => b.id === sb.id);
-                  if (bIdx >= 0) {
-                    books[bIdx] = Object.assign({}, sb, books[bIdx]);
-                  } else {
-                    books.push(sb);
-                  }
-                });
-                if (Array.isArray(serverCat.bookOrder)) {
-                  books.sort((a, b) => {
-                    const idxA = serverCat.bookOrder.indexOf(a.id);
-                    const idxB = serverCat.bookOrder.indexOf(b.id);
-                    if (idxA === -1 && idxB === -1) return 0;
-                    if (idxA === -1) return 1;
-                    if (idxB === -1) return -1;
-                    return idxA - idxB;
-                  });
-                }
-                saveBooksToStorage();
-              }
-              const syncBadge = document.getElementById('header-cloud-sync-badge-text');
-              if (syncBadge) syncBadge.textContent = 'Cloud DB (' + books.length + ' Buku)';
-            }
-          } catch (e) {
-            console.warn('Startup /api/catalog notice:', e);
-          }
+          // -1. Bersihkan buku yang masuk daftar terhapus lokal terlebih dahulu;
+          // penyelarasan otoritatif dengan Cloud Firestore & Server dilakukan di Langkah 3 (bootAndHydrateMultiAccount)
+          // agar buku default yang sudah dihapus tidak pernah ditambahkan kembali secara prematur.
+          const activeDel = getDeletedBookIds();
+          books = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !activeDel.has(String(b.id)));
+          const syncBadge = document.getElementById('header-cloud-sync-badge-text');
+          if (syncBadge) syncBadge.textContent = 'Cloud DB (' + books.length + ' Buku)';
 
           // 0. Hydrate & kunci data rak kustom dari localStorage (elibrary_racks_data) & IndexedDB
           const localRacks = StorageHandler.loadRacksDataPermanently();
@@ -10367,12 +10539,21 @@
             const urlInp = document.getElementById('music-custom-url-input');
             if (urlInp) urlInp.value = customMusicUrl;
           }
+          if (savedMusicCfg && savedMusicCfg.isPlaying && !isAmbientPlaying) {
+            startLibraryAmbience(true);
+            if (audioCtx && audioCtx.state === 'suspended') {
+              armMobileAudioUnlockOnFirstTouch();
+            }
+          }
           updateAmbientButtonsUI();
 
-          // 3. Sinkronisasi Lintas-Akun Otomatis (Cloud Firestore + Google Drive Database)
-          // Memastikan buku & rak yang diunggah Admin terbaca di semua akun & perangkat lain!
+          // 3. Sinkronisasi Lintas-Akun & Lintas-Perangkat Otomatis (Cloud Firestore + Server + Google Drive)
+          // Memastikan buku, penghapusan buku, rak, & musik latar tersinkron secara real-time antara Laptop & HP!
           if (window.CloudDriveSyncEngine) {
             await window.CloudDriveSyncEngine.bootAndHydrateMultiAccount();
+            if (typeof window.CloudDriveSyncEngine.startRealtimeCloudWatcher === 'function') {
+              window.CloudDriveSyncEngine.startRealtimeCloudWatcher();
+            }
           }
         } catch (err) {
           console.warn('Hydration storage warning:', err);
@@ -10640,12 +10821,7 @@
           return false;
         }
 
-        let firestoreWriteQuotaExceeded = false;
-
-        async function putFirestoreDocument(collectionName, docId, dataObj) {
-          if (firestoreWriteQuotaExceeded) {
-            return false;
-          }
+        async function putFirestoreDocument(collectionName, docId, dataObj, _isRetry) {
           const safeId = encodeURIComponent(docId);
           const url = FIRESTORE_BASE_URL + '/' + collectionName + '/' + safeId;
           const fields = {};
@@ -10659,9 +10835,9 @@
               body: JSON.stringify({ fields: fields })
             });
             if (!res.ok) {
-              if (res.status === 429) {
-                firestoreWriteQuotaExceeded = true;
-                return false;
+              if (res.status === 429 && !_isRetry) {
+                await new Promise((r) => setTimeout(r, 650));
+                return await putFirestoreDocument(collectionName, docId, dataObj, true);
               }
               const errBody = await res.text();
               handleFirestoreError(new Error(errBody || res.statusText), 'write', collectionName + '/' + docId);
@@ -11058,14 +11234,247 @@
           return true;
         }
 
+        let musicSyncTimer = null;
+        let lastSyncedAudioStamp = 0;
+        let lastUploadedAudioHash = '';
+        let realtimeWatchInterval = null;
+        let isPollingRealtime = false;
+        let lastKnownCloudFingerprint = '';
+
+        function splitAudioIntoChunks(dataUrl, maxChunkSize) {
+          const limit = maxChunkSize || 650000;
+          if (!dataUrl || typeof dataUrl !== 'string') return [];
+          const out = [];
+          for (let i = 0; i < dataUrl.length; i += limit) {
+            out.push(dataUrl.slice(i, i + limit));
+          }
+          return out;
+        }
+
+        async function pushMusicAndSettingsToCloud() {
+          try {
+            const musicCfg = StorageHandler.loadMusicConfig() || {
+              theme: currentMusicTheme || 'library',
+              volume: musicVolume,
+              customUrl: customMusicUrl || '',
+              fileName: '',
+              isPlaying: isAmbientPlaying,
+              updatedAt: getSafeNow()
+            };
+            const stamp = normalizeSafeTimestamp(musicCfg.updatedAt) || getSafeNow();
+            const customAudio = await StorageHandler.getCustomAudio();
+            const hasDataAudio = Boolean(customAudio && customAudio.audioDataUrl && String(customAudio.audioDataUrl).startsWith('data:'));
+
+            // 1. Kirim ke Server /api/music
+            try {
+              await fetch('/api/music', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  musicConfig: Object.assign({}, musicCfg, {
+                    hasCustomAudio: hasDataAudio,
+                    fileName: (customAudio && customAudio.fileName) || musicCfg.fileName || '',
+                    mimeType: (customAudio && customAudio.mimeType) || 'audio/mpeg',
+                    updatedAt: stamp
+                  }),
+                  customAudio: hasDataAudio ? {
+                    audioDataUrl: customAudio.audioDataUrl,
+                    fileName: customAudio.fileName || musicCfg.fileName || 'Musik Kustom',
+                    mimeType: customAudio.mimeType || 'audio/mpeg',
+                    updatedAt: stamp
+                  } : undefined,
+                  updatedAt: stamp
+                })
+              });
+            } catch (e) {}
+
+            // 2. Jika ada file musik kustom (data:audio/...), unggah potongan chunk ke library_pages/elibrary-system-settings_p1..N
+            let audioChunksCount = 0;
+            if (hasDataAudio) {
+              const rawAudio = String(customAudio.audioDataUrl);
+              const audioHash = rawAudio.length + ':' + rawAudio.slice(0, 64) + ':' + rawAudio.slice(-64);
+              const chunks = splitAudioIntoChunks(rawAudio, 650000);
+              audioChunksCount = chunks.length;
+              if (audioHash !== lastUploadedAudioHash) {
+                for (let idx = 0; idx < chunks.length; idx++) {
+                  const pageNum = idx + 1;
+                  await putFirestoreDocument('library_pages', SYSTEM_SETTINGS_DOC_ID + '_p' + pageNum, {
+                    bookId: SYSTEM_SETTINGS_DOC_ID,
+                    pageNumber: pageNum,
+                    title: 'Audio Chunk ' + pageNum + '/' + chunks.length,
+                    dataUrl: chunks[idx],
+                    isOriginalPdfPage: true,
+                    adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
+                    updatedAt: stamp
+                  });
+                }
+                lastUploadedAudioHash = audioHash;
+              }
+            }
+
+            // 3. Simpan konfigurasi sistem (deletedBookIds, bookOrder, musicConfig) ke library_books/elibrary-system-settings
+            const cleanBooks = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id)));
+            const settingsPayload = {
+              isSystemSettings: true,
+              deletedBookIds: Array.from(getDeletedBookIds()),
+              bookOrder: cleanBooks.map((b) => b.id),
+              musicConfig: {
+                theme: musicCfg.theme || 'library',
+                volume: Number.isFinite(musicCfg.volume) ? musicCfg.volume : 0.5,
+                customUrl: (!String(musicCfg.customUrl || '').startsWith('data:')) ? (musicCfg.customUrl || '') : '',
+                fileName: (customAudio && customAudio.fileName) || musicCfg.fileName || '',
+                mimeType: (customAudio && customAudio.mimeType) || 'audio/mpeg',
+                isPlaying: Boolean(musicCfg.isPlaying),
+                hasCustomAudioChunks: audioChunksCount > 0,
+                audioChunkCount: audioChunksCount,
+                updatedAt: stamp
+              },
+              updatedAt: getSafeNow()
+            };
+
+            await putFirestoreDocument('library_books', SYSTEM_SETTINGS_DOC_ID, {
+              id: SYSTEM_SETTINGS_DOC_ID,
+              shelfId: 'rak-01',
+              title: 'Pengaturan Sistem & Musik Latar e-Library',
+              author: 'System Sync',
+              description: JSON.stringify({
+                deletedBookIds: settingsPayload.deletedBookIds,
+                musicConfig: settingsPayload.musicConfig
+              }).slice(0, 4800),
+              kicker: 'SYSTEM_CONFIG',
+              accent: '#0B3B2C',
+              spineColor: '#0B3B2C',
+              pageCount: Math.max(1, audioChunksCount || 1),
+              passwordProtected: false,
+              password: '',
+              coverUrl: '',
+              hasCustomCoverImage: false,
+              isCustomPdf: false,
+              editablePagesJson: JSON.stringify(settingsPayload).slice(0, 220000),
+              driveFileId: '',
+              drivePdfFileId: '',
+              updatedBy: ADMIN_WHITELIST_EMAIL,
+              adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
+              updatedAt: getSafeNow()
+            });
+            return true;
+          } catch (err) {
+            console.warn('pushMusicAndSettingsToCloud notice:', err);
+            return false;
+          }
+        }
+
+        function scheduleMusicSync() {
+          if (musicSyncTimer) clearTimeout(musicSyncTimer);
+          musicSyncTimer = setTimeout(() => {
+            pushMusicAndSettingsToCloud();
+          }, 250);
+        }
+
+        async function pullMusicAndSettingsFromCloud() {
+          try {
+            let sysDoc = null;
+            try {
+              sysDoc = await getFirestoreDocument('library_books', SYSTEM_SETTINGS_DOC_ID);
+            } catch (e) {}
+
+            let serverMusic = null;
+            try {
+              const mRes = await fetch('/api/music');
+              if (mRes.ok) serverMusic = await mRes.json();
+            } catch (e) {}
+
+            let parsedSettings = null;
+            if (sysDoc && sysDoc.editablePagesJson) {
+              try {
+                parsedSettings = JSON.parse(sysDoc.editablePagesJson);
+              } catch (e) {}
+            }
+            if (!parsedSettings && sysDoc && sysDoc.description) {
+              try {
+                parsedSettings = JSON.parse(sysDoc.description);
+              } catch (e) {}
+            }
+
+            // Terapkan deletedBookIds dari Cloud System Settings
+            let deletionsChanged = false;
+            if (parsedSettings && Array.isArray(parsedSettings.deletedBookIds)) {
+              const beforeSize = getDeletedBookIds().size;
+              parsedSettings.deletedBookIds.forEach((id) => markBookAsDeleted(id));
+              if (getDeletedBookIds().size !== beforeSize) {
+                deletionsChanged = true;
+              }
+            }
+
+            // Pilih musicConfig terbaru antara Firestore & Server
+            const cloudMusicCfg = parsedSettings && parsedSettings.musicConfig ? parsedSettings.musicConfig : null;
+            const srvMusicCfg = serverMusic && serverMusic.musicConfig ? serverMusic.musicConfig : null;
+            const cloudMusicTs = normalizeSafeTimestamp(cloudMusicCfg && cloudMusicCfg.updatedAt);
+            const srvMusicTs = normalizeSafeTimestamp(srvMusicCfg && srvMusicCfg.updatedAt);
+
+            const remoteMusicCfg = (cloudMusicCfg && cloudMusicTs >= srvMusicTs)
+              ? cloudMusicCfg
+              : (srvMusicCfg || cloudMusicCfg);
+
+            if (remoteMusicCfg) {
+              const remoteTs = normalizeSafeTimestamp(remoteMusicCfg.updatedAt);
+              const localCfg = StorageHandler.loadMusicConfig();
+              const localTs = normalizeSafeTimestamp(localCfg && localCfg.updatedAt);
+              const stateDiffers =
+                !localCfg ||
+                remoteTs > localTs ||
+                (localTs === 0 && (remoteMusicCfg.isPlaying !== isAmbientPlaying || remoteMusicCfg.theme !== currentMusicTheme));
+
+              if (stateDiffers) {
+                let remoteAudioDataUrl = '';
+                if (serverMusic && serverMusic.customAudio && serverMusic.customAudio.audioDataUrl) {
+                  remoteAudioDataUrl = serverMusic.customAudio.audioDataUrl;
+                } else if (
+                  remoteMusicCfg.hasCustomAudioChunks &&
+                  Number(remoteMusicCfg.audioChunkCount) > 0 &&
+                  remoteTs !== lastSyncedAudioStamp
+                ) {
+                  const chunkCount = Math.min(25, Math.max(1, parseInt(remoteMusicCfg.audioChunkCount, 10) || 1));
+                  const chunkPromises = [];
+                  for (let c = 1; c <= chunkCount; c++) {
+                    chunkPromises.push(getFirestoreDocument('library_pages', SYSTEM_SETTINGS_DOC_ID + '_p' + c));
+                  }
+                  const chunkDocs = await Promise.all(chunkPromises);
+                  const validChunks = chunkDocs
+                    .filter((d) => d && d.dataUrl)
+                    .sort((a, b) => (a.pageNumber || 0) - (b.pageNumber || 0));
+                  if (validChunks.length === chunkCount) {
+                    remoteAudioDataUrl = validChunks.map((d) => d.dataUrl).join('');
+                    lastSyncedAudioStamp = remoteTs;
+                  }
+                }
+                await applyRemoteMusicConfig(remoteMusicCfg, remoteAudioDataUrl);
+              }
+            }
+
+            return {
+              deletionsChanged: deletionsChanged,
+              parsedSettings: parsedSettings
+            };
+          } catch (err) {
+            console.warn('pullMusicAndSettingsFromCloud notice:', err);
+            return { deletionsChanged: false, parsedSettings: null };
+          }
+        }
+
         // =========================================================
         // SINKRONISASI CLOUD FIRESTORE + GOOGLE DRIVE PARALEL CEPAT
         // =========================================================
         async function pushCatalogToCloud(shelvesList, booksList, onByteProgress) {
           const activeShelves = Array.isArray(shelvesList) ? shelvesList : shelves;
-          const activeBooks = Array.isArray(booksList) ? booksList : books;
+          const rawBooks = Array.isArray(booksList) ? booksList : books;
+          const deletedSet = getDeletedBookIds();
+          const activeBooks = rawBooks.filter(
+            (b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !deletedSet.has(String(b.id))
+          );
+          const safeStamp = getSafeNow();
 
-          // 1. Sinkronkan seketika ke Database Server Pusat (Zero-quota, instant & terpadu ke seluruh akun)
+          // 1. Sinkronkan seketika ke Database Server Pusat
           try {
             await fetch('/api/catalog', {
               method: 'POST',
@@ -11074,9 +11483,11 @@
                 shelves: activeShelves,
                 books: activeBooks,
                 bookOrder: activeBooks.map((b) => b.id),
+                deletedBookIds: Array.from(deletedSet),
+                musicConfig: StorageHandler.loadMusicConfig(),
                 driveFolderId: String(driveFolderId || ''),
                 driveCatalogFileId: String(driveCatalogFileId || ''),
-                updatedAt: Math.floor(Date.now()),
+                updatedAt: safeStamp,
                 updatedBy: ADMIN_WHITELIST_EMAIL
               })
             });
@@ -11092,38 +11503,57 @@
             }
           }
 
-          const slimBooksMeta = activeBooks.map((b) => {
-            normalizeBookLockState(b);
-            return {
-              id: String(b.id || '').slice(0, 120),
-              shelfId: String(b.shelfId || 'rak-01').slice(0, 120),
-              title: String(b.title || 'Buku Koleksi').slice(0, 480),
-              author: String(b.author || 'Anonim').slice(0, 280),
-              description: String(b.description || '').slice(0, 1500),
-              kicker: String(b.kicker || '').slice(0, 200),
-              accent: String(b.accent || '#0B3B2C').slice(0, 32),
-              spineColor: String(b.spineColor || b.accent || '#0B3B2C').slice(0, 32),
-              pageCount: Math.max(1, Math.min(2000, parseInt(b.pageCount, 10) || 1)),
-              passwordProtected: Boolean(b.passwordProtected && b.password),
-              password: b.passwordProtected ? String(b.password || '').slice(0, 180) : '',
-              hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
-              isCustomPdf: Boolean(b.isCustomPdf),
-              driveFileId: String(b.driveFileId || '').slice(0, 250),
-              drivePdfFileId: String(b.drivePdfFileId || '').slice(0, 250)
-            };
-          });
+          // Buat thumbnail sampul ringkas (<= 28KB) untuk buku kustom agar sampul langsung tampil instan di HP
+          const slimBooksMeta = await Promise.all(
+            activeBooks.map(async (b) => {
+              normalizeBookLockState(b);
+              const isCustom = Boolean(b.isCustomPdf || b.hasCustomCoverImage || String(b.id).startsWith('book-pdf-'));
+              let compactCover = '';
+              if (isCustom && b.coverUrl) {
+                compactCover = await ensureCloudSafeImageDataUrl(b.coverUrl, 28000, b.id + '_cat_thumb');
+              }
+              return {
+                id: String(b.id || '').slice(0, 120),
+                shelfId: String(b.shelfId || 'rak-01').slice(0, 120),
+                title: String(b.title || 'Buku Koleksi').slice(0, 480),
+                author: String(b.author || 'Anonim').slice(0, 280),
+                description: String(b.description || '').slice(0, 1200),
+                kicker: String(b.kicker || '').slice(0, 200),
+                accent: String(b.accent || '#0B3B2C').slice(0, 32),
+                spineColor: String(b.spineColor || b.accent || '#0B3B2C').slice(0, 32),
+                pageCount: Math.max(1, Math.min(2000, parseInt(b.pageCount, 10) || 1)),
+                passwordProtected: Boolean(b.passwordProtected && b.password),
+                password: b.passwordProtected ? String(b.password || '').slice(0, 180) : '',
+                hasCustomCoverImage: Boolean(b.hasCustomCoverImage || b.isCustomPdf),
+                isCustomPdf: Boolean(b.isCustomPdf),
+                coverUrl: compactCover,
+                driveFileId: String(b.driveFileId || '').slice(0, 250),
+                drivePdfFileId: String(b.drivePdfFileId || '').slice(0, 250)
+              };
+            })
+          );
+
+          let booksMetaStr = JSON.stringify(slimBooksMeta);
+          if (booksMetaStr.length > 580000) {
+            const ultraSlim = slimBooksMeta.map((bm) => Object.assign({}, bm, { coverUrl: '' }));
+            booksMetaStr = JSON.stringify(ultraSlim);
+          }
 
           const payload = {
             id: 'main',
             shelvesJson: JSON.stringify(activeShelves).slice(0, 240000),
-            booksMetaJson: JSON.stringify(slimBooksMeta).slice(0, 600000),
+            booksMetaJson: booksMetaStr.slice(0, 600000),
             bookOrderJson: JSON.stringify(activeBooks.map((b) => b.id)).slice(0, 55000),
             driveFolderId: String(driveFolderId || '').slice(0, 250),
             driveCatalogFileId: String(driveCatalogFileId || '').slice(0, 250),
             updatedBy: ADMIN_WHITELIST_EMAIL,
             adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
-            updatedAt: Math.floor(Date.now())
+            updatedAt: safeStamp
           };
+
+          // Sinkronkan juga daftar buku terhapus & musik latar ke dokumen pengaturan sistem
+          pushMusicAndSettingsToCloud().catch(() => {});
+
           try {
             return await putFirestoreDocument('library_catalog', 'main', payload);
           } catch (err) {
@@ -11133,7 +11563,7 @@
         }
 
         async function pushBookAndPagesToCloud(bookId, record, progressHooks) {
-          if (!bookId || !record) return false;
+          if (!bookId || bookId === SYSTEM_SETTINGS_DOC_ID || !record) return false;
           const safeBookId = String(bookId).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
           const hooks = progressHooks || {};
           const reportProgress = (pctWithinBook, substep, bytesInfo) => {
@@ -11149,6 +11579,7 @@
               : record.pagesDataUrls) || [];
 
           const isPreset = isUntouchedPresetBook(bookId, record);
+          const safeStamp = normalizeSafeTimestamp(record.updatedAt) || getSafeNow();
 
           // 1. Jika buku preset bawaan yang tidak diubah jadi PDF, cukup sinkronkan metadata (sangat instan < 150ms!)
           if (isPreset) {
@@ -11186,7 +11617,7 @@
               drivePdfFileId: String(record.drivePdfFileId || '').slice(0, 250),
               updatedBy: ADMIN_WHITELIST_EMAIL,
               adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
-              updatedAt: Math.floor(Number(record.updatedAt) || Date.now())
+              updatedAt: safeStamp
             };
             const ok = await putFirestoreDocument('library_books', safeBookId, bookDoc);
             setBookRowProgress(bookId, ok ? 'done' : 'error', 100, ok ? 'Tersinkron di Cloud' : 'Gagal Simpan Cloud');
@@ -11194,10 +11625,61 @@
           }
 
           // 2. Untuk Buku Unggahan PDF / Kustom Admin:
-          // Tahap A (0% - 25%): Kompresi paralel seluruh lembaran halaman agar ukuran ringan & cepat diunggah
-          reportProgress(5, 'Mengoptimalkan ' + rawSrcPages.length + ' halaman flipbook...', 'Kompresi Kanvas Cepat');
+          // LANGKAH PRIORITAS 0: Unggah Sampul & Dokumen Buku (library_books/{safeBookId}) TERLEBIH DAHULU
+          // supaya sampul & judul buku langsung tampil di HP dalam < 1 detik tanpa menunggu ratusan halaman selesai!
+          reportProgress(4, 'Menyimpan sampul & metadata buku ke Cloud...', 'Prioritas Sampul');
+          const initialRawCover =
+            record.coverUrl ||
+            (rawSrcPages[0] && rawSrcPages[0].dataUrl ? rawSrcPages[0].dataUrl : '') ||
+            '';
+          const initialSafeCoverUrl = await ensureCloudSafeImageDataUrl(initialRawCover, 380000, safeBookId + '_cover');
+          const slimEditablePages = Array.isArray(record.editablePages)
+            ? record.editablePages.map((p, idx) => ({
+                pageNumber: p.pageNumber || idx + 1,
+                kicker: p.kicker || '',
+                title: p.title || '',
+                subtitle: p.subtitle || '',
+                body: p.body || '',
+                isOriginalPdfPage: Boolean(p.isOriginalPdfPage || p.customImageDataUrl)
+              }))
+            : [];
+
+          const initialBookDoc = {
+            id: safeBookId,
+            shelfId: String(record.shelfId || 'rak-01').slice(0, 120),
+            title: String(record.title || 'Buku Tanpa Judul').slice(0, 480),
+            author: String(record.author || 'Anonim').slice(0, 280),
+            description: String(record.description || '').slice(0, 4500),
+            kicker: String(record.kicker || '').slice(0, 200),
+            accent: String(record.accent || '#0B3B2C').slice(0, 48),
+            spineColor: String(record.spineColor || record.accent || '#0B3B2C').slice(0, 48),
+            pageCount: Math.max(1, Math.min(2000, parseInt(rawSrcPages.length || record.pageCount || 1, 10) || 1)),
+            passwordProtected: Boolean(record.passwordProtected),
+            password: String(record.password || '').slice(0, 180),
+            coverUrl: initialSafeCoverUrl,
+            hasCustomCoverImage: Boolean(record.hasCustomCoverImage || record.isCustomPdf || initialSafeCoverUrl),
+            isCustomPdf: Boolean(record.isCustomPdf),
+            editablePagesJson: JSON.stringify(slimEditablePages).slice(0, 200000),
+            driveFileId: String(record.driveFileId || '').slice(0, 250),
+            drivePdfFileId: String(record.drivePdfFileId || '').slice(0, 250),
+            updatedBy: ADMIN_WHITELIST_EMAIL,
+            adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
+            updatedAt: safeStamp
+          };
+
+          await Promise.all([
+            putFirestoreDocument('library_books', safeBookId, initialBookDoc).catch(() => false),
+            fetch('/api/books/' + safeBookId, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(initialBookDoc)
+            }).catch(() => {})
+          ]);
+
+          // Tahap A (8% - 28%): Kompresi paralel seluruh lembaran halaman agar ukuran ringan & cepat diunggah
+          reportProgress(8, 'Mengoptimalkan ' + rawSrcPages.length + ' halaman flipbook...', 'Kompresi Kanvas Cepat');
           const compressedPages = await compressBookPagesParallel(safeBookId, rawSrcPages, (donePages, totalPages) => {
-            const pct = Math.round((donePages / Math.max(1, totalPages)) * 22);
+            const pct = 8 + Math.round((donePages / Math.max(1, totalPages)) * 20);
             reportProgress(
               pct,
               'Mengoptimalkan halaman (' + donePages + '/' + totalPages + ')...',
@@ -11205,13 +11687,20 @@
             );
           });
 
-          const rawCover =
-            record.coverUrl ||
-            (compressedPages[0] && compressedPages[0].dataUrl ? compressedPages[0].dataUrl : '') ||
-            '';
-          const safeCoverUrl = await ensureCloudSafeImageDataUrl(rawCover, 420000, safeBookId + '_cover');
+          const safeCoverUrl = initialSafeCoverUrl || (compressedPages[0] && compressedPages[0].dataUrl) || '';
 
-          // Tahap B (25% - 100%): Jalankan Upload Google Drive (dengan XHR byte progress) & Upload Cloud Firestore (batch paralel 12) secara BERSAMAAN!
+          // Simpan bundel penuh (termasuk pagesDataUrls) ke server /api/books/:id agar perangkat lain bisa mengunduh 1x request
+          fetch('/api/books/' + safeBookId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({}, initialBookDoc, {
+              coverUrl: safeCoverUrl,
+              pageCount: Math.max(1, compressedPages.length || initialBookDoc.pageCount),
+              pagesDataUrls: compressedPages
+            }))
+          }).catch(() => {});
+
+          // Tahap B (28% - 100%): Jalankan Upload Google Drive & Upload Cloud Firestore secara BERSAMAAN
           let driveFraction = cachedDriveAccessToken ? 0 : 1;
           let firestorePagesDone = 0;
           const totalPagesCount = Math.max(1, compressedPages.length);
@@ -11222,7 +11711,7 @@
             const combinedFraction = cachedDriveAccessToken
               ? driveFraction * 0.45 + firestoreFraction * 0.55
               : firestoreFraction;
-            const pct = 25 + Math.round(combinedFraction * 72);
+            const pct = 28 + Math.round(combinedFraction * 70);
             const sub =
               customSubstep ||
               'Mengunggah ke Drive & Cloud (Hal ' + firestorePagesDone + '/' + totalPagesCount + ')...';
@@ -11250,7 +11739,7 @@
               firestorePagesDone = 1;
               return;
             }
-            const batchSize = 12; // 12 halaman paralel sekaligus agar 3x lebih cepat!
+            const batchSize = 8;
             for (let i = 0; i < compressedPages.length; i += batchSize) {
               const slice = compressedPages.slice(i, i + batchSize);
               await Promise.all(
@@ -11268,7 +11757,7 @@
                     dataUrl: String(pageObj.dataUrl).slice(0, 880000),
                     isOriginalPdfPage: Boolean(pageObj.isOriginalPdfPage !== false),
                     adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
-                    updatedAt: Math.floor(Date.now())
+                    updatedAt: safeStamp
                   });
                   firestorePagesDone++;
                   updateCombinedProgress();
@@ -11283,71 +11772,24 @@
             record.driveFileId = driveIds.driveFileId;
             const targetBook = books.find((b) => b.id === bookId);
             if (targetBook) targetBook.driveFileId = driveIds.driveFileId;
+            initialBookDoc.driveFileId = String(driveIds.driveFileId).slice(0, 250);
+            await putFirestoreDocument('library_books', safeBookId, initialBookDoc).catch(() => false);
           }
 
-          const slimEditablePages = Array.isArray(record.editablePages)
-            ? record.editablePages.map((p, idx) => ({
-                pageNumber: p.pageNumber || idx + 1,
-                kicker: p.kicker || '',
-                title: p.title || '',
-                subtitle: p.subtitle || '',
-                body: p.body || '',
-                isOriginalPdfPage: Boolean(p.isOriginalPdfPage || p.customImageDataUrl)
-              }))
-            : [];
-
-          const bookDoc = {
-            id: safeBookId,
-            shelfId: String(record.shelfId || 'rak-01').slice(0, 120),
-            title: String(record.title || 'Buku Tanpa Judul').slice(0, 480),
-            author: String(record.author || 'Anonim').slice(0, 280),
-            description: String(record.description || '').slice(0, 4500),
-            kicker: String(record.kicker || '').slice(0, 200),
-            accent: String(record.accent || '#0B3B2C').slice(0, 48),
-            spineColor: String(record.spineColor || record.accent || '#0B3B2C').slice(0, 48),
-            pageCount: Math.max(1, Math.min(2000, parseInt(compressedPages.length || record.pageCount || 1, 10) || 1)),
-            passwordProtected: Boolean(record.passwordProtected),
-            password: String(record.password || '').slice(0, 180),
-            coverUrl: safeCoverUrl,
-            hasCustomCoverImage: Boolean(record.hasCustomCoverImage || record.isCustomPdf),
-            isCustomPdf: Boolean(record.isCustomPdf),
-            editablePagesJson: JSON.stringify(slimEditablePages).slice(0, 200000),
-            driveFileId: String(record.driveFileId || '').slice(0, 250),
-            drivePdfFileId: String(record.drivePdfFileId || '').slice(0, 250),
-            updatedBy: ADMIN_WHITELIST_EMAIL,
-            adminAuthHash: ADMIN_VERIFIED_RULE_HASH,
-            updatedAt: Math.floor(Number(record.updatedAt) || Date.now())
-          };
-
-          try {
-            await fetch('/api/books/' + safeBookId, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(bookDoc)
-            });
-          } catch (e) {}
-
-          let okBook = false;
-          try {
-            okBook = await putFirestoreDocument('library_books', safeBookId, bookDoc);
-          } catch (err) {
-            console.warn('Firestore book write notice:', err);
-          }
-          const isPersisted = Boolean(okBook || true);
           setBookRowProgress(
             bookId,
             'done',
             100,
             (compressedPages.length || 1) + ' Hal Tersimpan di Database Cloud' + (record.driveFileId ? ' & Google Drive' : '')
           );
-          return isPersisted;
+          return true;
         }
 
         function scheduleCatalogSync(shelvesData, booksData) {
           if (catalogSyncTimer) clearTimeout(catalogSyncTimer);
           catalogSyncTimer = setTimeout(() => {
             pushCatalogToCloud(shelvesData, booksData);
-          }, 300);
+          }, 250);
         }
 
         function scheduleBookSync(bookId, record) {
@@ -11355,12 +11797,14 @@
           bookSyncTimers[bookId] = setTimeout(async () => {
             const bookTitle = (record && record.title) || bookId;
             updateRealProgressUI({
-              pct: 8,
+              pct: 5,
               title: 'Mengunggah "' + bookTitle + '" ke Cloud & Google Drive...',
-              substep: 'Memulai sinkronisasi otomatis...',
+              substep: 'Menyinkronkan katalog & sampul seketika...',
               bytesText: 'Memproses...',
               isWorking: true
             });
+            // Publikasikan katalog seketika terlebih dahulu agar perangkat lain (HP) langsung melihat buku baru!
+            await pushCatalogToCloud(shelves, books);
             await pushBookAndPagesToCloud(bookId, record, {
               onBookProgress: (pct, substep, bytesText) => {
                 updateRealProgressUI({
@@ -11381,12 +11825,17 @@
               isWorking: false
             });
             renderCloudDriveBooksStatusList();
-          }, 200);
+          }, 150);
         }
 
         async function deleteBookEverywhere(bookId, pageCount, prevRec) {
+          if (!bookId || bookId === SYSTEM_SETTINGS_DOC_ID) return;
+          markBookAsDeleted(bookId);
           const safeBookId = String(bookId).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
-          await deleteFirestoreDocument('library_books', safeBookId);
+          await Promise.all([
+            deleteFirestoreDocument('library_books', safeBookId),
+            pushCatalogToCloud(shelves, books)
+          ]);
           const maxPages = Math.min(Math.max(pageCount || 15, 10), 80);
           const batch = [];
           for (let p = 1; p <= maxPages; p++) {
@@ -11407,17 +11856,41 @@
               }).catch(() => {});
             }
           }
-          await pushCatalogToCloud(shelves, books);
           renderCloudDriveBooksStatusList();
         }
 
-        // Tarik lembaran halaman buku dari Cloud Firestore / Google Drive saat dibuka di akun lain
+        // Tarik lembaran halaman buku dari Server / Cloud Firestore / Google Drive saat dibuka di perangkat lain (HP)
         async function fetchBookPagesFromCloudOrDrive(book) {
           if (!book || !book.id) return [];
           const bookId = book.id;
           const safeBookId = String(bookId).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
 
-          // 1. Jika buku memiliki driveFileId publik di Google Drive, unduh berkas JSON bundel secara langsung (1 request cepat!)
+          // 0. Coba unduh bundel penuh dari Server /api/books/{safeBookId} terlebih dahulu (1 request cepat!)
+          try {
+            const srvRes = await fetch('/api/books/' + encodeURIComponent(safeBookId));
+            if (srvRes.ok) {
+              const srvJson = await srvRes.json();
+              const srvPages = (Array.isArray(srvJson.originalPagesDataUrls) && srvJson.originalPagesDataUrls.length > 0)
+                ? srvJson.originalPagesDataUrls
+                : (Array.isArray(srvJson.pagesDataUrls) ? srvJson.pagesDataUrls : []);
+              if (srvPages.length > 0) {
+                await StorageHandler.saveBookAsset(bookId, {
+                  _skipCloudSync: true,
+                  bookMeta: book,
+                  coverUrl: srvJson.coverUrl || srvPages[0].dataUrl,
+                  hasCustomCoverImage: true,
+                  pagesDataUrls: srvPages,
+                  originalPagesDataUrls: srvPages,
+                  editablePages: srvJson.editablePages || [],
+                  isCustomPdf: Boolean(srvJson.isCustomPdf || book.isCustomPdf),
+                  driveFileId: srvJson.driveFileId || book.driveFileId || ''
+                });
+                return srvPages;
+              }
+            }
+          } catch (e) {}
+
+          // 1. Jika buku memiliki driveFileId publik di Google Drive, unduh berkas JSON bundel secara langsung
           if (book.driveFileId) {
             try {
               const driveDownloadUrl =
@@ -11447,7 +11920,7 @@
           }
 
           // 2. Unduh dari Cloud Firestore library_pages/{bookId}_p1..pN secara paralel (batch 12)
-          const totalPages = Math.max(1, Math.min(book.pageCount || 12, 120));
+          const totalPages = Math.max(1, Math.min(book.pageCount || 12, 450));
           const fetchedPages = [];
           const batchSize = 12;
           for (let i = 1; i <= totalPages; i += batchSize) {
@@ -11456,8 +11929,10 @@
               promises.push(getFirestoreDocument('library_pages', safeBookId + '_p' + p));
             }
             const results = await Promise.all(promises);
+            let batchFoundAny = false;
             results.forEach((doc) => {
               if (doc && doc.dataUrl) {
+                batchFoundAny = true;
                 fetchedPages.push({
                   pageNumber: doc.pageNumber || fetchedPages.length + 1,
                   title: doc.title || ('Halaman ' + (doc.pageNumber || fetchedPages.length + 1)),
@@ -11466,6 +11941,8 @@
                 });
               }
             });
+            // Jika dua batch berturut-turut kosong setelah halaman awal ditemukan, hentikan lebih awal
+            if (!batchFoundAny && i > 24) break;
           }
 
           if (fetchedPages.length > 0) {
@@ -11500,9 +11977,11 @@
           return [];
         }
 
-        // Tarik katalog rak & koleksi buku dari Cloud Firestore saat aplikasi dibuka di akun/perangkat mana pun
+        // Tarik katalog rak, koleksi buku, penghapusan buku, & musik latar dari Cloud Firestore + Server
         async function pullCatalogAndBooksFromCloud() {
-          // Pastikan rak lokal dari elibrary_racks_data telah dimuat sebagai sumber kebenaran lokal sebelum merge
+          // 0. Tarik pengaturan sistem (deletedBookIds & musicConfig) terlebih dahulu
+          await pullMusicAndSettingsFromCloud();
+
           const persistedLocalRacks = StorageHandler.loadRacksDataPermanently();
           if (Array.isArray(persistedLocalRacks) && persistedLocalRacks.length > 0) {
             const persistedIsCustom = !isShelvesListEqualToDefaultTemplate(persistedLocalRacks) ||
@@ -11522,10 +12001,10 @@
             !isShelvesListEqualToDefaultTemplate(shelves) ||
             shelves.some((s) => s && (s.isCustomEdited || !isShelfEqualToDefaultTemplate(s)))
           );
-          const localRacksUpdatedAt = Math.max(
+          const localRacksUpdatedAt = normalizeSafeTimestamp(Math.max(
             Number(localRacksMeta.updatedAt) || 0,
             ...shelves.map((s) => Number((s && s.updatedAt) || 0))
-          );
+          ));
 
           let serverCatalog = null;
           try {
@@ -11550,25 +12029,29 @@
             pill.className = 'text-[10px] font-mono-tabular font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50';
           }
 
-          // Prioritaskan serverCatalog jika memiliki koleksi buku lengkap (16 buku) atau lebih baru dari snapshot Firestore
-          const serverBooksCount = (serverCatalog && Array.isArray(serverCatalog.books)) ? serverCatalog.books.length : 0;
-          let firestoreBooksCount = 0;
-          if (catalogDoc && catalogDoc.booksMetaJson) {
-            try { firestoreBooksCount = JSON.parse(catalogDoc.booksMetaJson).length; } catch (e) {}
-          }
-
           if (serverCatalog && Array.isArray(serverCatalog.deletedBookIds)) {
             serverCatalog.deletedBookIds.forEach((id) => markBookAsDeleted(id));
           }
+          if (serverCatalog && serverCatalog.musicConfig) {
+            const localMusicTs = normalizeSafeTimestamp((StorageHandler.loadMusicConfig() || {}).updatedAt);
+            const srvMusicTs = normalizeSafeTimestamp(serverCatalog.musicConfig.updatedAt);
+            if (srvMusicTs > localMusicTs) {
+              await applyRemoteMusicConfig(serverCatalog.musicConfig, '');
+            }
+          }
 
-          if (serverCatalog && (serverBooksCount >= firestoreBooksCount || !catalogDoc)) {
+          const srvUpdatedAt = normalizeSafeTimestamp(serverCatalog && serverCatalog.updatedAt);
+          const fsUpdatedAt = normalizeSafeTimestamp(catalogDoc && catalogDoc.updatedAt);
+
+          // Gunakan serverCatalog hanya bila benar-benar lebih baru dari Firestore catalogDoc atau bila Firestore kosong
+          if (serverCatalog && (!catalogDoc || srvUpdatedAt > fsUpdatedAt)) {
             catalogDoc = {
               shelvesJson: JSON.stringify(serverCatalog.shelves),
               booksMetaJson: JSON.stringify(serverCatalog.books),
-              bookOrderJson: JSON.stringify(serverCatalog.bookOrder || serverCatalog.books.map((b) => b.id)),
+              bookOrderJson: JSON.stringify(serverCatalog.bookOrder || (serverCatalog.books || []).map((b) => b.id)),
               driveFolderId: serverCatalog.driveFolderId || (catalogDoc && catalogDoc.driveFolderId) || driveFolderId || '',
               driveCatalogFileId: serverCatalog.driveCatalogFileId || (catalogDoc && catalogDoc.driveCatalogFileId) || driveCatalogFileId || '',
-              updatedAt: serverCatalog.updatedAt || Date.now(),
+              updatedAt: srvUpdatedAt,
               source: 'server_cloud'
             };
           }
@@ -11583,20 +12066,19 @@
             if (catalogDoc.driveCatalogFileId) driveCatalogFileId = catalogDoc.driveCatalogFileId;
             updateDriveAuthUI();
 
-            const remoteCatalogUpdatedAt = Number(catalogDoc.updatedAt) || 0;
+            const remoteCatalogUpdatedAt = normalizeSafeTimestamp(catalogDoc.updatedAt);
 
             if (catalogDoc.shelvesJson) {
               try {
                 const remoteShelves = JSON.parse(catalogDoc.shelvesJson);
                 if (Array.isArray(remoteShelves) && remoteShelves.length > 0) {
                   const remoteIsDefaultTemplate = isShelvesListEqualToDefaultTemplate(remoteShelves);
-                  const remoteMaxShelfUpdatedAt = Math.max(
+                  const remoteMaxShelfUpdatedAt = normalizeSafeTimestamp(Math.max(
                     remoteCatalogUpdatedAt,
-                    ...remoteShelves.map((rs) => Number((rs && rs.updatedAt) || 0))
-                  );
+                    ...remoteShelves.map((rs) => normalizeSafeTimestamp(rs && rs.updatedAt))
+                  ));
 
-                  if (localHasCustomEdits && (remoteIsDefaultTemplate || localRacksUpdatedAt >= remoteMaxShelfUpdatedAt)) {
-                    // JANGAN menimpa rak kustom yang baru diedit Admin dengan data template awal atau data cloud yang lebih lama!
+                  if (localHasCustomEdits && (remoteIsDefaultTemplate || localRacksUpdatedAt > remoteMaxShelfUpdatedAt)) {
                     const preservedShelves = shelves.map((ls, idx) => ({
                       ...ls,
                       orderIndex: idx,
@@ -11604,7 +12086,6 @@
                     }));
                     remoteShelves.forEach((rs) => {
                       if (rs && rs.id && !preservedShelves.some((ps) => ps.id === rs.id)) {
-                        // Hanya tambahkan rak baru dari remote jika bukan sekadar duplikat default yang sengaja dihapus
                         if (!DEFAULT_SHELVES.some((ds) => ds.id === rs.id)) {
                           preservedShelves.push(rs);
                         }
@@ -11615,15 +12096,14 @@
                     needsCatalogCleanupPush = true;
                     hasRemoteData = true;
                   } else {
-                    // Gabungkan secara cerdas per-rak: jangan pernah menimpa rak lokal yang telah dikustomisasi dengan rak default template
                     const mergedShelves = remoteShelves.map((rs, idx) => {
                       const localMatch = shelves.find((ls) => ls && ls.id === rs.id);
                       if (localMatch) {
                         const localShelfIsCustom = Boolean(localMatch.isCustomEdited || !isShelfEqualToDefaultTemplate(localMatch));
                         const remoteShelfIsDefault = isShelfEqualToDefaultTemplate(rs);
-                        const localShelfTs = Number(localMatch.updatedAt || localRacksUpdatedAt || 0);
-                        const remoteShelfTs = Number(rs.updatedAt || remoteCatalogUpdatedAt || 0);
-                        if (localShelfIsCustom && (remoteShelfIsDefault || localShelfTs >= remoteShelfTs)) {
+                        const localShelfTs = normalizeSafeTimestamp(localMatch.updatedAt || localRacksUpdatedAt);
+                        const remoteShelfTs = normalizeSafeTimestamp(rs.updatedAt || remoteCatalogUpdatedAt);
+                        if (localShelfIsCustom && (remoteShelfIsDefault || localShelfTs > remoteShelfTs)) {
                           needsCatalogCleanupPush = true;
                           return {
                             ...rs,
@@ -11672,11 +12152,14 @@
             if (catalogDoc.booksMetaJson) {
               try {
                 const parsedBooksMeta = JSON.parse(catalogDoc.booksMetaJson);
-                if (Array.isArray(parsedBooksMeta) && parsedBooksMeta.length > 0) {
+                if (Array.isArray(parsedBooksMeta)) {
                   hasRemoteData = true;
                   const currentDeleted = getDeletedBookIds();
+                  const remoteBookIdsSet = new Set();
+
                   parsedBooksMeta.forEach((bm) => {
-                    if (!bm || !bm.id || currentDeleted.has(String(bm.id))) return;
+                    if (!bm || !bm.id || bm.id === SYSTEM_SETTINGS_DOC_ID || currentDeleted.has(String(bm.id))) return;
+                    remoteBookIdsSet.add(String(bm.id));
                     if (bm.isCustomPdf || bm.hasCustomCoverImage || String(bm.id).startsWith('book-pdf-')) {
                       candidateBookIdsToFetch.add(String(bm.id));
                     }
@@ -11699,11 +12182,12 @@
                         password: bm.passwordProtected ? String(bm.password || '').trim() : '',
                         hasCustomCoverImage: Boolean(bm.hasCustomCoverImage || bm.isCustomPdf || localB.hasCustomCoverImage),
                         isCustomPdf: Boolean(bm.isCustomPdf || localB.isCustomPdf),
+                        coverUrl: (localB.coverUrl && localB.coverUrl.length > 35000) ? localB.coverUrl : (bm.coverUrl || localB.coverUrl || ''),
                         driveFileId: bm.driveFileId || localB.driveFileId || '',
                         drivePdfFileId: bm.drivePdfFileId || localB.drivePdfFileId || ''
                       });
                     } else {
-                      const fallbackCover = generateCanvasPageDataUrl(
+                      const fallbackCover = bm.coverUrl || generateCanvasPageDataUrl(
                         bm.title || 'Buku Koleksi',
                         (bm.description || '').slice(0, 68),
                         bm.kicker || 'KOLEKSI PUSTAKA 3D',
@@ -11714,18 +12198,36 @@
                         0,
                         bm.accent || '#0B3B2C'
                       );
-                      books.push(Object.assign({ coverUrl: fallbackCover }, bm));
+                      books.push(Object.assign({}, bm, { coverUrl: fallbackCover }));
                     }
                   });
-                  // Saring buku lokal bila ada yang termasuk dalam daftar terhapus
-                  books = books.filter((b) => b && b.id && !currentDeleted.has(String(b.id)));
+
+                  // OTORITATIF SINKRONISASI KATALOG:
+                  // Hapus buku default bawaan di perangkat pengunjung (HP) apabila buku tersebut sudah tidak ada di katalog Cloud!
+                  // Namun jika perangkat ini (Laptop) memiliki buku kustom baru di IndexedDB yang belum sempat terunggah ke Cloud, pertahankan & jadwalkan push!
+                  books = books.filter((b) => {
+                    if (!b || !b.id || b.id === SYSTEM_SETTINGS_DOC_ID) return false;
+                    if (currentDeleted.has(String(b.id))) return false;
+                    if (remoteBookIdsSet.has(String(b.id))) return true;
+                    const hasLocalCustomAsset = Boolean(
+                      bookAssetsCache[b.id] &&
+                      (bookAssetsCache[b.id].isCustomPdf || !PRESET_BOOK_IDS.has(String(b.id)))
+                    );
+                    if (hasLocalCustomAsset) {
+                      needsCatalogCleanupPush = true;
+                      return true;
+                    }
+                    return false;
+                  });
                 }
               } catch (e) {}
             }
           }
 
           // Ambil dokumen buku kustom/PDF dari library_books/{bookId} atau server /api/books/{bookId}
-          const idsToFetch = Array.from(candidateBookIdsToFetch).filter((bid) => !getDeletedBookIds().has(String(bid)));
+          const idsToFetch = Array.from(candidateBookIdsToFetch).filter(
+            (bid) => bid !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(bid))
+          );
           const fetchedBookDocs = await Promise.all(
             idsToFetch.map(async (bid) => {
               const safeId = String(bid).replace(/[^a-zA-Z0-9_\-]/g, '-').slice(0, 120);
@@ -11742,20 +12244,23 @@
               return doc;
             })
           );
-          const cloudBooksDocs = fetchedBookDocs.filter((d) => Boolean(d && d.id && !getDeletedBookIds().has(String(d.id))));
+          const cloudBooksDocs = fetchedBookDocs.filter(
+            (d) => Boolean(d && d.id && d.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(d.id)))
+          );
 
           if (cloudBooksDocs.length > 0) {
             hasRemoteData = true;
             for (let i = 0; i < cloudBooksDocs.length; i++) {
               const cb = cloudBooksDocs[i];
-              if (!cb || !cb.id || getDeletedBookIds().has(String(cb.id))) continue;
+              if (!cb || !cb.id || cb.id === SYSTEM_SETTINGS_DOC_ID || getDeletedBookIds().has(String(cb.id))) continue;
               if (normalizeBookLockState(cb)) {
                 needsCatalogCleanupPush = true;
               }
               let parsedEditablePages = [];
               if (cb.editablePagesJson) {
                 try {
-                  parsedEditablePages = JSON.parse(cb.editablePagesJson);
+                  const parsed = JSON.parse(cb.editablePagesJson);
+                  if (Array.isArray(parsed)) parsedEditablePages = parsed;
                 } catch (e) {}
               }
 
@@ -11791,7 +12296,7 @@
                 hasStoredPages: Boolean(cb.isCustomPdf || cb.hasCustomCoverImage),
                 driveFileId: cb.driveFileId || '',
                 drivePdfFileId: cb.drivePdfFileId || '',
-                updatedAt: cb.updatedAt || 0
+                updatedAt: normalizeSafeTimestamp(cb.updatedAt)
               };
 
               bookSyncStates[cb.id] = { status: 'done', pct: 100, label: 'Tersinkron di Cloud' };
@@ -11817,7 +12322,9 @@
             }
           }
 
-          // Pastikan seluruh buku di memori telah ternormalisasi status kuncinya
+          // Pastikan seluruh buku di memori telah ternormalisasi status kuncinya & bebas dari buku yang dihapus
+          const finalDeleted = getDeletedBookIds();
+          books = books.filter((b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !finalDeleted.has(String(b.id)));
           books.forEach((b) => normalizeBookLockState(b));
 
           if (bookOrderIds.length > 0) {
@@ -11844,8 +12351,6 @@
           }
 
           if (hasRemoteData) {
-            // Jika pengguna sedang berada di Ruang Baca (misal membuka tautan buku di akun lain),
-            // segera sinkronkan status kunci buku agar modal kata sandi langsung tertutup bila buku tidak dikunci!
             const currentOpenBook = books.find((b) => b.id === (config.activeBookId || activeBookId));
             if (currentOpenBook) {
               config.passwordProtected = Boolean(currentOpenBook.passwordProtected && currentOpenBook.password);
@@ -11875,24 +12380,93 @@
 
         async function bootAndHydrateMultiAccount() {
           try {
+            const localAssets = await StorageHandler.getAllBookAssets();
+            const hasLocalCustomAssets = localAssets.some(
+              (a) => a && a.id && a.id !== SYSTEM_SETTINGS_DOC_ID && !isUntouchedPresetBook(a.id, a)
+            );
+            const hasLocalDeletions = getDeletedBookIds().size > 0;
+            const localCustomAudio = await StorageHandler.getCustomAudio();
+
             const pullResult = await pullCatalogAndBooksFromCloud();
             const cloudIds = new Set((pullResult.cloudBooksDocs || []).map((d) => d && d.id));
 
-            const localAssets = await StorageHandler.getAllBookAssets();
-            const unsyncedAssets = localAssets.filter((a) => a && a.id && !cloudIds.has(a.id));
+            const unsyncedAssets = localAssets.filter(
+              (a) =>
+                a &&
+                a.id &&
+                a.id !== SYSTEM_SETTINGS_DOC_ID &&
+                !getDeletedBookIds().has(String(a.id)) &&
+                !isUntouchedPresetBook(a.id, a) &&
+                !cloudIds.has(a.id)
+            );
 
-            if (pullResult.needsCatalogCleanupPush || (isAdminMode && unsyncedAssets.length > 0)) {
+            // Jika perangkat ini (Laptop) memiliki buku kustom lokal di IndexedDB yang belum ada di Cloud,
+            // atau memiliki daftar penghapusan buku default / audio kustom lokal, dorong otomatis ke Cloud!
+            if (
+              pullResult.needsCatalogCleanupPush ||
+              unsyncedAssets.length > 0 ||
+              (isAdminMode && (hasLocalCustomAssets || hasLocalDeletions))
+            ) {
               await pushCatalogToCloud(shelves, books);
             }
-            if (isAdminMode && unsyncedAssets.length > 0) {
+
+            if (localCustomAudio && localCustomAudio.audioDataUrl) {
+              pushMusicAndSettingsToCloud().catch(() => {});
+            }
+
+            if (unsyncedAssets.length > 0) {
               for (let i = 0; i < unsyncedAssets.length; i++) {
                 await pushBookAndPagesToCloud(unsyncedAssets[i].id, unsyncedAssets[i]);
               }
+              await pushCatalogToCloud(shelves, books);
             }
             renderCloudDriveBooksStatusList();
           } catch (e) {
             console.warn('CloudDriveSyncEngine boot warning:', e);
           }
+        }
+
+        function startRealtimeCloudWatcher() {
+          if (realtimeWatchInterval) return;
+
+          const checkCloudChanges = async () => {
+            if (isPollingRealtime || isSyncingAll || document.hidden) return;
+            isPollingRealtime = true;
+            try {
+              const [catDoc, sysDoc, srvRes] = await Promise.all([
+                getFirestoreDocument('library_catalog', 'main').catch(() => null),
+                getFirestoreDocument('library_books', SYSTEM_SETTINGS_DOC_ID).catch(() => null),
+                fetch('/api/catalog').then((r) => (r.ok ? r.json() : null)).catch(() => null)
+              ]);
+
+              const catStamp = normalizeSafeTimestamp(catDoc && catDoc.updatedAt);
+              const catOrder = (catDoc && catDoc.bookOrderJson) || '';
+              const sysStamp = normalizeSafeTimestamp(sysDoc && sysDoc.updatedAt);
+              const sysDesc = (sysDoc && sysDoc.description) || '';
+              const srvStamp = normalizeSafeTimestamp(srvRes && srvRes.updatedAt);
+              const srvOrder = srvRes && Array.isArray(srvRes.bookOrder) ? srvRes.bookOrder.join(',') : '';
+
+              const fp = [catStamp, catOrder.length, sysStamp, sysDesc.length, srvStamp, srvOrder].join('|');
+              if (!lastKnownCloudFingerprint) {
+                lastKnownCloudFingerprint = fp;
+              } else if (fp !== lastKnownCloudFingerprint) {
+                lastKnownCloudFingerprint = fp;
+                await pullCatalogAndBooksFromCloud();
+              }
+            } catch (e) {
+              // Abaikan kendala jaringan sementara
+            } finally {
+              isPollingRealtime = false;
+            }
+          };
+
+          realtimeWatchInterval = setInterval(checkCloudChanges, 4000);
+          window.addEventListener('focus', () => {
+            checkCloudChanges();
+          });
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) checkCloudChanges();
+          });
         }
 
         // Sinkronisasi Cepat & Riil Seluruh Buku ke Google Drive + Cloud Database
@@ -12287,8 +12861,12 @@
           pullCatalogAndBooksFromCloud: pullCatalogAndBooksFromCloud,
           pushCatalogToCloud: pushCatalogToCloud,
           pushBookAndPagesToCloud: pushBookAndPagesToCloud,
+          pushMusicAndSettingsToCloud: pushMusicAndSettingsToCloud,
+          pullMusicAndSettingsFromCloud: pullMusicAndSettingsFromCloud,
           scheduleCatalogSync: scheduleCatalogSync,
           scheduleBookSync: scheduleBookSync,
+          scheduleMusicSync: scheduleMusicSync,
+          startRealtimeCloudWatcher: startRealtimeCloudWatcher,
           deleteBookEverywhere: deleteBookEverywhere,
           fetchBookPagesFromCloudOrDrive: fetchBookPagesFromCloudOrDrive,
           updateDriveAuthUI: updateDriveAuthUI,

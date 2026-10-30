@@ -22,6 +22,11 @@ import {
   isOriginalUploadedBook,
   hydrateEditablePagesPreservingOriginals,
   applyMetadataUpdatePreservingOriginalContent,
+  normalizeSafeTimestamp,
+  chunkAudioDataUrl,
+  reassembleAudioChunks,
+  mergeAuthoritativeCatalogBooks,
+  resolveSinglePageTapDirection,
 } from './flipbookLogic';
 
 test('calculateSpreadState handles desktop 2-page spread transitions accurately', () => {
@@ -432,4 +437,54 @@ test('uploaded PDF and custom image books preserve 100% original cover and page 
   assert.equal(updatedPages[0].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_COVER_PAGE_1');
   assert.equal(updatedPages[1].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_2');
   assert.equal(updatedPages[2].customImageDataUrl, 'data:image/jpeg;base64,ORIGINAL_PDF_PAGE_3');
+});
+
+test('normalizeSafeTimestamp prevents future container timestamps from blocking real user timestamps', () => {
+  const realUserTs = 1745000000000;
+  const syntheticFutureTs = 1793319000000;
+  assert.equal(normalizeSafeTimestamp(realUserTs), realUserTs);
+  assert.ok(normalizeSafeTimestamp(syntheticFutureTs) < realUserTs);
+});
+
+test('chunkAudioDataUrl and reassembleAudioChunks round-trip custom background music accurately', () => {
+  const fakeAudio = 'data:audio/mpeg;base64,' + 'A'.repeat(2500) + 'B'.repeat(2500) + 'C'.repeat(1200);
+  const chunks = chunkAudioDataUrl(fakeAudio, 2000);
+  assert.equal(chunks.length, 4);
+  const shuffled = [
+    { pageNumber: 3, dataUrl: chunks[2] },
+    { pageNumber: 1, dataUrl: chunks[0] },
+    { pageNumber: 4, dataUrl: chunks[3] },
+    { pageNumber: 2, dataUrl: chunks[1] },
+  ];
+  const reassembled = reassembleAudioChunks(shuffled);
+  assert.equal(reassembled, fakeAudio);
+});
+
+test('mergeAuthoritativeCatalogBooks removes deleted default books while preserving uploaded PDF books', () => {
+  const localDefaultBooks = [
+    { id: 'book-kurikulum', title: 'Panduan Kurikulum', coverUrl: 'cover-def-1' },
+    { id: 'book-metodologi', title: 'Metodologi', coverUrl: 'cover-def-2' },
+    { id: 'book-local-unsynced', title: 'Buku Baru di Laptop', coverUrl: 'cover-local-new' },
+  ];
+  const remoteBooks = [
+    { id: 'book-pdf-1793311132578', title: '200 Motivasi Nabi', coverUrl: 'cover-motivasi' },
+    { id: 'elibrary-system-settings', title: 'System Settings', coverUrl: '' },
+  ];
+  const deletedIds = ['book-kurikulum', 'book-metodologi'];
+  const merged = mergeAuthoritativeCatalogBooks(
+    localDefaultBooks,
+    remoteBooks,
+    deletedIds,
+    ['book-local-unsynced']
+  );
+  assert.deepEqual(
+    merged.map((b) => b.id),
+    ['book-pdf-1793311132578', 'book-local-unsynced']
+  );
+});
+
+test('resolveSinglePageTapDirection maps left tap to prev and right tap to next', () => {
+  assert.equal(resolveSinglePageTapDirection(80, 360), 'prev');
+  assert.equal(resolveSinglePageTapDirection(170, 360), 'prev');
+  assert.equal(resolveSinglePageTapDirection(220, 360), 'next');
 });

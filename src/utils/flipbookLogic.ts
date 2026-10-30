@@ -1362,6 +1362,118 @@ function nextBookCoverFromOriginal(
   return book.customCoverDataUrl || page1CustomImageDataUrl || book.coverUrl || '';
 }
 
+// =========================================================
+// REAL-TIME CROSS-DEVICE SYNC & BACKGROUND MUSIC PURE LOGIC
+// =========================================================
+
+export const SYSTEM_SETTINGS_DOC_ID = 'elibrary-system-settings';
+export const FUTURE_TIMESTAMP_CEILING = 1785000000000;
+
+/**
+ * Normalizes timestamps so synthetic container future timestamps (> 1785000000000)
+ * never permanently block real-world user device timestamps (Date.now()).
+ */
+export function normalizeSafeTimestamp(ts: number | string | null | undefined): number {
+  const num = Number(ts) || 0;
+  if (num <= 0) return 0;
+  if (num > FUTURE_TIMESTAMP_CEILING) {
+    // Map synthetic container timestamp down to a baseline so real user edits win
+    return 1000 + (num % 1000000);
+  }
+  return Math.floor(num);
+}
+
+/**
+ * Splits a Base64 audio data URL into Firestore-safe string chunks (default 650KB per chunk).
+ */
+export function chunkAudioDataUrl(audioDataUrl: string, maxChunkChars = 650000): string[] {
+  if (!audioDataUrl || typeof audioDataUrl !== 'string') return [];
+  const size = Math.max(1000, Math.floor(maxChunkChars));
+  const chunks: string[] = [];
+  for (let i = 0; i < audioDataUrl.length; i += size) {
+    chunks.push(audioDataUrl.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
+ * Reassembles ordered audio chunks back into a complete Base64 audio data URL.
+ */
+export function reassembleAudioChunks(
+  chunks: Array<{ pageNumber: number; dataUrl: string }>
+): string {
+  if (!Array.isArray(chunks) || chunks.length === 0) return '';
+  return [...chunks]
+    .filter((c) => Boolean(c && typeof c.dataUrl === 'string' && c.dataUrl.length > 0))
+    .sort((a, b) => (Number(a.pageNumber) || 0) - (Number(b.pageNumber) || 0))
+    .map((c) => c.dataUrl)
+    .join('');
+}
+
+/**
+ * Merges remote catalog books authoritatively for cross-device sync (Laptop <-> HP):
+ * - Filters out system settings doc (`elibrary-system-settings`) and any `deletedBookIds`.
+ * - Removes any local default/preset books that are NOT present in `remoteBooksMeta` (so deleted default books never reappear on HP or after refresh).
+ * - Preserves any local custom uploaded books (`localUnsyncedIds`) that exist in the user's IndexedDB and are about to be pushed to Cloud.
+ */
+export function mergeAuthoritativeCatalogBooks<T extends { id: string; coverUrl?: string }>(
+  localBooks: T[],
+  remoteBooksMeta: T[],
+  deletedBookIds: Iterable<string>,
+  localUnsyncedIds: Iterable<string> = []
+): T[] {
+  const deletedSet = new Set(Array.from(deletedBookIds, (id) => String(id)));
+  const unsyncedSet = new Set(Array.from(localUnsyncedIds, (id) => String(id)));
+  const localMap = new Map<string, T>();
+  for (const lb of localBooks || []) {
+    if (lb && lb.id && lb.id !== SYSTEM_SETTINGS_DOC_ID && !deletedSet.has(String(lb.id))) {
+      localMap.set(String(lb.id), lb);
+    }
+  }
+
+  const merged: T[] = [];
+  const seenIds = new Set<string>();
+
+  for (const rb of remoteBooksMeta || []) {
+    if (!rb || !rb.id) continue;
+    const id = String(rb.id);
+    if (id === SYSTEM_SETTINGS_DOC_ID || deletedSet.has(id) || seenIds.has(id)) continue;
+    seenIds.add(id);
+    const existingLocal = localMap.get(id);
+    if (existingLocal) {
+      merged.push({
+        ...existingLocal,
+        ...rb,
+        coverUrl: rb.coverUrl || existingLocal.coverUrl || '',
+      });
+    } else {
+      merged.push({ ...rb });
+    }
+  }
+
+  // Keep any local unsynced custom books (e.g. uploaded on Laptop before cloud push finishes)
+  for (const [id, lb] of localMap.entries()) {
+    if (!seenIds.has(id) && !deletedSet.has(id) && unsyncedSet.has(id)) {
+      seenIds.add(id);
+      merged.push(lb);
+    }
+  }
+
+  return merged;
+}
+
+/**
+ * Resolves single-page tap navigation direction on mobile/single-page view:
+ * tapping left 48% of the page goes backward ('prev'), right 52% goes forward ('next').
+ */
+export function resolveSinglePageTapDirection(
+  offsetX: number,
+  pageWidth: number
+): 'prev' | 'next' {
+  const safeWidth = Math.max(1, Number(pageWidth) || 1);
+  return offsetX < safeWidth * 0.48 ? 'prev' : 'next';
+}
+
 
 
 
