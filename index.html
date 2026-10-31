@@ -6269,12 +6269,107 @@
       window.getPagesDataUrls = () => pagesDataUrls;
 
       // =========================================================
-      // KONTROLER DAN CACHE ON-DEMAND STREAMING PDF.JS
+      // KONTROLER STREAMING PDF.JS & LAZY LOADER INTERSECTION-OBSERVER
       // =========================================================
       let activeReaderPdfDoc = null;
       let activeReaderPdfBookId = null;
       const readerPageRenderCache = new Map();
       const pendingPageRenderPromises = new Map();
+
+      // IntersectionObserver Lazy Loader untuk Panggung Ruang Baca 3D
+      let readerIntersectionObserver = null;
+
+      function getReaderIntersectionObserver() {
+        if (!('IntersectionObserver' in window)) return null;
+        if (!readerIntersectionObserver) {
+          const stageEl = document.getElementById('reader-stage');
+          readerIntersectionObserver = new IntersectionObserver(
+            (entries) => {
+              const curBook = books.find((b) => b.id === activeBookId);
+              if (!curBook) return;
+
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  const pNo = parseInt(entry.target.getAttribute('data-page-no'), 10);
+                  if (pNo && pNo >= 1 && pNo <= pagesDataUrls.length) {
+                    if (pagesDataUrls[pNo - 1] && !pagesDataUrls[pNo - 1].dataUrl) {
+                      renderPdfPageOnDemand(curBook, pNo);
+                    }
+                  }
+                }
+              });
+            },
+            {
+              root: stageEl || null,
+              rootMargin: '120px 120px 120px 120px',
+              threshold: 0.01
+            }
+          );
+        }
+        return readerIntersectionObserver;
+      }
+
+      function observePageElement(el) {
+        if (!el) return;
+        const obs = getReaderIntersectionObserver();
+        if (obs) {
+          obs.observe(el);
+        }
+      }
+
+      // Pembersih Memori Kanvas & Texture GPU untuk Halaman di Luar Jangkauan (Max: Current + Neighboring 2 Pages)
+      function pruneOutofBoundsPageMemory(book, targetPage) {
+        const curBook = book || books.find((b) => b.id === activeBookId);
+        if (!curBook) return;
+        const bookId = curBook.id;
+
+        const visible = getVisiblePages();
+        const refPage = (typeof targetPage === 'number' && targetPage >= 1) ? targetPage : currentPage;
+        const minVis = visible.length > 0 ? Math.min(...visible) : refPage;
+        const maxVis = visible.length > 0 ? Math.max(...visible) : refPage;
+
+        // Batas jendela memori: Halaman Aktif ± 2 Halaman Tetangga
+        const minAllowed = Math.max(1, minVis - 2);
+        const maxAllowed = Math.min((pagesDataUrls && pagesDataUrls.length) || (curBook.pageCount || 1), maxVis + 2);
+
+        // 1. Hapus cache render dari Map untuk halaman di luar jangkauan
+        for (const key of Array.from(readerPageRenderCache.keys())) {
+          if (key.startsWith(`${bookId}-`)) {
+            const pNo = parseInt(key.replace(`${bookId}-`, ''), 10);
+            if (pNo && (pNo < minAllowed || pNo > maxAllowed)) {
+              // Pengecualian: pertahankan sampul depan (Halaman 1) jika digunakan sebagai cover resmi
+              if (pNo === 1 && curBook.coverUrl && curBook.coverUrl.length > 100 && curBook.hasCustomCoverImage) {
+                continue;
+              }
+              readerPageRenderCache.delete(key);
+            }
+          }
+        }
+
+        // 2. Kosongkan dataUrl di array pagesDataUrls untuk melepaskan String biner dari memori RAM
+        if (Array.isArray(pagesDataUrls)) {
+          for (let idx = 0; idx < pagesDataUrls.length; idx++) {
+            const pNo = idx + 1;
+            if (pNo < minAllowed || pNo > maxAllowed) {
+              if (pNo === 1 && curBook.coverUrl && pagesDataUrls[0] && pagesDataUrls[0].dataUrl === curBook.coverUrl && curBook.hasCustomCoverImage) {
+                continue;
+              }
+              if (pagesDataUrls[idx]) {
+                pagesDataUrls[idx].dataUrl = null;
+              }
+            }
+          }
+        }
+
+        // 3. Lepaskan tekstur gambar DOM di panggung jika elemen berada di luar halaman yang terlihat
+        const stageImages = document.querySelectorAll('#pages-spread-Mount img[data-page-no]');
+        stageImages.forEach((img) => {
+          const pNo = parseInt(img.getAttribute('data-page-no'), 10);
+          if (pNo && !visible.includes(pNo)) {
+            img.src = '';
+          }
+        });
+      }
 
       async function loadPdfDocumentForReader(book) {
         if (!book) return null;
@@ -6330,11 +6425,12 @@
           updateReaderControlsState(getVisiblePages(), numPages);
           renderThumbnailsGrid();
 
-          // Render segera halaman aktif yang terlihat di layar
+          // Pangkas memori di luar jangkauan & render halaman aktif
+          pruneOutofBoundsPageMemory(book, currentPage);
           await renderVisiblePagesOnDemand(book);
 
-          // Prefetch halaman berikutnya secara senyap di background
-          prefetchPages(book, [currentPage + 1, currentPage + 2]);
+          // Prefetch halaman tetangga dalam batas jendela [currentPage - 2, currentPage + 2]
+          prefetchPages(book, [currentPage + 1, currentPage + 2, currentPage - 1, currentPage - 2]);
 
           return pdf;
         } catch (err) {
@@ -6372,13 +6468,11 @@
             const vp1 = page.getViewport({ scale: 1 });
 
             // Optimasi Skala Viewport & GPU Memory untuk Layar Mobile
-            // Di ponsel (window.innerWidth < 768px), sesuaikan target rendering width
             const isMobile = window.innerWidth < 768;
             const targetRenderWidth = isMobile
               ? Math.min(window.innerWidth - 20, 520)
               : Math.min(window.innerWidth * 0.46, 750);
 
-            // devicePixelRatio adaptif (clamped max 2.0 agar teks tajam tanpa membebani GPU/RAM ponsel)
             const dpr = Math.min(window.devicePixelRatio || 1.5, 2.0);
             const scale = (targetRenderWidth / vp1.width) * dpr;
 
@@ -6386,13 +6480,19 @@
             const canvas = document.createElement('canvas');
             canvas.width = Math.round(viewport.width);
             canvas.height = Math.round(viewport.height);
-            const ctx = canvas.getContext('2d', { alpha: false });
+            let ctx = canvas.getContext('2d', { alpha: false });
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             await page.render({ canvasContext: ctx, viewport }).promise;
 
             const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
+            // DEALOKASI MUTLAK MEMORI KANVAS & CONTEXT UNTUK CEGAH MEMORY CRASH DI HP
+            canvas.width = 0;
+            canvas.height = 0;
+            ctx = null;
+
             readerPageRenderCache.set(cacheKey, dataUrl);
 
             if (pagesDataUrls[pageNum - 1]) {
@@ -6447,12 +6547,14 @@
 
         if (el.parentNode) {
           el.parentNode.replaceChild(img, el);
+          observePageElement(img);
         }
       }
 
       async function renderVisiblePagesOnDemand(book) {
         const curBook = book || books.find((b) => b.id === activeBookId);
         if (!curBook) return;
+        pruneOutofBoundsPageMemory(curBook, currentPage);
         const visible = getVisiblePages();
         for (let i = 0; i < visible.length; i++) {
           const pNo = visible[i];
@@ -6466,7 +6568,17 @@
         const curBook = book || books.find((b) => b.id === activeBookId);
         if (!curBook || !activeReaderPdfDoc) return;
         const total = activeReaderPdfDoc.numPages;
-        const queue = pageNums.filter((p) => p >= 1 && p <= total && !readerPageRenderCache.has(`${curBook.id}-${p}`));
+
+        const visible = getVisiblePages();
+        const minVis = visible.length > 0 ? Math.min(...visible) : currentPage;
+        const maxVis = visible.length > 0 ? Math.max(...visible) : currentPage;
+        const minAllowed = Math.max(1, minVis - 2);
+        const maxAllowed = Math.min(total, maxVis + 2);
+
+        // Hanya prefetch halaman yang berada secara ketat di dalam jendela [currentPage - 2, currentPage + 2]
+        const queue = pageNums.filter(
+          (p) => p >= minAllowed && p <= maxAllowed && !readerPageRenderCache.has(`${curBook.id}-${p}`)
+        );
         if (queue.length === 0) return;
 
         const runNext = () => {
@@ -6728,6 +6840,8 @@
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           await page1.render({ canvasContext: ctx, viewport }).promise;
           const coverDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+          canvas.width = 0;
+          canvas.height = 0;
 
           const rendered = [];
           for (let i = 1; i <= total; i++) {
@@ -7060,6 +7174,11 @@
         const oldVisible = getVisiblePages();
 
         currentPage = targetPage;
+        const curBook = books.find((b) => b.id === activeBookId);
+        if (curBook) {
+          pruneOutofBoundsPageMemory(curBook, targetPage);
+        }
+
         const newVisible = getVisiblePages();
 
         if (oldVisible.join(',') === newVisible.join(',')) {
@@ -12301,6 +12420,8 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 await page1.render({ canvasContext: ctx, viewport }).promise;
                 coverDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+                canvas.width = 0;
+                canvas.height = 0;
                 readerPageRenderCache.set(`${bookId}-1`, coverDataUrl);
               }
 
