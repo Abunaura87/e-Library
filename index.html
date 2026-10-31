@@ -1435,50 +1435,61 @@
     <section id="view-shelf" aria-label="Etalase Koleksi Buku 3D" class="hidden flex-1 overflow-y-auto wall-plank-backdrop text-[#072A20] flex flex-col justify-between relative transition-colors duration-700">
       <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-2 pb-10 space-y-6 relative z-10">
         <!-- Header Etalase Rak Klasikal (Nuansa Cerah & Hijau Gold) -->
-        <div class="white-bookcase-frame p-4 sm:p-7 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
-          <div class="space-y-2.5">
-            <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
-              <button type="button" id="btn-back-to-lobby" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg btn-emerald-gold text-xs font-semibold transition-all shadow-xs">
-                <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-                <span>Kembali ke Lemari Rak 3D</span>
-              </button>
-              <span id="active-shelf-badge" class="text-xs font-classical-label uppercase tracking-widest px-3 py-1 rounded-md bg-[#0B3B2C]/10 border border-[#D4AF37] text-[#0B3B2C] font-bold">
-                KLASIKAL 000
-              </span>
-              <span id="active-shelf-count-badge" class="text-xs font-mono-tabular font-semibold text-[#9E7B1C] bg-[#F3E5AB]/50 px-2.5 py-1 rounded-md border border-[#D4AF37]/50">
-                0 Buku Tersedia
-              </span>
+        <div class="white-bookcase-frame p-5 sm:p-7 md:p-8 space-y-6 w-full shadow-lg">
+          <!-- Bagian Atas: Grid 2 Kolom Seimbang (Sisi Kiri: Badge Navigasi & Judul Rak, Sisi Kanan: Deskripsi Kuratorial) -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
+            <!-- Sisi Kiri (Col 1 - Badge, Navigasi & Judul Rak) -->
+            <div class="md:col-span-5 lg:col-span-5 space-y-3">
+              <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <button type="button" id="btn-back-to-lobby" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg btn-emerald-gold text-xs font-semibold transition-all shadow-xs cursor-pointer">
+                  <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                  <span>Kembali ke Lemari Rak 3D</span>
+                </button>
+                <span id="active-shelf-badge" class="text-xs font-classical-label uppercase tracking-widest px-3 py-1 rounded-md bg-[#0B3B2C]/10 border border-[#D4AF37] text-[#0B3B2C] font-bold">
+                  KLASIKAL 000
+                </span>
+                <span id="active-shelf-count-badge" class="text-xs font-mono-tabular font-semibold text-[#9E7B1C] bg-[#F3E5AB]/60 px-2.5 py-1 rounded-md border border-[#D4AF37]/60 shadow-2xs">
+                  0 Buku Tersedia
+                </span>
+              </div>
+              <h1 id="active-shelf-title" class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight leading-snug">
+                Nama Klasifikasi Rak Buku
+              </h1>
             </div>
-            <h1 id="active-shelf-title" class="text-2xl md:text-3xl lg:text-4xl font-bold font-serif-editorial text-[#072A20] tracking-tight">
-              Nama Klasifikasi Rak Buku
-            </h1>
-            <p id="active-shelf-desc" class="text-xs sm:text-sm md:text-base font-serif-editorial italic text-[#12543F] max-w-2xl leading-relaxed">
-              Deskripsi kuratorial mengenai koleksi buku yang tersimpan dalam kotak rak klasifikasi ini.
-            </p>
+
+            <!-- Sisi Kanan (Col 2 - Deskripsi Kuratorial Mengisi Area dengan Tipografi Rapi) -->
+            <div class="md:col-span-7 lg:col-span-7 bg-[#FBF9F5]/90 p-4 sm:p-5 rounded-xl border border-[#D4AF37]/40 shadow-2xs">
+              <p id="active-shelf-desc" class="text-xs sm:text-sm md:text-base font-serif-editorial italic text-[#12543F] leading-relaxed">
+                Deskripsi kuratorial mengenai koleksi buku yang tersimpan dalam kotak rak klasifikasi ini.
+              </p>
+            </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
-            <div class="relative w-full sm:w-56">
+          <!-- Bagian Bawah: Baris Tombol Aksi & Pencarian Lebar Penuh (Border-T Separator) -->
+          <div class="pt-4 border-t border-[#D4AF37]/35 flex flex-wrap items-center justify-between gap-3 sm:gap-4 w-full">
+            <div class="relative w-full sm:w-72 lg:w-80">
               <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-              <input id="shelf-search-input" type="text" placeholder="Cari judul atau penulis..." class="w-full pl-8 pr-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C]" />
+              <input id="shelf-search-input" type="text" placeholder="Cari judul atau penulis..." class="w-full pl-8 pr-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C] focus:ring-1 focus:ring-[#0B3B2C]/30 shadow-2xs" />
             </div>
-            <button type="button" id="btn-open-crud-etalase-modal" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#072A20]/20 whitespace-nowrap shadow-sm cursor-pointer transition-all">
-              <i data-lucide="file-pen-line" class="w-4 h-4 text-[#072A20]"></i>
-              <span>Menu Edit CRUD Etalase &amp; Konten</span>
-            </button>
-            <button type="button" id="btn-add-book-etalase" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer">
-              <i data-lucide="book-plus" class="w-4 h-4 text-[#D4AF37]"></i>
-              <span>+ Buku Baru</span>
-            </button>
-            <button type="button" id="btn-edit-active-shelf-etalase" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer" title="Ubah Nama &amp; Deskripsi Rak Etalase Ini">
-              <i data-lucide="folder-pen" class="w-4 h-4 text-[#D4AF37]"></i>
-              <span class="hidden sm:inline">Edit Rak</span>
-            </button>
-            <button type="button" id="btn-upload-to-shelf" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer" title="Unggah PDF atau Gambar Orisinal langsung ke Etalase sebagai Flipbook 3D">
-              <i data-lucide="upload" class="w-4 h-4 text-[#D4AF37]"></i>
-              <span>+ Unggah PDF / Gambar</span>
-            </button>
-            <input id="etalase-direct-upload-input" type="file" accept="application/pdf,.pdf,image/*" multiple class="sr-only" />
+            <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-start sm:justify-end">
+              <button type="button" id="btn-open-crud-etalase-modal" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#072A20]/20 whitespace-nowrap shadow-sm cursor-pointer transition-all">
+                <i data-lucide="file-pen-line" class="w-4 h-4 text-[#072A20]"></i>
+                <span>Menu Edit CRUD Etalase &amp; Konten</span>
+              </button>
+              <button type="button" id="btn-add-book-etalase" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer">
+                <i data-lucide="book-plus" class="w-4 h-4 text-[#D4AF37]"></i>
+                <span>+ Buku Baru</span>
+              </button>
+              <button type="button" id="btn-edit-active-shelf-etalase" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer" title="Ubah Nama &amp; Deskripsi Rak Etalase Ini">
+                <i data-lucide="folder-pen" class="w-4 h-4 text-[#D4AF37]"></i>
+                <span class="inline">Edit Rak</span>
+              </button>
+              <button type="button" id="btn-upload-to-shelf" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-semibold rounded-lg btn-emerald-gold whitespace-nowrap shadow-xs cursor-pointer" title="Unggah PDF atau Gambar Orisinal langsung ke Etalase sebagai Flipbook 3D">
+                <i data-lucide="upload" class="w-4 h-4 text-[#D4AF37]"></i>
+                <span>+ Unggah PDF / Gambar</span>
+              </button>
+              <input id="etalase-direct-upload-input" type="file" accept="application/pdf,.pdf,image/*" multiple class="sr-only" />
+            </div>
           </div>
         </div>
 
