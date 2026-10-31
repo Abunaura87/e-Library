@@ -13280,6 +13280,9 @@
 
       const strictOriginalSelectBook=selectBookInCrudStudio;let strictEditorRequest=0;
       selectBookInCrudStudio=async function(id){const request=++strictEditorRequest;const panels=['crud-panel-metadata','crud-panel-pages'].map(x=>document.getElementById(x));const buttons=['btn-crud-save-all','btn-crud-open-in-reader','btn-crud-delete-current-book','btn-crud-duplicate-current-book'].map(x=>document.getElementById(x));panels.forEach(x=>{if(x)x.inert=true;});buttons.forEach(x=>{if(x)x.disabled=true;});try{const fresh=(await strictRequest({action:'readBook',id},true)).book;if(request!==strictEditorRequest)return;const existing=books.find(b=>b.id===id);if(existing)Object.assign(existing,fresh);bookAssetsCache[id]={...fresh};return strictOriginalSelectBook(id);}catch(error){showToast('Konten editor belum dapat dimuat: '+error.message);}finally{if(request===strictEditorRequest){panels.forEach(x=>{if(x)x.inert=false;});buttons.forEach(x=>{if(x)x.disabled=false;});}}};
+
+      const strictOriginalCreateBook=startCreateNewBookInCrud;
+      startCreateNewBookInCrud=function(...args){++strictEditorRequest;['crud-panel-metadata','crud-panel-pages'].forEach(id=>{const el=document.getElementById(id);if(el)el.inert=false;});['btn-crud-save-all','btn-crud-open-in-reader','btn-crud-delete-current-book','btn-crud-duplicate-current-book'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false;});return strictOriginalCreateBook(...args);};
       const strictUnlockedBooks=new Map();
       const strictOriginalOpenBook=openBookInReader;
       openBookInReader=async function(book){
