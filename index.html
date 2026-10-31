@@ -3605,16 +3605,20 @@
             (b) => b && b.id && b.id !== SYSTEM_SETTINGS_DOC_ID && !getDeletedBookIds().has(String(b.id))
           );
           try {
-            localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(cleanBooksData));
-            localStorage.setItem('elibrary_books_cache', JSON.stringify(cleanBooksData));
+            const jsonStr = JSON.stringify(cleanBooksData);
+            localStorage.setItem(STORAGE_BOOKS_KEY, jsonStr);
+            localStorage.setItem('elibrary_books_cache', jsonStr);
+            localStorage.setItem('elibrary_books', jsonStr);
           } catch (e) {
             try {
               const slimBooks = cleanBooksData.map((b) => ({
                 ...b,
                 coverUrl: bookAssetsCache[b.id] ? '' : b.coverUrl
               }));
-              localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(slimBooks));
-              localStorage.setItem('elibrary_books_cache', JSON.stringify(slimBooks));
+              const slimStr = JSON.stringify(slimBooks);
+              localStorage.setItem(STORAGE_BOOKS_KEY, slimStr);
+              localStorage.setItem('elibrary_books_cache', slimStr);
+              localStorage.setItem('elibrary_books', slimStr);
             } catch (err) {}
           }
         },
@@ -3824,22 +3828,38 @@
             body: bodyStr
           };
 
-          const promises = [
-            fetchCloudApi('/api/gas', postOpts)
-              .then((r) => (r && r.ok ? r.json() : null))
-              .catch(() => null)
-          ];
+          const promises = [];
 
           if (customGas) {
-            promises.unshift(
+            promises.push(
               fetch(customGas, postOpts)
-                .then((r) => (r && r.ok ? r.json() : null))
+                .then(async (r) => {
+                  if (r && r.ok) {
+                    try { return await r.json(); } catch(e) { return { status: 'ok' }; }
+                  }
+                  return null;
+                })
                 .catch(() => null)
             );
           }
 
+          promises.push(
+            fetchCloudApi('/api/gas', postOpts)
+              .then(async (r) => {
+                if (r && r.ok) {
+                  try { return await r.json(); } catch(e) { return { status: 'ok' }; }
+                }
+                return null;
+              })
+              .catch(() => null)
+          );
+
           const results = await Promise.all(promises);
-          return results.find(Boolean) || { status: 'ok' };
+          const validResult = results.find((res) => res && (res.status === 'ok' || res.status === 'success' || res.success));
+          if (validResult) {
+            return validResult;
+          }
+          throw new Error('Gagal terhubung ke Google Sheets API Endpoint.');
         },
 
         async saveRack(rackObj, allRacksList) {
@@ -3865,10 +3885,12 @@
         async saveBook(bookObj, fullAssetPayload) {
           if (!bookObj || !bookObj.id) return null;
           const normalizedPdf = bookObj.pdfUrl ? normalizePublicPdfUrl(bookObj.pdfUrl) : null;
+          const cleanShelf = String(bookObj.shelfId || bookObj.rackId || bookObj.kategoriRak || (typeof activeShelfId !== 'undefined' ? activeShelfId : '') || 'rak-01').trim();
           const cleanBook = Object.assign({}, bookObj, {
             id: String(bookObj.id),
-            rackId: String(bookObj.shelfId || bookObj.rackId || 'rak-01'),
-            shelfId: String(bookObj.shelfId || bookObj.rackId || 'rak-01'),
+            rackId: cleanShelf,
+            shelfId: cleanShelf,
+            kategoriRak: cleanShelf,
             title: String(bookObj.title || 'Buku Koleksi'),
             author: String(bookObj.author || 'Anonim'),
             description: String(bookObj.description || ''),
@@ -3892,6 +3914,7 @@
             this.postAction({
               action: 'saveBook',
               book: cleanBook,
+              payload: cleanBook,
               racks: shelves,
               updatedAt: cleanBook.updatedAt
             })
@@ -4093,6 +4116,28 @@
       let books = [];
       let activeShelfId = 'rak-03';
       let activeBookId = 'book-arch';
+
+      function isBookOnShelf(book, shelfIdOrObj) {
+        if (!book) return false;
+        const targetId = typeof shelfIdOrObj === 'object' && shelfIdOrObj !== null
+          ? String(shelfIdOrObj.id || shelfIdOrObj.rackId || shelfIdOrObj.code || '').trim().toLowerCase()
+          : String(shelfIdOrObj || '').trim().toLowerCase();
+
+        if (!targetId) return false;
+
+        const bookShelfId = String(book.shelfId || '').trim().toLowerCase();
+        const bookRackId = String(book.rackId || '').trim().toLowerCase();
+        const bookKategori = String(book.kategoriRak || '').trim().toLowerCase();
+        const bookCategory = String(book.category || '').trim().toLowerCase();
+
+        return (
+          bookShelfId === targetId ||
+          bookRackId === targetId ||
+          bookKategori === targetId ||
+          bookCategory === targetId
+        );
+      }
+      window.isBookOnShelf = isBookOnShelf;
 
       let config = {
         title: 'Arsitektur Cahaya & Ruang Nusantara',
@@ -5835,7 +5880,7 @@
         const filteredShelves = shelves.filter((s) => {
           if (!q) return true;
           const matchShelf = s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q) || s.description.toLowerCase().includes(q);
-          const matchBook = books.some((b) => b.shelfId === s.id && (b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)));
+          const matchBook = books.some((b) => isBookOnShelf(b, s) && (b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)));
           return matchShelf || matchBook;
         });
 
@@ -5849,7 +5894,7 @@
         }
 
         filteredShelves.forEach((shelf, idx) => {
-          const shelfBooks = books.filter((b) => b.shelfId === shelf.id);
+          const shelfBooks = books.filter((b) => isBookOnShelf(b, shelf));
           const spanClass = shelf.colSpan || 'lg:col-span-4';
 
           const cubby = document.createElement('article');
@@ -5956,7 +6001,7 @@
         switchViewTo('shelf');
 
         const shelf = shelves.find((s) => s.id === shelfId) || shelves[0];
-        const shelfBooks = books.filter((b) => b.shelfId === shelf.id);
+        const shelfBooks = books.filter((b) => isBookOnShelf(b, shelf));
 
         document.getElementById('active-shelf-badge').textContent = shelf.code;
         document.getElementById('active-shelf-title').textContent = shelf.name;
@@ -5992,7 +6037,7 @@
         const q = (searchQuery || '').toLowerCase().trim();
 
         const shelfBooks = books.filter((b) => {
-          if (b.shelfId !== activeShelfId) return false;
+          if (!isBookOnShelf(b, activeShelfId)) return false;
           if (!q) return true;
           return (
             (b.title || '').toLowerCase().includes(q) ||
@@ -6003,7 +6048,7 @@
 
         const countBadge = document.getElementById('active-shelf-count-badge');
         if (countBadge) {
-          countBadge.textContent = books.filter((b) => b.shelfId === activeShelfId).length + ' Koleksi Buku 3D';
+          countBadge.textContent = books.filter((b) => isBookOnShelf(b, activeShelfId)).length + ' Koleksi Buku 3D';
         }
 
         if (shelfBooks.length === 0) {
@@ -10614,7 +10659,7 @@
         if (countLabel) countLabel.textContent = shelves.length + ' Kotak Rak Terpasang';
 
         shelves.forEach((s, idx) => {
-          const sBooks = books.filter((b) => b.shelfId === s.id);
+          const sBooks = books.filter((b) => isBookOnShelf(b, s));
           const boxNumberLabel = 'KOTAK #' + String(idx + 1).padStart(2, '0');
           const row = document.createElement('div');
           row.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-[#072A20] border border-[#D4AF37]/50 hover:border-[#D4AF37] transition-all';
@@ -11654,6 +11699,7 @@
           const substepText = opts.substep || '';
           const bytesText = opts.bytesText || '';
           const isWorking = Boolean(opts.isWorking);
+          const isError = Boolean(opts.isError);
 
           const feedbackTextEl = document.getElementById('cloud-drive-sync-feedback-text');
           const pctEl = document.getElementById('cloud-drive-progress-pct');
@@ -11664,19 +11710,45 @@
           const headerBadgeText = document.getElementById('header-cloud-sync-badge-text');
           const headerDriveBtnText = document.getElementById('header-cloud-drive-btn-text');
 
-          if (feedbackTextEl && titleText) feedbackTextEl.textContent = titleText;
+          if (feedbackTextEl && titleText) {
+            feedbackTextEl.textContent = titleText;
+            feedbackTextEl.className = isError
+              ? 'text-xs font-bold text-red-400 font-serif-editorial'
+              : 'text-xs font-bold text-[#F3E5AB] font-serif-editorial';
+          }
           if (pctEl) pctEl.textContent = pct + '%';
-          if (fillEl) fillEl.style.width = pct + '%';
+          if (fillEl) {
+            fillEl.style.width = pct + '%';
+            if (isError) {
+              fillEl.className = 'h-full bg-red-600 rounded-full transition-all duration-300';
+            } else {
+              fillEl.className = 'h-full bg-gradient-to-r from-[#9E7B1C] via-[#D4AF37] to-[#F3E5AB] rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(212,175,55,0.6)]';
+            }
+          }
           if (substepEl && substepText) substepEl.textContent = substepText;
           if (bytesEl && bytesText) bytesEl.textContent = bytesText;
 
           if (spinnerEl) {
             if (isWorking) {
               spinnerEl.classList.add('animate-spin');
+              spinnerEl.classList.remove('hidden');
             } else {
               spinnerEl.classList.remove('animate-spin');
+              if (isError) spinnerEl.classList.add('hidden');
             }
           }
+
+          if (headerBadgeText) {
+            headerBadgeText.textContent = isWorking
+              ? 'Sync ' + pct + '%'
+              : (isError ? 'Sync Gagal' : 'Cloud DB (' + books.length + ' Buku)');
+          }
+          if (headerDriveBtnText) {
+            headerDriveBtnText.textContent = isWorking
+              ? 'Mengunggah ' + pct + '%'
+              : (isError ? 'Sync Gagal' : 'Google Sheets DB');
+          }
+        }
 
           if (headerBadgeText) {
             headerBadgeText.textContent = isWorking
@@ -12375,25 +12447,43 @@
               bytesText: 'Memproses...',
               isWorking: true
             });
-            await pushBookAndPagesToCloud(bookId, record, {
-              onBookProgress: (pct, substep, bytesText) => {
+            try {
+              const success = await pushBookAndPagesToCloud(bookId, record, {
+                onBookProgress: (pct, substep, bytesText) => {
+                  updateRealProgressUI({
+                    pct: pct,
+                    title: 'Menyimpan "' + bookTitle + '" (' + pct + '%)',
+                    substep: substep,
+                    bytesText: bytesText,
+                    isWorking: true
+                  });
+                }
+              });
+              await pushCatalogToCloud(shelves, books);
+              if (success !== false) {
                 updateRealProgressUI({
-                  pct: pct,
-                  title: 'Menyimpan "' + bookTitle + '" (' + pct + '%)',
-                  substep: substep,
-                  bytesText: bytesText,
-                  isWorking: true
+                  pct: 100,
+                  title: 'Buku "' + bookTitle + '" berhasil tersimpan di Google Sheets API!',
+                  substep: 'Siap dibaca di seluruh perangkat pengunjung publik',
+                  bytesText: 'Selesai 100%',
+                  isWorking: false
                 });
+              } else {
+                throw new Error('Gagal push buku');
               }
-            });
-            await pushCatalogToCloud(shelves, books);
-            updateRealProgressUI({
-              pct: 100,
-              title: 'Buku "' + bookTitle + '" berhasil tersimpan di Google Sheets API!',
-              substep: 'Siap dibaca di seluruh perangkat pengunjung publik',
-              bytesText: 'Selesai 100%',
-              isWorking: false
-            });
+            } catch (err) {
+              console.error('Failed to sync book to Google Sheets:', err);
+              updateRealProgressUI({
+                pct: 0,
+                title: 'Gagal Menyimpan "' + bookTitle + '" ke Google Sheets API',
+                substep: 'Terjadi kesalahan saat menghubungi server/endpoint GAS.',
+                bytesText: 'Gagal 0%',
+                isWorking: false,
+                isError: true
+              });
+              setBookRowProgress(bookId, 'error', 0, 'Gagal Sinkronisasi Cloud');
+              showToast('Gagal sinkronisasi buku ke Google Sheets API.');
+            }
             renderCloudDriveBooksStatusList();
           }, 120);
         }

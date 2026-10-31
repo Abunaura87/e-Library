@@ -165,17 +165,18 @@ async function startServer() {
       }
 
       if (action === 'saveBook') {
-        const b = payload.book || payload;
-        if (!b || !b.id) {
-          return res.status(400).json({ status: 'error', message: 'Missing book id' });
+        const b = payload.book || payload.payload || payload;
+        if (!b || (!b.id && !b.title)) {
+          return res.status(400).json({ status: 'error', message: 'Missing book payload' });
         }
-        const bookId = String(b.id);
+        const bookId = String(b.id || ('book-' + Date.now()));
         cat.deletedBookIds = cat.deletedBookIds.filter((delId: string) => String(delId) !== bookId);
-        const shelfId = String(b.shelfId || b.rackId || 'rak-01');
+        const shelfId = String(b.shelfId || b.rackId || b.kategoriRak || 'rak-01').trim();
         const bookMeta = {
           id: bookId,
           rackId: shelfId,
           shelfId: shelfId,
+          kategoriRak: shelfId,
           title: String(b.title || 'Buku Koleksi'),
           author: String(b.author || 'Anonim'),
           description: String(b.description || ''),
