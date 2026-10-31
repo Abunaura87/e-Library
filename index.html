@@ -3606,6 +3606,7 @@
           );
           try {
             localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(cleanBooksData));
+            localStorage.setItem('elibrary_books_cache', JSON.stringify(cleanBooksData));
           } catch (e) {
             try {
               const slimBooks = cleanBooksData.map((b) => ({
@@ -3613,6 +3614,7 @@
                 coverUrl: bookAssetsCache[b.id] ? '' : b.coverUrl
               }));
               localStorage.setItem(STORAGE_BOOKS_KEY, JSON.stringify(slimBooks));
+              localStorage.setItem('elibrary_books_cache', JSON.stringify(slimBooks));
             } catch (err) {}
           }
         },
@@ -4133,7 +4135,17 @@
           .replace(/'/g, '&#39;');
       }
 
-      const PRESET_BOOK_IDS = new Set();
+      const PRESET_BOOK_IDS = new Set([
+        'book-arch',
+        'book-fiqh',
+        'book-sains',
+        'book-filsafat',
+        'book-sastra',
+        'book-sosial',
+        'book-teknologi',
+        'book-1',
+        'book-2'
+      ]);
 
       // =========================================================
       // AUDIO CONTEXT & UNLOCK SISTEM (KOMPATIBEL DENGAN HP & TABLET)
@@ -5637,7 +5649,7 @@
         const deletedIds = getDeletedBookIds();
         let savedBooks = null;
         try {
-          const rawBooks = localStorage.getItem(STORAGE_BOOKS_KEY);
+          const rawBooks = localStorage.getItem('elibrary_books_cache') || localStorage.getItem(STORAGE_BOOKS_KEY);
           if (rawBooks) {
             savedBooks = JSON.parse(rawBooks);
           }
@@ -9890,51 +9902,76 @@
           hasStoredPages: isOriginalPdfOrImg
         };
 
-        const existingIdx = books.findIndex((b) => b.id === finalBookRecord.id);
-        if (existingIdx >= 0) {
-          books[existingIdx] = Object.assign({}, books[existingIdx], finalBookRecord);
-        } else {
-          books.unshift(finalBookRecord);
+        const btnSaveAll = document.getElementById('btn-crud-save-all');
+        const btnOpenReader = document.getElementById('btn-crud-open-in-reader');
+        const origSaveAllText = btnSaveAll ? btnSaveAll.textContent : '';
+
+        if (btnSaveAll) {
+          btnSaveAll.disabled = true;
+          btnSaveAll.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Menyimpan ke Cloud...</span>';
         }
-        crudIsNewBook = false;
-        saveBooksToStorage();
-
-        const assetToSave = {
-          bookMeta: finalBookRecord,
-          coverUrl: finalCoverUrl,
-          hasCustomCoverImage: finalBookRecord.hasCustomCoverImage,
-          pagesDataUrls: renderedPages,
-          originalPagesDataUrls:
-            crudWorkingBook.originalPagesDataUrls ||
-            prevAsset.originalPagesDataUrls ||
-            (isOriginalPdfOrImg ? renderedPages : []),
-          editablePages: finalBookRecord.editablePages,
-          isCustomPdf: finalBookRecord.isCustomPdf,
-          pdfUrl: finalBookRecord.pdfUrl,
-          drivePdfFileId: finalBookRecord.drivePdfFileId,
-          pdfDataUrl: crudWorkingBook.pdfDataUrl || prevAsset.pdfDataUrl || ''
-        };
-
-        await StorageHandler.saveBookAsset(finalBookRecord.id, assetToSave);
-
-        // Otomatis sinkronkan seketika ke Database Server & Cloud tanpa perlu menekan tombol manual
-        autoSyncCatalogEverywhere({ savedBook: finalBookRecord, asset: assetToSave });
-
-        populateCrudShelfSelectors();
-        renderCrudBooksListSidebar();
-        renderLobbyView(document.getElementById('lobby-search-input').value || '');
-        if (currentView === 'shelf') {
-          activeShelfId = finalBookRecord.shelfId;
-          openShelfView(activeShelfId);
-        }
-        if (activeBookId === finalBookRecord.id || openReaderAfterSave) {
-          openBookInReader(finalBookRecord);
+        if (btnOpenReader) {
+          btnOpenReader.disabled = true;
         }
 
-        if (openReaderAfterSave) {
-          closeCrudEtalaseModal();
+        try {
+          unmarkBookAsDeleted(finalBookRecord.id);
+
+          const existingIdx = books.findIndex((b) => b.id === finalBookRecord.id);
+          if (existingIdx >= 0) {
+            books[existingIdx] = Object.assign({}, books[existingIdx], finalBookRecord);
+          } else {
+            books.unshift(finalBookRecord);
+          }
+          crudIsNewBook = false;
+          saveBooksToStorage();
+
+          const assetToSave = {
+            bookMeta: finalBookRecord,
+            coverUrl: finalCoverUrl,
+            hasCustomCoverImage: finalBookRecord.hasCustomCoverImage,
+            pagesDataUrls: renderedPages,
+            originalPagesDataUrls:
+              crudWorkingBook.originalPagesDataUrls ||
+              prevAsset.originalPagesDataUrls ||
+              (isOriginalPdfOrImg ? renderedPages : []),
+            editablePages: finalBookRecord.editablePages,
+            isCustomPdf: finalBookRecord.isCustomPdf,
+            pdfUrl: finalBookRecord.pdfUrl,
+            drivePdfFileId: finalBookRecord.drivePdfFileId,
+            pdfDataUrl: crudWorkingBook.pdfDataUrl || prevAsset.pdfDataUrl || ''
+          };
+
+          await StorageHandler.saveBookAsset(finalBookRecord.id, assetToSave);
+
+          // Otomatis sinkronkan seketika ke Database Server & Cloud tanpa perlu menekan tombol manual
+          await autoSyncCatalogEverywhere({ savedBook: finalBookRecord, asset: assetToSave });
+
+          populateCrudShelfSelectors();
+          renderCrudBooksListSidebar();
+          renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
+          if (currentView === 'shelf') {
+            activeShelfId = finalBookRecord.shelfId;
+            openShelfView(activeShelfId);
+          }
+          if (activeBookId === finalBookRecord.id || openReaderAfterSave) {
+            openBookInReader(finalBookRecord);
+          }
+
+          if (openReaderAfterSave) {
+            closeCrudEtalaseModal();
+          }
+          showToast('Buku berhasil disimpan permanen ke Google Sheets & Katalog!');
+        } finally {
+          if (btnSaveAll) {
+            btnSaveAll.disabled = false;
+            btnSaveAll.textContent = origSaveAllText || 'Simpan Permanen ke Etalase';
+          }
+          if (btnOpenReader) {
+            btnOpenReader.disabled = false;
+          }
+          if (window.lucide) window.lucide.createIcons();
         }
-        showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
       }
 
       async function deleteBookFromEtalase(bookId) {
@@ -12642,15 +12679,22 @@
             nextBooks.push(mergedBook);
           });
 
-          // Jika Admin di perangkat ini baru saja mengunggah buku PDF kustom yang belum sempat terkirim ke Google Sheets API, pertahankan & sinkronkan
+          // Jika Admin di perangkat ini baru saja mengunggah/menambahkan buku baru
+          // yang belum sempat terkirim ke Google Sheets API, pertahankan & sinkronkan
           books.forEach((localBook) => {
             if (!localBook || !localBook.id || localBook.id === SYSTEM_SETTINGS_DOC_ID) return;
             if (currentDeleted.has(String(localBook.id))) return;
             if (remoteBookIdsSet.has(String(localBook.id))) return;
+
+            const isPresetDefault = PRESET_BOOK_IDS.has(String(localBook.id));
             const hasLocalCustomAsset = Boolean(
-              bookAssetsCache[localBook.id] &&
-              (bookAssetsCache[localBook.id].isCustomPdf || !PRESET_BOOK_IDS.has(String(localBook.id)))
+              bookAssetsCache[localBook.id] ||
+              !isPresetDefault ||
+              localBook.isCustomPdf ||
+              String(localBook.id).startsWith('book-pdf-') ||
+              String(localBook.id).startsWith('book-')
             );
+
             if (hasLocalCustomAsset) {
               needsCatalogCleanupPush = true;
               unsyncedLocalBookIds.push(String(localBook.id));
