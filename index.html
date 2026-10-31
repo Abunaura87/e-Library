@@ -8458,13 +8458,11 @@
         applyLobbyLightingUI(nextState, true);
       }
 
-      // Pulihkan status lampu dari localStorage pengguna (tanpa pernah menulis/membaca Firestore)
+      // Inisialisasi Mutlak: Lampu SELALU MATI (Mode Temaram) secara mutlak setiap kali aplikasi dibuka atau direfresh
       try {
-        const savedLampState = localStorage.getItem('elibrary_ui_lamp_on');
-        if (savedLampState === 'true') {
-          applyLobbyLightingUI(true, false);
-        }
+        localStorage.removeItem('elibrary_ui_lamp_on');
       } catch (e) {}
+      applyLobbyLightingUI(false, false);
 
       const pullChainAssembly = document.getElementById('pull-chain-assembly');
       const pullChainSvg = document.getElementById('pull-chain-svg');
