@@ -11750,18 +11750,6 @@
           }
         }
 
-          if (headerBadgeText) {
-            headerBadgeText.textContent = isWorking
-              ? 'Sync ' + pct + '%'
-              : 'Cloud DB (' + books.length + ' Buku)';
-          }
-          if (headerDriveBtnText) {
-            headerDriveBtnText.textContent = isWorking
-              ? 'Mengunggah ' + pct + '%'
-              : 'Google Sheets DB';
-          }
-        }
-
         function setBookRowProgress(bookId, status, pct, label) {
           bookSyncStates[bookId] = {
             status: status,
