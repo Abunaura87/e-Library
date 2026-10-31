@@ -638,7 +638,13 @@ async function startServer() {
 
   if (!isProduction) {
     const vite = await createViteServer({
-      server: { middlewareMode: true, host: '0.0.0.0', port },
+      server: {
+        middlewareMode: true,
+        host: '0.0.0.0',
+        port,
+        hmr: false,
+        ws: false,
+      },
       appType: 'spa'
     });
     app.use(vite.middlewares);
@@ -649,9 +655,32 @@ async function startServer() {
     });
   }
 
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`e-Library Cloud Database Server running on http://0.0.0.0:${port}`);
-  });
+  const startHttpServer = (targetPort: number, attemptsLeft = 5) => {
+    const server = app.listen(targetPort, '0.0.0.0', () => {
+      console.log(`e-Library Cloud Database Server running on http://0.0.0.0:${targetPort}`);
+    });
+
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.warn(`Port ${targetPort} is currently in use.`);
+        if (attemptsLeft > 0) {
+          console.log(`Retrying on port ${targetPort} in 1 second... (${attemptsLeft} attempts remaining)`);
+          setTimeout(() => {
+            server.close();
+            startHttpServer(targetPort, attemptsLeft - 1);
+          }, 1000);
+        } else {
+          const fallbackPort = targetPort + 1;
+          console.warn(`Falling back to port ${fallbackPort}...`);
+          startHttpServer(fallbackPort, 5);
+        }
+      } else {
+        console.error('Server error:', err);
+      }
+    });
+  };
+
+  startHttpServer(port);
 }
 
 startServer();
