@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Keep production data backups out of source control.
+*.bak

@@ -3898,7 +3898,7 @@
             accent: String(bookObj.accent || '#0B3B2C'),
             spineColor: String(bookObj.spineColor || bookObj.accent || '#0B3B2C'),
             pageCount: Math.max(1, parseInt(bookObj.pageCount, 10) || 1),
-            passwordProtected: Boolean(bookObj.passwordProtected && bookObj.password),
+            passwordProtected: Boolean(bookObj.passwordProtected),
             password: bookObj.passwordProtected ? String(bookObj.password || '').trim() : '',
             pdfUrl: normalizedPdf && normalizedPdf.directUrl ? normalizedPdf.directUrl : String(bookObj.pdfUrl || ''),
             coverUrl: String(bookObj.coverUrl || ''),
@@ -7678,25 +7678,6 @@
       function initFirebaseAdminAuth() {
         try {
           updateDomainFallbackHostLabels();
-          // Pulihkan sesi Admin yang sudah terverifikasi sebelumnya di browser (Laptop & HP)
-          try {
-            const savedAdminRaw = localStorage.getItem(STORAGE_ADMIN_SESSION_KEY);
-            if (savedAdminRaw) {
-              const savedAdmin = JSON.parse(savedAdminRaw);
-              if (savedAdmin && (savedAdmin.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL) {
-                currentAdminUser = savedAdmin;
-                isAdminMode = true;
-                if (!cachedDriveAccessToken) {
-                  cachedDriveAccessToken = localStorage.getItem(STORAGE_ADMIN_DRIVE_TOKEN_KEY) || null;
-                }
-                updateAdminModeUI();
-                if (window.CloudDriveSyncEngine) {
-                  window.CloudDriveSyncEngine.updateDriveAuthUI();
-                }
-              }
-            }
-          } catch (e) {}
-
           if (window.firebase && window.firebase.initializeApp) {
             if (!window.firebase.apps || window.firebase.apps.length === 0) {
               window.firebase.initializeApp(firebaseConfig);
@@ -7872,6 +7853,8 @@
       });
 
       function verifyAndApplyAdminUser(user, isInteractiveAttempt) {
+        if (!user || typeof user.getIdToken !== 'function' || !user.emailVerified || !firebaseAuth || firebaseAuth.currentUser !== user) { currentAdminUser=null;isAdminMode=false;updateAdminModeUI();return; }
+
         const errBox = document.getElementById('admin-login-error');
         const errText = document.getElementById('admin-login-error-text');
         const infoBox = document.getElementById('admin-domain-fallback-info');
@@ -8152,84 +8135,9 @@
       }
 
       // Verifikasi Email + Kata Sandi Pengaman Admin (TIDAK PERNAH mengizinkan masuk hanya dengan email!)
-      async function verifyAdminEmailAndPasswordForm(rawEmail, rawPassword) {
-        const errBox = document.getElementById('admin-login-error');
-        const errText = document.getElementById('admin-login-error-text');
-        const emailInp = document.getElementById('admin-email-input');
-        const passInp = document.getElementById('admin-password-input');
-
-        let cleanedEmail = (rawEmail || '').trim().toLowerCase();
-        const passwordVal = rawPassword || '';
-
-        // Normalisasi jika Password Manager peramban mengisi otomatis nama situs ('e-library' / 'admin' / 'marhaniza05')
-        if (
-          cleanedEmail === 'e-library' ||
-          cleanedEmail === 'elibrary' ||
-          cleanedEmail === 'admin' ||
-          cleanedEmail === 'marhaniza05'
-        ) {
-          cleanedEmail = ADMIN_WHITELIST_EMAIL;
-          if (emailInp) emailInp.value = ADMIN_WHITELIST_EMAIL;
-        }
-
-        if (!cleanedEmail) {
-          if (errText) errText.textContent = 'Masukkan alamat email Google Administrator resmi terlebih dahulu.';
-          if (errBox) errBox.classList.remove('hidden');
-          if (emailInp) emailInp.focus();
-          return;
-        }
-
-        if (!passwordVal.trim()) {
-          if (errText) errText.textContent = 'Kata Sandi Pengaman Admin wajib diisi. Akses tanpa kata sandi ditolak demi keamanan.';
-          if (errBox) errBox.classList.remove('hidden');
-          if (passInp) passInp.focus();
-          return;
-        }
-
-        if (cleanedEmail !== ADMIN_WHITELIST_EMAIL) {
-          const denialMsg = 'Akses Ditolak: Akun (' + cleanedEmail + ') tidak memiliki izin sebagai Administrator. Gunakan email resmi marhaniza05@gmail.com.';
-          if (errText) errText.textContent = denialMsg;
-          if (errBox) errBox.classList.remove('hidden');
-          showToast(denialMsg);
-          return;
-        }
-
-        const expectedHash = getStoredAdminPasswordHash();
-        const attemptHash = computeAdminPasswordHash(passwordVal);
-
-        if (attemptHash !== expectedHash) {
-          // Jika admin baru saja mereset kata sandi melalui tautan email Firebase Auth, verifikasi ke Firebase Auth
-          if (firebaseAuth) {
-            try {
-              const fbCred = await firebaseAuth.signInWithEmailAndPassword(cleanedEmail, passwordVal);
-              if (fbCred && fbCred.user && (fbCred.user.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL) {
-                try {
-                  localStorage.setItem(STORAGE_ADMIN_PASS_HASH_KEY, attemptHash);
-                } catch (e) {}
-                verifyAndApplyAdminUser(fbCred.user, true);
-                return;
-              }
-            } catch (fbErr) {
-              // Lanjut ke pesan kata sandi salah
-            }
-          }
-
-          const wrongPassMsg = 'Akses Ditolak: Kata Sandi Pengaman Admin salah.';
-          if (errText) errText.textContent = wrongPassMsg;
-          if (errBox) errBox.classList.remove('hidden');
-          if (passInp) {
-            passInp.value = '';
-            passInp.focus();
-          }
-          showToast(wrongPassMsg);
-          return;
-        }
-
-        verifyAndApplyAdminUser({
-          email: cleanedEmail,
-          displayName: 'Administrator e-Library',
-          authMethod: 'password_verified'
-        }, true);
+      async function verifyAdminEmailAndPasswordForm(rawEmail,rawPassword){
+        try{if(!firebaseAuth)throw Error('Autentikasi Google belum siap.');const result=await firebaseAuth.signInWithEmailAndPassword(String(rawEmail||'').trim(),rawPassword);if(!result.user.emailVerified||String(result.user.email).toLowerCase()!==ADMIN_WHITELIST_EMAIL)throw Error('Akun tidak memiliki akses Admin.');verifyAndApplyAdminUser(result.user,true);}
+        catch(error){const el=document.getElementById('admin-login-error-text');if(el)el.textContent='Login gagal. Gunakan akun Google Admin yang terverifikasi.';const box=document.getElementById('admin-login-error');if(box)box.classList.remove('hidden');}
       }
 
       async function signInWithGoogleAdmin() {
@@ -9393,6 +9301,7 @@
           }
         }
         if (targetSel) {
+          const previousTarget=targetSel.value || (crudWorkingBook&&crudWorkingBook.shelfId);
           targetSel.innerHTML = '';
           shelves.forEach((s) => {
             const opt = document.createElement('option');
@@ -9400,6 +9309,7 @@
             opt.textContent = s.code + ' — ' + s.name;
             targetSel.appendChild(opt);
           });
+          if([...targetSel.options].some(o=>o.value===previousTarget))targetSel.value=previousTarget;
         }
       }
 
@@ -9541,7 +9451,7 @@
           author: found.author || '',
           description: found.description || '',
           kicker: found.kicker || (shelfObj ? shelfObj.code : 'KOLEKSI PUSTAKA 3D'),
-          pageCount: crudWorkingPages.length || found.pageCount || 6,
+          pageCount: found.pageCount || crudWorkingPages.length || 6,
           passwordProtected: Boolean(found.passwordProtected),
           password: found.password || '',
           accent: found.accent || found.spineColor || '#0B3B2C',
@@ -9658,7 +9568,7 @@
         }
         const isChkPwd = document.getElementById('crud-chk-password').checked;
         const rawCrudPwd = document.getElementById('crud-inp-password').value.trim();
-        crudWorkingBook.passwordProtected = Boolean(isChkPwd && rawCrudPwd.length > 0);
+        crudWorkingBook.passwordProtected = Boolean(isChkPwd);
         crudWorkingBook.password = isChkPwd ? rawCrudPwd : '';
 
         // JANGAN mengubah halaman 1 jika buku berasal dari PDF/Gambar orisinal!
@@ -9933,7 +9843,7 @@
           author: crudWorkingBook.author,
           description: crudWorkingBook.description,
           kicker: crudWorkingBook.kicker,
-          pageCount: renderedPages.length,
+          pageCount: isOriginalPdfOrImg ? Math.max(Number(crudWorkingBook.pageCount)||0,renderedPages.length) : renderedPages.length,
           passwordProtected: Boolean(crudWorkingBook.passwordProtected),
           password: crudWorkingBook.password || '',
           accent: crudWorkingBook.accent || '#0B3B2C',
@@ -10028,13 +9938,13 @@
         }
         const confirmed = window.CloudDriveSyncEngine
           ? await window.CloudDriveSyncEngine.requestConfirmation({
-              title: 'Hapus Buku dari Etalase & Cloud / Google Drive',
-              message: 'Apakah Anda yakin ingin menghapus buku ini secara permanen dari Etalase, Cloud Database, dan Google Drive?',
+              title: 'Arsipkan Buku dari Etalase',
+              message: 'Buku akan disembunyikan dari katalog. Data dan aset tetap disimpan untuk pemulihan.',
               detailsHtml:
                 '<div><strong>Judul:</strong> ' + escapeHtml(target.title || '') + '</div>' +
                 '<div><strong>Penulis:</strong> ' + escapeHtml(target.author || '') + '</div>' +
                 '<div><strong>ID Buku:</strong> ' + escapeHtml(target.id || '') + '</div>',
-              acceptLabel: 'Ya, Hapus Permanen'
+              acceptLabel: 'Ya, Arsipkan Buku'
             })
           : true;
         if (!confirmed) {
@@ -10047,7 +9957,7 @@
         await StorageHandler.deleteBookAsset(bookId);
 
         // Otomatis sinkronkan penghapusan ke Server & Cloud DB seketika untuk semua akun
-        autoSyncCatalogEverywhere({
+        await autoSyncCatalogEverywhere({
           deletedBookId: bookId,
           prevPageCount: (target && target.pageCount) || 1,
           prevRec: target
@@ -11512,6 +11422,7 @@
       }
 
       function handleInitialRouting() {
+        if(!strictCatalogReady)return;
         if (isGoogleAuthBridgeMode()) {
           switchViewTo('lobby');
           const modal = document.getElementById('modal-admin-login');
@@ -11552,7 +11463,8 @@
                 return;
               }
             }
-            switchViewTo('reader');
+            showToast('Buku pada tautan ini tidak tersedia di katalog cloud.');
+            switchViewTo('lobby');
             return;
           }
         }
@@ -13260,6 +13172,14 @@
           });
         }
 
+        // Runtime catalog methods share the durable endpoint; old Drive snapshots are archival only.
+        pullCatalogAndBooksFromCloud=async()=>window.__strictLoadCatalog();
+        bootAndHydrateMultiAccount=async()=>window.__strictLoadCatalog();
+        pushCatalogToCloud=async()=>SheetsApiHandler.fetchCatalog();
+        scheduleCatalogSync=()=>{};
+        scheduleBookSync=()=>{};
+        deleteBookEverywhere=async()=>true;
+        pushBookAndPagesToCloud=async(id,record)=>{const meta=books.find(b=>b.id===id)||record.bookMeta||record;await SheetsApiHandler.saveBook(meta,record);return true;};
         return {
           bootAndHydrateMultiAccount: bootAndHydrateMultiAccount,
           pullCatalogAndBooksFromCloud: pullCatalogAndBooksFromCloud,
@@ -13280,9 +13200,157 @@
       })();
       window.CloudDriveSyncEngine = CloudDriveSyncEngine;
 
+
+      // Permanent catalog protocol: one endpoint, authenticated mutations, no browser catalog authority.
+      const serverBookRevisions = new Map();
+      let cloudWritePending = 0;
+      let strictCatalogReady = false;
+      async function strictAdminToken() {
+        const user = firebaseAuth && firebaseAuth.currentUser;
+        if (!user || !user.emailVerified || String(user.email).toLowerCase() !== ADMIN_WHITELIST_EMAIL) throw new Error('Silakan login dengan akun Google Admin yang terverifikasi.');
+        return user.getIdToken();
+      }
+      async function strictHash(text){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return btoa(String.fromCharCode(...new Uint8Array(bytes)));}
+      async function strictRequest(payload, publicRead) {
+        const headers={'Content-Type':'application/json'};
+        if(!publicRead || (firebaseAuth&&firebaseAuth.currentUser&&firebaseAuth.currentUser.emailVerified&&String(firebaseAuth.currentUser.email).toLowerCase()===ADMIN_WHITELIST_EMAIL))headers.Authorization='Bearer '+await strictAdminToken();
+        const request={...payload};if(!request.requestId&&!['readBook','catalog'].includes(request.action))request.requestId=crypto.randomUUID().replace(/-/g,'');
+        let result;
+        for(let attempt=0;attempt<2;attempt++){
+          try{
+            const response=await fetch('/api/gas',{method:'POST',cache:'no-store',credentials:'same-origin',headers,body:JSON.stringify(request),signal:AbortSignal.timeout(90000)});
+            try{result=await response.json();}catch{const e=new Error('Respons database tidak valid (HTTP '+response.status+').');e.retryable=response.status>=500;throw e;}
+            if(!response.ok||result.status!=='success'){const e=new Error(result.message||'Data belum tersimpan di cloud.');e.retryable=response.status>=500;throw e;}break;
+          }catch(error){if(attempt===0&&(error.retryable||['TypeError','TimeoutError','AbortError'].includes(error.name))){await new Promise(resolve=>setTimeout(resolve,1000));continue;}throw error;}
+        }
+        if(request.action==='readBook'&&result.transfer){
+          const transfer=result.transfer;if(!Number.isInteger(transfer.total)||transfer.total<1||transfer.total>128)throw Error('Ukuran buku tidak valid.');
+          let raw='';for(let i=0;i<transfer.total;i++){const part=(await strictRequest({...payload,transferPart:i,transferHash:transfer.hash},publicRead)).transferPart;if(!part||part.part!==i||part.hash!==transfer.hash)throw Error('Bagian buku tidak konsisten.');raw+=part.data;}
+          if(await strictHash(raw)!==transfer.hash)throw Error('Verifikasi keutuhan buku gagal.');result.book=JSON.parse(raw);delete result.transfer;
+        }
+        return result;
+      }
+      fetchCloudApi = async function(apiPath,options) {
+        const path=String(apiPath),opts={...(options||{}),cache:'no-store'};
+        if(path.startsWith('/api/books/')&&(!opts.method||opts.method==='GET')){
+          const result=await strictRequest({action:'readBook',id:decodeURIComponent(path.split('/').pop())},true);
+          return new Response(JSON.stringify(result.book),{status:200,headers:{'Content-Type':'application/json'}});
+        }
+        const headers=new Headers(opts.headers||{});
+        if(opts.method&&!['GET','HEAD','OPTIONS'].includes(opts.method))headers.set('Authorization','Bearer '+await strictAdminToken());
+        return fetch(path,{...opts,headers,signal:AbortSignal.timeout(90000)});
+      };
+      window.fetchCloudApi=fetchCloudApi;
+      SheetsApiHandler.getCustomEndpoint=()=>'';
+      SheetsApiHandler.setCustomEndpoint=()=>{throw new Error('Alamat database dikelola pada konfigurasi server untuk seluruh perangkat.');};
+      SheetsApiHandler.fetchCatalog=async()=>{
+        const headers={};
+        if(firebaseAuth && firebaseAuth.currentUser && firebaseAuth.currentUser.emailVerified && String(firebaseAuth.currentUser.email).toLowerCase()===ADMIN_WHITELIST_EMAIL)headers.Authorization='Bearer '+await strictAdminToken();
+        const response=await fetch('/api/gas',{cache:'no-store',headers,signal:AbortSignal.timeout(90000)});
+        const data=await response.json();
+        if(!response.ok||data.status!=='success'||data.schemaVersion!==2||!Array.isArray(data.books)||!Array.isArray(data.racks))throw new Error(data.message||'Database cloud tidak tersedia.');
+        return data;
+      };
+      SheetsApiHandler.postAction=async payload=>{
+        cloudWritePending++;
+        try{return await strictRequest(payload,payload.action==='readBook');}
+        catch(error){if(payload.action!=='readBook'){try{await strictLoadCatalog();}catch{}showToast('Penyimpanan gagal: '+error.message);}throw error;}
+        finally{cloudWritePending--;}
+      };
+      SheetsApiHandler.saveBook=async(book,asset)=>{
+        const payload={action:'saveBook',book:{...book},asset:asset||undefined};
+        if(serverBookRevisions.has(String(book.id)))payload.expectedRevision=serverBookRevisions.get(String(book.id));
+        const packed=JSON.stringify(payload);
+        let uploadPayload=payload;
+        if(packed.length>600000){const uploadId=crypto.randomUUID().replace(/-/g,''),total=Math.ceil(packed.length/600000);if(total>64)throw Error('Berkas terlalu besar. Gunakan tautan PDF Google Drive.');for(let part=0;part<total;part++){showToast('Mengunggah berkas '+(part+1)+' dari '+total+'...');await SheetsApiHandler.postAction({action:'uploadChunk',uploadId,total,part,data:packed.slice(part*600000,(part+1)*600000)});}uploadPayload={action:'saveBook',uploadId,total,uploadHash:await strictHash(packed)};}
+        const result=await SheetsApiHandler.postAction(uploadPayload);
+        if(result.book)serverBookRevisions.set(String(book.id),Number(result.book.updatedAt)||result.updatedAt);
+        return result;
+      };
+      SheetsApiHandler.deleteBook=async id=>{
+        const payload={action:'deleteBook',id:String(id)};
+        if(serverBookRevisions.has(String(id)))payload.expectedRevision=serverBookRevisions.get(String(id));
+        const result=await SheetsApiHandler.postAction(payload);markBookAsDeleted(id);return result;
+      };
+      SheetsApiHandler.saveRack=async(rack)=>{const result=await SheetsApiHandler.postAction({action:'saveRack',rack});await strictLoadCatalog();showToast('Rak tersimpan dan terverifikasi di database cloud.');return result;};
+      SheetsApiHandler.deleteRack=async(id,fallbackRackId)=>{const result=await SheetsApiHandler.postAction({action:'deleteRack',id,fallbackRackId});await strictLoadCatalog();showToast('Perubahan rak tersimpan di database cloud.');return result;};
+      SheetsApiHandler.syncAll=()=>SheetsApiHandler.fetchCatalog();
+      normalizeBookLockState=book=>{if(!book)return false;book.passwordProtected=Boolean(book.passwordProtected);delete book.password;return false;};
+
+
+      const strictOriginalSelectBook=selectBookInCrudStudio;let strictEditorRequest=0;
+      selectBookInCrudStudio=async function(id){const request=++strictEditorRequest;const panels=['crud-panel-metadata','crud-panel-pages'].map(x=>document.getElementById(x));const buttons=['btn-crud-save-all','btn-crud-open-in-reader','btn-crud-delete-current-book','btn-crud-duplicate-current-book'].map(x=>document.getElementById(x));panels.forEach(x=>{if(x)x.inert=true;});buttons.forEach(x=>{if(x)x.disabled=true;});try{const fresh=(await strictRequest({action:'readBook',id},true)).book;if(request!==strictEditorRequest)return;const existing=books.find(b=>b.id===id);if(existing)Object.assign(existing,fresh);bookAssetsCache[id]={...fresh};return strictOriginalSelectBook(id);}catch(error){showToast('Konten editor belum dapat dimuat: '+error.message);}finally{if(request===strictEditorRequest){panels.forEach(x=>{if(x)x.inert=false;});buttons.forEach(x=>{if(x)x.disabled=false;});}}};
+      const strictUnlockedBooks=new Map();
+      const strictOriginalOpenBook=openBookInReader;
+      openBookInReader=async function(book){
+        if(!book)return;
+        try{
+          let fresh=strictUnlockedBooks.get(book.id);strictUnlockedBooks.delete(book.id);
+          if(!fresh)fresh=(await strictRequest({action:'readBook',id:book.id},true)).book;
+          bookAssetsCache[book.id]={...fresh};
+          return strictOriginalOpenBook({...fresh,passwordProtected:false});
+        }catch(error){
+          if(book.passwordProtected){
+            activeBookId=book.id;config.activeBookId=book.id;config.title=book.title;config.author=book.author;config.passwordProtected=true;isLocked=true;currentPage=1;
+            pagesDataUrls=[{pageNumber:1,title:'Buku terlindungi',dataUrl:book.coverUrl||null}];
+            renderStage('forward');switchViewTo('reader');document.getElementById('password-gate-modal').classList.remove('hidden');
+          }else showToast('Buku belum dapat dibuka: '+error.message);
+        }
+      };
+      window.openBookInReader=openBookInReader;
+      async function strictLoadCatalog() {
+        try{
+          const data=await SheetsApiHandler.fetchCatalog();
+          shelves=data.racks.map(r=>({...r}));books=data.books.map(b=>({...b}));
+          serverBookRevisions.clear();books.forEach(b=>serverBookRevisions.set(String(b.id),Number(b.updatedAt)||0));
+          try{localStorage.setItem(STORAGE_DELETED_BOOKS_KEY,JSON.stringify(data.deletedBookIds||[]));}catch{}
+          books.forEach(b=>{if(typeof b.editablePagesJson==='string'&&!Array.isArray(b.editablePages)){try{b.editablePages=JSON.parse(b.editablePagesJson);}catch{}}});
+          const firstCloudLoad=!strictCatalogReady;strictCatalogReady=true;
+          renderLobbyView((document.getElementById('lobby-search-input')||{}).value||'');
+          if(currentView==='shelf')renderShelfBooksGrid((document.getElementById('shelf-search-input')||{}).value||'');
+          populateCrudShelfSelectors();renderCrudBooksListSidebar();renderShelfQuickSwitcher();
+          if(firstCloudLoad)handleInitialRouting();
+          const badge=document.getElementById('header-cloud-sync-badge-text');if(badge)badge.textContent='Cloud DB ('+books.length+' Buku)';
+          return {hasRemoteData:true,needsCatalogCleanupPush:false,unsyncedLocalBookIds:[]};
+        }catch(error){
+          if(!strictCatalogReady){books=[];shelves=[];renderLobbyView('');}
+          const badge=document.getElementById('header-cloud-sync-badge-text');if(badge)badge.textContent='Koneksi database gagal';
+          showToast(error.message||'Katalog belum dapat dimuat. Silakan coba kembali.');throw error;
+        }
+      }
+      const originalCloudToast=showToast;
+      showToast=function(message){if(cloudWritePending>0&&/berhasil|tersimpan|ditambahkan|dihapus/i.test(String(message)))return;return originalCloudToast(message);};
+      window.__strictLoadCatalog=strictLoadCatalog;
+      autoSyncCatalogEverywhere=async options=>{
+        const opts=options||{};
+        try{
+          if(opts.deletedBookId)await SheetsApiHandler.deleteBook(opts.deletedBookId);
+          else if(opts.savedBook)await SheetsApiHandler.saveBook(opts.savedBook,opts.asset||bookAssetsCache[opts.savedBook.id]);
+          else if(opts.savedRack)await SheetsApiHandler.saveRack(opts.savedRack);
+          await strictLoadCatalog();
+          showToast('Perubahan tersimpan dan terverifikasi di database cloud.');
+        }catch(error){try{await strictLoadCatalog();}catch{}showToast('Penyimpanan gagal: '+error.message);throw error;}
+      };
+      window.autoSyncCatalogEverywhere=autoSyncCatalogEverywhere;
+      window.CloudDriveSyncEngine.bootAndHydrateMultiAccount=strictLoadCatalog;
+      window.CloudDriveSyncEngine.pullCatalogAndBooksFromCloud=strictLoadCatalog;
+      document.getElementById('form-new-shelf').onsubmit=async event=>{
+        event.preventDefault();
+        const rack={id:'rak-'+Date.now(),code:document.getElementById('new-shelf-code').value.trim(),name:document.getElementById('new-shelf-name').value.trim(),description:document.getElementById('new-shelf-desc').value.trim(),accent:'#0B3B2C',colSpan:'lg:col-span-4',bookStyle:'standing-row',orderIndex:shelves.length,isCustomEdited:true};
+        try{await SheetsApiHandler.saveRack(rack);await strictLoadCatalog();shelfModal.classList.add('hidden');showToast('Rak tersimpan di database cloud.');}catch(error){showToast('Rak belum tersimpan: '+error.message);}
+      };
+      document.getElementById('unlock-form').onsubmit=async event=>{
+        event.preventDefault();const input=document.getElementById('unlock-password-input');
+        try{const result=await strictRequest({action:'readBook',id:activeBookId,bookPassword:input.value},true);const book=books.find(b=>b.id===activeBookId);strictUnlockedBooks.set(book.id,result.book);await openBookInReader(book);isLocked=false;renderStage('forward');input.value='';document.getElementById('unlock-error-msg').classList.add('hidden');}
+        catch(error){const msg=document.getElementById('unlock-error-msg');msg.textContent=error.message;msg.classList.remove('hidden');}
+      };
+      document.getElementById('tab-reader-btn').onclick=()=>{const book=books.find(b=>b.id===activeBookId)||books[0];if(book)openBookInReader(book);else showToast('Katalog cloud belum tersedia.');};
+      books=[];shelves=[];pagesDataUrls=[];
+      window.addEventListener('focus',()=>{if(!cloudWritePending&&!isAdminMode)strictLoadCatalog().catch(()=>{});});
+      setInterval(()=>{if(!document.hidden&&!cloudWritePending&&!isAdminMode)strictLoadCatalog().catch(()=>{});},30000);
+
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');
-      renderDefaultMonographPages();
       handleInitialRouting();
 
       // Pemuatan data tunggal langsung dari Cloud DB / Google Apps Script
