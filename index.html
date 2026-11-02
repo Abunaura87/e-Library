@@ -1128,6 +1128,11 @@
 #elib-connection-status{position:fixed;right:16px;bottom:18px;max-width:min(450px,calc(100vw - 32px));background:#0B3B2C;color:#F3E5AB;border:1px solid #D4AF37;border-radius:12px;padding:12px 16px;z-index:1200;box-shadow:0 8px 28px #0003;font-size:13px}#elib-connection-status[hidden]{display:none}#elib-connection-status .elib-retry{margin:0 0 0 10px;background:#f3e5ab;color:#0b3b2c}
 @media(prefers-reduced-motion:reduce){.elib-spinner{animation-duration:2s}.elib-skeleton{animation:none}}
 </style>
+<style id="elib-editor-hotfix-styles">
+
+#modal-crud-etalase-book>div{height:min(94dvh,980px);min-height:0}#modal-crud-etalase-book aside{min-height:0}#crud-books-list-container,#crud-panel-metadata,#crud-panel-pages,#crud-pages-list{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;-webkit-overflow-scrolling:touch}#crud-panel-metadata,#crud-panel-pages{overflow-y:auto}#crud-books-list-container{overflow-y:auto;flex:1}#elib-editor-status{flex-shrink:0;padding:9px 16px;color:#f3e5ab;background:#072a20;border-bottom:1px solid #d4af3760;font-size:12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}#elib-editor-status[hidden]{display:none}#elib-editor-status .elib-spinner{width:19px;height:19px;border-width:2px}#elib-editor-status button{border:1px solid #d4af37;border-radius:6px;padding:4px 10px;margin-left:auto}#elib-editor-dirty{font-size:10px;color:#f3e5ab;margin-left:8px}.elib-page-pagination{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;padding:8px 0;color:#f3e5ab}.elib-page-pagination button,.elib-page-pagination input{background:#072a20;border:1px solid #d4af3760;border-radius:5px;padding:4px 7px}.elib-page-pagination input{width:60px}#crud-page-live-preview-img{max-width:100%;height:auto;object-fit:contain}@media(max-width:1023px){#modal-crud-etalase-book aside{max-height:185px}#crud-pages-list{max-height:220px}#modal-crud-etalase-book>div{max-height:96dvh;height:96dvh}}
+@media(max-width:1023px){#elib-crud-header{padding:8px 10px;gap:6px}#elib-crud-header h3{font-size:14px}#elib-crud-header>div:first-child{gap:7px}#elib-crud-header>div:first-child>div:first-child{width:28px;height:28px}#modal-crud-etalase-book aside{max-height:145px}#modal-crud-etalase-book aside>div:first-child{padding:8px}#modal-crud-etalase-book aside>div:first-child .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}#modal-crud-etalase-book aside input,#modal-crud-etalase-book aside select{font-size:10px}#elib-crud-footer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;padding:7px 9px}#elib-crud-footer>div{display:contents}#elib-crud-footer button{padding:6px;font-size:10px;line-height:1.2;justify-content:center;min-height:32px}#elib-crud-footer button svg{width:12px;height:12px;flex-shrink:0}#elib-editor-status{padding:6px 10px;font-size:11px}#tab-btn-crud-metadata,#tab-btn-crud-pages{font-size:10px;padding:7px 5px}#crud-panel-metadata,#crud-panel-pages{padding:12px}}
+</style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
   <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
@@ -2072,7 +2077,7 @@
   <div id="modal-crud-etalase-book" class="hidden fixed inset-0 z-[75] flex items-center justify-center p-2 sm:p-4 bg-[#072A20]/85 backdrop-blur-xs">
     <div class="w-full max-w-6xl bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl text-[#FBF9F5] shadow-2xl flex flex-col max-h-[94vh] overflow-hidden">
       <!-- Header Studio CRUD -->
-      <div class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-b border-[#D4AF37]/40 bg-[#072A20] shrink-0">
+      <div id="elib-crud-header" class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-b border-[#D4AF37]/40 bg-[#072A20] shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-[#0B3B2C] border border-[#D4AF37] flex items-center justify-center shrink-0">
             <i data-lucide="file-pen-line" class="w-5 h-5 text-[#D4AF37]"></i>
@@ -2239,7 +2244,7 @@
                       <div id="crud-pdf-url-status" class="hidden text-[11px] px-2.5 py-2 rounded-lg border leading-snug break-words"></div>
                     </div>
                     <p class="text-[10px] text-[#E6E1D6]/75 leading-snug">
-                      Tempel link berbagi Google Drive (<code class="text-[#FEF08A]">Siapa saja yang memiliki link</code>) atau Direct URL PDF. Sistem otomatis merender sampul &amp; seluruh halaman asli buku.
+                      Tempel link berbagi Google Drive (<code class="text-[#FEF08A]">Siapa saja yang memiliki link</code>) atau Direct URL PDF. Sampul dimuat terlebih dahulu. Halaman PDF dimuat saat dibuka.
                     </p>
                     <div class="flex flex-wrap items-center gap-2">
                       <label for="crud-cover-image-input" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer inline-flex items-center gap-1.5">
@@ -2406,7 +2411,7 @@
           </div>
 
           <!-- Footer Aksi Simpan / Hapus / Duplikat / Buka Ruang Baca -->
-          <div class="px-4 sm:px-6 py-3 border-t border-[#D4AF37]/40 bg-[#072A20] flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+          <div id="elib-crud-footer" class="px-4 sm:px-6 py-3 border-t border-[#D4AF37]/40 bg-[#072A20] flex flex-wrap items-center justify-between gap-2.5 shrink-0">
             <div class="flex items-center gap-2">
               <button type="button" id="btn-crud-delete-current-book" class="px-3 py-2 text-xs font-semibold rounded-xl bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-400/60 flex items-center gap-1.5 cursor-pointer transition-colors">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-300"></i>
@@ -9490,9 +9495,11 @@
 
         const cachedAsset = bookAssetsCache[found.id];
         const isOriginalPdfOrImg = isBookOriginalPdfOrImage(found, cachedAsset);
+        const editorHasPdf=Boolean(found.pdfUrl||found.drivePdfFileId||found.driveFileId||(cachedAsset&&(cachedAsset.pdfDataUrl||cachedAsset.pdfUrl||cachedAsset.drivePdfFileId)));
         const shelfObj = shelves.find((s) => s.id === found.shelfId) || shelves[0];
 
         crudWorkingPages = buildEditablePagesForBook(found, cachedAsset);
+        if(editorHasPdf){crudWorkingPages.forEach(p=>{p.isOriginalPdfPage=true;});const count=Math.max(crudWorkingPages.length,Number(found.pageCount)||0);while(crudWorkingPages.length<count){const n=crudWorkingPages.length+1;crudWorkingPages.push({pageNumber:n,title:'Halaman '+n,kicker:'HALAMAN PDF '+n,subtitle:'',body:'',customImageDataUrl:'',isOriginalPdfPage:true});}}
 
         const originalPage1DataUrl =
           (cachedAsset && Array.isArray(cachedAsset.originalPagesDataUrls) && cachedAsset.originalPagesDataUrls[0] && cachedAsset.originalPagesDataUrls[0].dataUrl) ||
@@ -9514,7 +9521,7 @@
           spineColor: found.spineColor || found.accent || '#0B3B2C',
           hasCustomCoverImage: Boolean(found.hasCustomCoverImage || isOriginalPdfOrImg || originalPage1DataUrl),
           customCoverDataUrl: originalPage1DataUrl || (found.hasCustomCoverImage ? found.coverUrl : ''),
-          isCustomPdf: isOriginalPdfOrImg,
+          isCustomPdf: editorHasPdf,
           pdfUrl: found.pdfUrl || (cachedAsset && cachedAsset.pdfUrl) || '',
           drivePdfFileId: found.drivePdfFileId || (cachedAsset && cachedAsset.drivePdfFileId) || '',
           pdfDataUrl: (cachedAsset && cachedAsset.pdfDataUrl) || '',
@@ -9524,36 +9531,6 @@
         // Pastikan Halaman 1 memiliki judul yang sinkron dengan judul buku hanya jika BUKAN PDF/gambar orisinal
         if (crudWorkingPages.length > 0 && !crudWorkingBook.isCustomPdf && !crudWorkingPages[0].customImageDataUrl) {
           crudWorkingPages[0].title = crudWorkingBook.title;
-        }
-
-        // Jika buku ini adalah PDF unggahan (book-pdf-*) yang sebelumnya sempat tertimpa kanvas hijau padahal pdfDataUrl ada di IndexedDB,
-        // otomatis pulihkan lembaran asli PDF-nya!
-        if (
-          isOriginalPdfOrImg &&
-          cachedAsset &&
-          cachedAsset.pdfDataUrl &&
-          crudWorkingPages.some((p) => !p.customImageDataUrl)
-        ) {
-          renderOriginalPdfPagesFromDataUrl(cachedAsset.pdfDataUrl).then((restoredPages) => {
-            if (restoredPages && restoredPages.length > 0 && crudCurrentBookId === found.id) {
-              crudWorkingPages = restoredPages.map((r, idx) => ({
-                pageNumber: idx + 1,
-                kicker: idx === 0 ? 'SAMPUL DOKUMEN ASLI' : 'HALAMAN PDF ' + (idx + 1),
-                title: idx === 0 ? crudWorkingBook.title : 'Halaman ' + (idx + 1),
-                subtitle: 'Konten Orisinal Flipbook 3D',
-                body: '',
-                customImageDataUrl: r.dataUrl,
-                isOriginalPdfPage: true
-              }));
-              crudWorkingBook.hasCustomCoverImage = true;
-              crudWorkingBook.customCoverDataUrl = restoredPages[0].dataUrl;
-              crudWorkingBook.isCustomPdf = true;
-              crudWorkingBook.originalPagesDataUrls = restoredPages;
-              updateCrudMetadataLivePreview();
-              renderCrudPagesList();
-              loadCrudPageIntoForm(crudSelectedPageIdx);
-            }
-          });
         }
 
         crudSelectedPageIdx = 0;
@@ -9587,7 +9564,7 @@
 
       function populateCrudMetadataFormFromWorking() {
         if (!crudWorkingBook) return;
-        normalizeBookLockState(crudWorkingBook);
+        // Keep the administrator's unsaved password input in the draft.
         document.getElementById('crud-current-book-id-label').textContent = crudWorkingBook.id;
         document.getElementById('crud-inp-title').value = crudWorkingBook.title;
         document.getElementById('crud-inp-author').value = crudWorkingBook.author;
@@ -13271,24 +13248,24 @@ function strictPack(value){const strings=[],seen=new Map();function enc(v){if(ty
 function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;function dec(v){if(!Array.isArray(v))return v;if(v[0]===0){if(!Number.isInteger(v[1])||typeof p.strings[v[1]]!=='string')throw Error('Invalid string reference');return p.strings[v[1]];}if(v[0]===1)return v[1].map(dec);if(v[0]===2){const o={};v[1].forEach(k=>Object.defineProperty(o,k[0],{value:dec(k[1]),enumerable:true,writable:true,configurable:true}));return o;}throw Error('Invalid packed data');}return dec(p.data);}
 
       async function strictHash(text){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return btoa(String.fromCharCode(...new Uint8Array(bytes)));}
-      async function strictRequest(payload, publicRead) {
+      async function strictRequest(payload, publicRead, requestOptions={}) {
         const headers={'Content-Type':'application/json'};
         if(!publicRead || (firebaseAuth&&firebaseAuth.currentUser&&firebaseAuth.currentUser.emailVerified&&String(firebaseAuth.currentUser.email).toLowerCase()===ADMIN_WHITELIST_EMAIL))headers.Authorization='Bearer '+await strictAdminToken();
         const request={...payload};if(!request.requestId&&!['readBook','catalog'].includes(request.action))request.requestId=crypto.randomUUID().replace(/-/g,'');
         let result;
         for(let attempt=0;attempt<2;attempt++){
           try{
-            const response=await fetch('/api/gas',{method:'POST',cache:'no-store',credentials:'same-origin',headers,body:JSON.stringify(request),signal:AbortSignal.timeout(90000)});
+            const response=await fetch('/api/gas',{method:'POST',cache:'no-store',credentials:'same-origin',headers,body:JSON.stringify(request),signal:requestOptions.signal||AbortSignal.timeout(90000)});
             try{result=await response.json();}catch{const e=new Error('Respons database tidak valid (HTTP '+response.status+').');e.retryable=response.status>=500;throw e;}
             if(!response.ok||result.status!=='success'){const e=new Error(result.message||'Data belum tersimpan di cloud.');e.retryable=response.status>=500;throw e;}break;
-          }catch(error){if(attempt===0&&(error.retryable||['TypeError','TimeoutError','AbortError'].includes(error.name))){await new Promise(resolve=>setTimeout(resolve,1000));continue;}throw error;}
+          }catch(error){if(!requestOptions.noRetry&&attempt===0&&(error.retryable||['TypeError','TimeoutError','AbortError'].includes(error.name))){await new Promise(resolve=>setTimeout(resolve,1000));continue;}throw error;}
         }
         if(request.action==='readBook'&&result.transfer){
           const transfer=result.transfer;if(!Number.isInteger(transfer.total)||transfer.total<1||transfer.total>512)throw Error('Ukuran buku tidak valid.');
           const chunks=new Array(transfer.total);let nextPart=0,completed=0;
           await Promise.all(Array.from({length:Math.min(3,transfer.total)},async()=>{
             while(nextPart<transfer.total){const i=nextPart++;
-              const part=(await strictRequest({...payload,transferPart:i,transferHash:transfer.hash},publicRead)).transferPart;
+              const part=(await strictRequest({...payload,transferPart:i,transferHash:transfer.hash},publicRead,requestOptions)).transferPart;
               if(!part||part.part!==i||part.hash!==transfer.hash)throw Error('Bagian buku tidak konsisten.');
               chunks[i]=part.data;completed++;
               const badge=document.getElementById('header-cloud-sync-badge-text');if(badge)badge.textContent='Memuat buku '+Math.round(completed/transfer.total*100)+'%';
@@ -13381,6 +13358,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
           if(request!==strictReaderRequest)return;
           if(!book.passwordProtected){strictReaderCache.clear();strictReaderCache.set(key,fresh);}
           bookAssetsCache[book.id]={...fresh};
+          if(!fresh.pdfUrl&&!fresh.drivePdfFileId&&!fresh.driveFileId&&!fresh.pdfDataUrl&&Array.isArray(fresh.editablePages)){fresh={...fresh,isCustomPdf:false};bookAssetsCache[book.id]={...fresh};delete bookAssetsCache[book.id].pagesDataUrls;delete bookAssetsCache[book.id].originalPagesDataUrls;}
           return await strictOriginalOpenBook({...fresh,passwordProtected:false});
         }catch(error){
           if(request!==strictReaderRequest)return;
@@ -13480,6 +13458,159 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
       for(const name of ['saveBook','saveRack','deleteBook','deleteRack']){const original=SheetsApiHandler[name];SheetsApiHandler[name]=async function(...args){const stop=elibBusyActive();try{return await original.apply(this,args);}finally{stop();}};}
       const elibOriginalSelect=selectBookInCrudStudio;
       selectBookInCrudStudio=async function(...args){const stop=elibBusyActive();try{return await elibOriginalSelect(...args);}finally{stop();}};
+
+
+      // Stable per-book editor sessions. Drafts are session-only; the catalog remains cloud-authoritative.
+      const editorSession={loadedId:null,dirty:false,version:0,request:0,controller:null,loading:false,saving:false,operation:null,retry:null,drafts:new Map(),cache:new Map(),previewTimer:0,metaTimer:0,pdf:null,pdfKey:'',pdfTask:null,previewRequest:0,loadPromise:null,loadTarget:null};
+      const editorActionIds=['btn-crud-save-all','btn-crud-open-in-reader','btn-crud-delete-current-book','btn-crud-duplicate-current-book','btn-crud-regen-cover','btn-crud-sync-cover-page','btn-crud-load-pdf-url','btn-crud-add-page'];
+      function editorStatus(message,busy=false,retry=null){
+        let el=document.getElementById('elib-editor-status');if(!el){el=document.createElement('div');el.id='elib-editor-status';el.setAttribute('role','status');el.setAttribute('aria-live','polite');const panel=document.getElementById('crud-panel-metadata');panel.parentElement.insertBefore(el,panel.parentElement.firstChild);}
+        el.hidden=!message;el.replaceChildren();editorSession.retry=retry;editorSession.hasError=!!retry;
+        if(busy){const s=document.createElement('span');s.className='elib-spinner';s.setAttribute('aria-hidden','true');el.appendChild(s);}
+        const text=document.createElement('span');text.textContent=message;el.appendChild(text);
+        if(retry){const button=document.createElement('button');button.type='button';button.textContent='Coba Lagi';button.onclick=()=>{if(!editorSession.loading&&!editorSession.saving&&!editorSession.operation)retry();};el.appendChild(button);}
+      }
+      function editorControls(){const blocked=editorSession.loading||editorSession.saving||!!editorSession.operation;
+        ['crud-panel-metadata','crud-panel-pages'].forEach(id=>{const el=document.getElementById(id);if(el)el.inert=blocked;});
+        editorActionIds.forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=blocked||!crudWorkingBook;});
+        ['tab-btn-crud-metadata','tab-btn-crud-pages'].forEach(id=>{document.getElementById(id).disabled=editorSession.loading;});
+      }
+      function editorDirty(value=true){editorSession.dirty=value;if(value)editorSession.version++;
+        let label=document.getElementById('elib-editor-dirty');if(!label){label=document.createElement('span');label.id='elib-editor-dirty';document.getElementById('crud-active-mode-badge').after(label);}label.textContent=value?'● Perubahan belum disimpan':'✓ Tersimpan / siap disunting';
+      }
+      function editorFlushPage(){if(crudActiveTab!=='pages')return;const p=crudWorkingPages[crudSelectedPageIdx];if(!p||editorSession.loading)return;for(const key of ['kicker','title','subtitle','body'])p[key]=document.getElementById('crud-page-inp-'+key).value;}
+      function editorCheckpoint(){if(!crudWorkingBook||editorSession.loading)return;clearTimeout(editorSession.previewTimer);clearTimeout(editorSession.metaTimer);editorFlushPage();syncWorkingBookFromMetadataInputs(false);
+        editorSession.drafts.set(crudWorkingBook.id,{book:{...crudWorkingBook},pages:crudWorkingPages.map(p=>({...p})),index:crudSelectedPageIdx,tab:crudActiveTab,dirty:editorSession.dirty,isNew:crudIsNewBook,revision:serverBookRevisions.get(String(crudWorkingBook.id))});
+      }
+      async function editorMayLeave(){if(editorSession.saving||editorSession.operation){showToast('Tunggu proses editor selesai.');return false;}if(!editorSession.dirty)return true;
+        return window.CloudDriveSyncEngine.requestConfirmation({title:'Perubahan Belum Disimpan',message:'Lanjut berpindah atau menutup editor? Draf buku ini tetap dipertahankan selama sesi ini. Simpan Permanen diperlukan agar masuk database.',acceptLabel:'Lanjut, Pertahankan Draf'});
+      }
+      function editorAbortLoad(){editorSession.request++;if(editorSession.controller)editorSession.controller.abort();editorSession.controller=null;editorSession.loading=false;editorSession.loadTarget=null;editorSession.loadPromise=null;}
+      function editorRestoreDraft(draft){crudWorkingBook={...draft.book};crudWorkingPages=draft.pages.map(p=>({...p}));crudCurrentBookId=draft.book.id;crudIsNewBook=draft.isNew;crudSelectedPageIdx=draft.index;editorSession.loadedId=crudCurrentBookId;
+        if(draft.revision!==undefined)serverBookRevisions.set(String(crudCurrentBookId),draft.revision);
+        populateCrudMetadataFormFromWorking();renderCrudBooksListSidebar();renderCrudPagesList();loadCrudPageIntoForm(crudSelectedPageIdx);editorDirty(draft.dirty);editorControls();
+      }
+      selectBookInCrudStudio=function(id){
+        if(editorSession.loading&&editorSession.loadTarget===id)return editorSession.loadPromise;
+        const task=(async()=>{
+          if(id===editorSession.loadedId&&!editorSession.loading)return true;
+          if(!await editorMayLeave())return false;editorCheckpoint();editorAbortLoad();
+          const request=++editorSession.request;const controller=new AbortController();editorSession.controller=controller;editorSession.loading=true;editorSession.loadTarget=id;editorControls();
+          editorStatus('Sedang membuka editor...',true);const timeout=setTimeout(()=>controller.abort(),45000);
+          try{
+            const draft=editorSession.drafts.get(id);
+            if(draft&&draft.dirty){editorSession.loading=false;editorRestoreDraft(draft);editorStatus('Draf belum tersimpan dipulihkan.');return true;}
+            const meta=books.find(b=>b.id===id);if(!meta)throw Error('Buku tidak tersedia dalam katalog.');const key=id+':'+(Number(meta.updatedAt)||0);
+            let fresh=editorSession.cache.get(key);
+            if(!fresh)fresh=(await strictRequest({action:'readBook',id},true,{signal:controller.signal,noRetry:true})).book;
+            if(request!==editorSession.request||controller.signal.aborted)return false;
+            if(!fresh||fresh.id!==id)throw Error('Identitas konten buku tidak sesuai.');
+            if(!Array.isArray(fresh.editablePages)&&typeof fresh.editablePagesJson==='string')fresh.editablePages=JSON.parse(fresh.editablePagesJson);
+            if(editorSession.cache.size>=3)editorSession.cache.delete(editorSession.cache.keys().next().value);editorSession.cache.set(key,fresh);
+            Object.assign(meta,fresh);bookAssetsCache[id]={...fresh};editorSession.loading=false;strictOriginalSelectBook(id);editorSession.loadedId=id;editorDirty(false);editorStatus('Editor siap. Halaman dimuat sesuai kebutuhan.');return true;
+          }catch(error){if(request!==editorSession.request)return false;editorStatus((error.name==='AbortError'?'Pemuatan melewati batas waktu.':('Konten belum dapat dimuat: '+error.message))+' Draf sebelumnya tetap aman.',false,()=>selectBookInCrudStudio(id));return false;}
+          finally{clearTimeout(timeout);if(request===editorSession.request){editorSession.loading=false;editorSession.controller=null;editorSession.loadTarget=null;editorSession.loadPromise=null;editorControls();}}
+        })();editorSession.loadPromise=task;return task;
+      };
+      openCrudEtalaseModal=async function(bookId,initialTab,defaultShelf){const modal=document.getElementById('modal-crud-etalase-book');modal.classList.remove('hidden');if(!strictCatalogReady){editorStatus('Sedang membuka editor...',true);try{await strictLoadCatalog();}catch(error){editorStatus('Katalog belum dapat dimuat. Coba kembali.',false,()=>openCrudEtalaseModal(bookId,initialTab,defaultShelf));return;}}populateCrudShelfSelectors();
+        if(defaultShelf){if(!await startCreateNewBookInCrud(defaultShelf))return;}else{const requestedId=bookId||activeBookId;const id=books.some(b=>b.id===requestedId)?requestedId:(books[0]&&books[0].id);if(id){if(!await selectBookInCrudStudio(id))return;}else if(!await startCreateNewBookInCrud(activeShelfId||'rak-01'))return;}
+        switchCrudTab(initialTab||'metadata');
+      };
+      closeCrudEtalaseModal=async function(){if(!await editorMayLeave())return false;editorCheckpoint();editorAbortLoad();document.getElementById('modal-crud-etalase-book').classList.add('hidden');editorControls();return true;};
+      startCreateNewBookInCrud=async function(shelf){if(!await editorMayLeave())return false;editorCheckpoint();editorAbortLoad();strictOriginalCreateBook(shelf);editorSession.loadedId=crudCurrentBookId;editorDirty(false);editorStatus('Buku baru siap disunting.');editorControls();return true;};
+      const editorOriginalSwitchTab=switchCrudTab;
+      switchCrudTab=function(name){if(editorSession.loading)return;editorFlushPage();clearTimeout(editorSession.previewTimer);return editorOriginalSwitchTab(name);};
+      // At most 40 page rows, irrespective of the length of the document.
+      renderCrudPagesList=function(){const el=document.getElementById('crud-pages-list');if(!el)return;el.replaceChildren();const total=crudWorkingPages.length,start=Math.floor(crudSelectedPageIdx/40)*40,end=Math.min(total,start+40);
+        const nav=document.createElement('div');nav.className='elib-page-pagination';
+        function navButton(label,idx,disabled){const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=disabled;b.onclick=()=>{editorFlushPage();loadCrudPageIntoForm(Math.max(0,Math.min(total-1,idx)));renderCrudPagesList();};nav.appendChild(b);}
+        navButton('‹',start-40,start===0);const info=document.createElement('span');info.textContent=(start+1)+'–'+end+' / '+total;nav.appendChild(info);navButton('›',start+40,end>=total);
+        const jump=document.createElement('input');jump.type='number';jump.min='1';jump.max=String(total);jump.placeholder='Hal';jump.setAttribute('aria-label','Lompat ke halaman editor');const go=()=>{editorFlushPage();loadCrudPageIntoForm(Math.max(0,Math.min(total-1,(Number(jump.value)||1)-1)));renderCrudPagesList();};jump.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go();}};nav.appendChild(jump);const goButton=document.createElement('button');goButton.type='button';goButton.textContent='Ke Halaman';goButton.onclick=go;nav.appendChild(goButton);el.appendChild(nav);
+        for(let idx=start;idx<end;idx++){const p=crudWorkingPages[idx],row=document.createElement('button');row.type='button';row.dataset.editorPage=String(idx);row.className='w-full text-left p-2.5 rounded-lg border mb-1 text-xs '+(idx===crudSelectedPageIdx?'bg-[#D4AF37] text-[#072A20] border-[#F3E5AB]':'bg-[#0B3B2C] text-[#F3E5AB] border-[#D4AF37]/35');row.textContent='Hal '+(idx+1)+' · '+(p.title||'Tanpa Judul');row.onclick=()=>{editorFlushPage();loadCrudPageIntoForm(idx);renderCrudPagesList();};el.appendChild(row);}
+        document.getElementById('crud-tab-pages-count').textContent=total+' Hal';document.getElementById('crud-pages-count-badge').textContent='Total: '+total+' Halaman';
+      };
+      function editorDeadline(promise,ms=35000){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Proses melewati batas waktu. Silakan coba lagi.')),ms);})]).finally(()=>clearTimeout(timer));}
+      async function editorPdf(){const b=crudWorkingBook,key=b.id+':'+(b.pdfUrl||b.drivePdfFileId||'upload')+':'+(b.pdfDataUrl||'').length;
+        if(editorSession.pdf&&editorSession.pdfKey===key)return editorSession.pdf;if(editorSession.pdfTask&&editorSession.pdfKey===key)return editorSession.pdfTask;
+        const previous=editorSession.pdf;editorSession.pdf=null;editorSession.pdfKey=key;if(previous)previous.destroy().catch(()=>{});
+        const source=b.pdfDataUrl?{data:b.pdfDataUrl}:b.pdfUrl?{url:b.pdfUrl}:b.drivePdfFileId?{url:'https://drive.google.com/file/d/'+b.drivePdfFileId+'/view'}:null;if(!source)return null;
+        const task=editorDeadline(openPdfWithCorsFallback(source)).then(r=>{if(editorSession.pdfKey!==key){r.pdf.destroy().catch(()=>{});return null;}editorSession.pdf=r.pdf;return r.pdf;}).finally(()=>{if(editorSession.pdfKey===key)editorSession.pdfTask=null;});editorSession.pdfTask=task;return task;
+      }
+      function editorPdfImage(pdf,index){return editorDeadline(editorPdfImageOnce(pdf,index),30000);}
+      async function editorPdfImageOnce(pdf,index){const p=await pdf.getPage(index+1);const base=p.getViewport({scale:1}),viewport=p.getViewport({scale:Math.min(1.5,800/base.width)});const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);try{await p.render({canvasContext:canvas.getContext('2d',{alpha:false}),viewport}).promise;return canvas.toDataURL('image/jpeg',.84);}finally{canvas.width=0;canvas.height=0;}}
+      updateCrudActivePageLivePreview=function(){if(!crudWorkingBook||!crudWorkingPages[crudSelectedPageIdx])return;editorFlushPage();clearTimeout(editorSession.previewTimer);const request=++editorSession.previewRequest,id=crudWorkingBook.id,index=crudSelectedPageIdx,page=crudWorkingPages[index];
+        const row=document.querySelector('#crud-pages-list [data-editor-page="'+index+'"]');if(row)row.textContent='Hal '+(index+1)+' · '+(page.title||'Tanpa Judul');
+        document.getElementById('crud-page-preview-folio-label').textContent='HALAMAN '+(index+1)+' / '+crudWorkingPages.length;
+        editorSession.previewTimer=setTimeout(async()=>{if(editorSession.loading||crudWorkingBook.id!==id||crudSelectedPageIdx!==index)return;const image=document.getElementById('crud-page-live-preview-img');try{
+          let url=page.customImageDataUrl;
+          if(!url&&page.isOriginalPdfPage&&(crudWorkingBook.pdfUrl||crudWorkingBook.pdfDataUrl||crudWorkingBook.drivePdfFileId)){editorStatus('Memuat konten halaman...',true);const pdf=await editorPdf();if(pdf)url=await editorPdfImage(pdf,index);}
+          if(!url)url=generateCanvasPageDataUrl(page.title||crudWorkingBook.title,page.subtitle||'',page.kicker||'',crudWorkingBook.author,page.body||'',index===0,crudWorkingPages.length,index,crudWorkingBook.accent);
+          if(request===editorSession.previewRequest&&crudWorkingBook.id===id&&crudSelectedPageIdx===index){image.src=url;if(!editorSession.loading&&!editorSession.saving&&!editorSession.operation&&!editorSession.hasError)editorStatus(editorSession.dirty?'Draf berubah; belum tersimpan ke database.':'Editor siap.');}
+        }catch(error){if(request===editorSession.previewRequest)editorStatus('Halaman belum dapat dimuat: '+error.message,false,()=>updateCrudActivePageLivePreview());}},180);
+      };
+      const editorOriginalMetaPreview=updateCrudMetadataLivePreview;
+      updateCrudMetadataLivePreview=function(){clearTimeout(editorSession.metaTimer);editorSession.metaTimer=setTimeout(()=>{if(!editorSession.loading&&crudWorkingBook)editorOriginalMetaPreview();},180);};
+
+      async function editorRun(label,work,retry){if(editorSession.operation||editorSession.saving||editorSession.loading)return false;editorSession.operation=label;editorControls();editorStatus(label,true);try{return await work();}catch(error){editorStatus(label+' gagal: '+error.message+' Draf tetap tersedia.',false,retry||null);return false;}finally{editorSession.operation=null;editorControls();}}
+      function editorMergeCommitted(record,asset,result){const committed={...record,...(result.book||{}),updatedAt:Number(result.book&&result.book.updatedAt)||result.updatedAt||Date.now()};const index=books.findIndex(b=>b.id===record.id);if(index>=0)books[index]=committed;else books.unshift(committed);bookAssetsCache[record.id]={...asset,...committed};serverBookRevisions.set(String(record.id),committed.updatedAt);catalogUX.dirty=true;editorSession.cache.clear();
+        renderCrudBooksListSidebar();elibPaintCatalog();const badge=document.getElementById('header-cloud-sync-badge-text');if(badge)badge.textContent='Cloud DB ('+books.length+' Buku)';return committed;
+      }
+      saveCrudWorkingBookPermanently=async function(openAfter){
+        if(editorSession.loading||editorSession.saving||editorSession.operation||!crudWorkingBook)return false;
+        editorCheckpoint();if(!crudWorkingBook.title.trim()||!crudWorkingBook.author.trim()){showToast('Judul dan penulis wajib diisi.');return false;}
+        editorSession.saving=true;editorControls();editorStatus('Menyimpan perubahan...',true);
+        const id=crudWorkingBook.id;const saveVersion=editorSession.version;
+        try{
+          // Yield before serializing; render only the cover, never the whole book.
+          await new Promise(resolve=>requestAnimationFrame(resolve));editorOriginalMetaPreview();
+          const previous=bookAssetsCache[id]||{};const pages=crudWorkingPages.map((p,i)=>({...p,pageNumber:i+1}));
+          const record={...(books.find(b=>b.id===id)||{}),id,shelfId:crudWorkingBook.shelfId,title:crudWorkingBook.title,author:crudWorkingBook.author,description:crudWorkingBook.description,kicker:crudWorkingBook.kicker,accent:crudWorkingBook.accent,spineColor:crudWorkingBook.accent,pageCount:pages.length,passwordProtected:!!crudWorkingBook.passwordProtected,password:crudWorkingBook.password||'',coverUrl:crudWorkingBook.customCoverDataUrl||document.getElementById('crud-preview-cover-img').src,hasCustomCoverImage:!!crudWorkingBook.hasCustomCoverImage,editablePages:pages,isCustomPdf:!!crudWorkingBook.isCustomPdf,pdfUrl:crudWorkingBook.pdfUrl||'',drivePdfFileId:crudWorkingBook.drivePdfFileId||''};
+          // Retain original assets; previews of unedited text pages are disposable and regenerated on demand.
+          const asset={...previous,bookMeta:record,coverUrl:record.coverUrl,editablePages:pages,pagesDataUrls:pages.map((p,i)=>({pageNumber:i+1,title:p.title,dataUrl:p.customImageDataUrl||null,isOriginalPdfPage:!!p.isOriginalPdfPage})),originalPagesDataUrls:crudWorkingBook.originalPagesDataUrls||previous.originalPagesDataUrls||[],pdfDataUrl:crudWorkingBook.pdfDataUrl||previous.pdfDataUrl||'',pdfUrl:record.pdfUrl,drivePdfFileId:record.drivePdfFileId,isCustomPdf:record.isCustomPdf};
+          delete asset.editablePagesJson;delete record.editablePagesJson;
+          const result=await SheetsApiHandler.saveBook(record,asset);
+          if(result.status!=='success'||!result.book||result.book.id!==id)throw Error('Database belum mengonfirmasi penyimpanan buku.');
+          const committed=editorMergeCommitted(record,asset,result);crudIsNewBook=false;editorSession.loadedId=id;
+          if(editorSession.version===saveVersion){editorDirty(false);editorSession.drafts.delete(id);}editorStatus('Perubahan tersimpan dan terverifikasi di database cloud.');
+          showToast('Perubahan buku tersimpan dan terverifikasi di database cloud.');
+          if(openAfter){document.getElementById('modal-crud-etalase-book').classList.add('hidden');await openBookInReader(committed);}return true;
+        }catch(error){editorStatus('Penyimpanan belum berhasil: '+error.message+' Draf tetap aman. Bila koneksi terputus, hasil akhir dapat diperiksa dengan mencoba kembali.',false,()=>saveCrudWorkingBookPermanently(openAfter));return false;}
+        finally{editorSession.saving=false;editorControls();}
+      };
+      duplicateBookInEtalase=async function(id){if(editorSession.dirty){editorStatus('Simpan perubahan sebelum menduplikasi buku.');return false;}
+        return editorRun('Menduplikasi buku...',async()=>{let source=bookAssetsCache[id];if(!source||!Array.isArray(source.editablePages))source=(await strictRequest({action:'readBook',id},true,{signal:AbortSignal.timeout(45000),noRetry:true})).book;
+          const newId='book-'+Date.now()+'-'+crypto.randomUUID().slice(0,8),record={...source,id:newId,title:source.title+' (Salinan)',updatedAt:0};delete record.bookMeta;const asset={...source,bookMeta:record};
+          const result=await SheetsApiHandler.saveBook(record,asset);if(result.status!=='success')throw Error('Duplikasi belum dikonfirmasi.');editorMergeCommitted(record,asset,result);editorStatus('Salinan tersimpan di database.');showToast('Buku berhasil diduplikasi setelah tersimpan di database.');return true;
+        },()=>duplicateBookInEtalase(id));
+      };
+      deleteBookFromEtalase=async function(id){if(editorSession.loading||editorSession.saving||editorSession.operation)return false;const target=books.find(b=>b.id===id);if(!target)return false;
+        const confirmed=await window.CloudDriveSyncEngine.requestConfirmation({title:'Arsipkan Buku dari Etalase',message:'Buku akan disembunyikan dari katalog. Data dan aset tetap disimpan untuk pemulihan.',acceptLabel:'Ya, Arsipkan Buku'});if(!confirmed)return false;
+        return editorRun('Mengarsipkan buku...',async()=>{try{await SheetsApiHandler.deleteBook(id);}catch(error){if(books.some(b=>b.id===id))throw error;}books=books.filter(b=>b.id!==id);editorSession.drafts.delete(id);editorSession.cache.clear();elibPaintCatalog();renderCrudBooksListSidebar();if(crudCurrentBookId===id){crudWorkingBook=null;crudWorkingPages=[];editorSession.loadedId=null;editorDirty(false);}const badge=document.getElementById('header-cloud-sync-badge-text');if(badge)badge.textContent='Cloud DB ('+books.length+' Buku)';editorStatus('Buku berhasil diarsipkan. Pilih buku lain untuk melanjutkan.');return true;},()=>deleteBookFromEtalase(id));
+      };
+      async function editorInstallPdf(pdf,source){const id=crudWorkingBook.id,cover=await editorPdfImage(pdf,0);if(crudWorkingBook.id!==id)return false;
+        crudWorkingPages=Array.from({length:pdf.numPages},(_,i)=>({pageNumber:i+1,title:i===0?crudWorkingBook.title:'Halaman '+(i+1),kicker:i===0?'SAMPUL DOKUMEN ASLI':'HALAMAN PDF '+(i+1),subtitle:'',body:'',customImageDataUrl:i===0?cover:'',isOriginalPdfPage:true}));
+        Object.assign(crudWorkingBook,{pageCount:pdf.numPages,isCustomPdf:true,hasCustomCoverImage:true,customCoverDataUrl:cover,originalPagesDataUrls:[],...source});crudSelectedPageIdx=0;editorDirty();populateCrudMetadataFormFromWorking();renderCrudPagesList();loadCrudPageIntoForm(0);editorStatus('PDF siap. Hanya halaman aktif yang dirender. Simpan Permanen untuk menyimpan.');return true;
+      }
+      loadPdfUrlIntoCrudWorkingBook=async function(raw){const url=String(raw||document.getElementById('crud-inp-pdf-url').value).trim();if(!url||!crudWorkingBook)return false;
+        return editorRun('Memuat konten halaman...',async()=>{const id=crudWorkingBook.id;const opened=await editorDeadline(openPdfWithCorsFallback({url}));if(crudWorkingBook.id!==id){opened.pdf.destroy();return false;}const result=await editorInstallPdf(opened.pdf,{pdfUrl:opened.normalized&&opened.normalized.directUrl||url,drivePdfFileId:opened.normalized&&opened.normalized.fileId||'',pdfDataUrl:''});await opened.pdf.destroy();return result;},()=>loadPdfUrlIntoCrudWorkingBook(url));
+      };
+      const crudModal=document.getElementById('modal-crud-etalase-book');
+      crudModal.addEventListener('input',event=>{if(!editorSession.loading&&!editorSession.saving&&!event.target.closest('.elib-page-pagination')&&event.target.matches('#crud-panel-metadata input,#crud-panel-metadata textarea,#crud-panel-pages input:not([type="file"]),#crud-panel-pages textarea'))editorDirty();});
+      crudModal.addEventListener('change',event=>{if(!editorSession.loading&&!editorSession.saving&&event.target.matches('#crud-panel-metadata select'))editorDirty();});
+      ['crud-page-inp-kicker','crud-page-inp-title','crud-page-inp-subtitle','crud-page-inp-body'].forEach(id=>{document.getElementById(id).oninput=()=>{editorFlushPage();if(id==='crud-page-inp-title'&&crudSelectedPageIdx===0&&!crudWorkingBook.isCustomPdf){crudWorkingBook.title=document.getElementById(id).value;document.getElementById('crud-inp-title').value=crudWorkingBook.title;}updateCrudActivePageLivePreview();};});
+      ['crud-inp-title','crud-inp-author','crud-inp-shelf','crud-inp-kicker','crud-inp-accent','crud-inp-desc','crud-chk-password','crud-inp-password'].forEach(id=>{const input=document.getElementById(id);input.oninput=()=>{syncWorkingBookFromMetadataInputs(true);if(id==='crud-inp-title'&&crudWorkingPages[0]&&!crudWorkingBook.isCustomPdf)crudWorkingPages[0].title=crudWorkingBook.title;updateCrudMetadataLivePreview();};input.onchange=input.oninput;});
+      document.getElementById('crud-inp-pdf-url').onpaste=null;
+      document.getElementById('btn-close-crud-etalase-modal').onclick=()=>closeCrudEtalaseModal();
+      document.getElementById('btn-crud-open-shelves-manager').onclick=async()=>{if(await closeCrudEtalaseModal())openAdminShelvesModal();};
+      document.getElementById('btn-crud-create-new-book').onclick=async()=>{const shelf=document.getElementById('crud-filter-shelf-select').value;if(await startCreateNewBookInCrud(shelf==='ALL'?(activeShelfId||'rak-01'):shelf))switchCrudTab('metadata');};
+      document.getElementById('btn-crud-regen-cover').onclick=()=>editorRun('Sinkron sampul...',async()=>{if(crudWorkingBook.isCustomPdf){const p=crudWorkingPages[0];const url=p&&p.customImageDataUrl||await editorPdfImage(await editorPdf(),0);crudWorkingBook.customCoverDataUrl=url;crudWorkingBook.hasCustomCoverImage=true;}else{crudWorkingBook.hasCustomCoverImage=false;crudWorkingBook.customCoverDataUrl='';}editorDirty();editorOriginalMetaPreview();editorStatus('Sampul diperbarui dalam draf. Simpan Permanen untuk menyimpan.');},()=>document.getElementById('btn-crud-regen-cover').click());
+      document.getElementById('btn-crud-sync-cover-page').onclick=async()=>{if(editorSession.operation||editorSession.loading||editorSession.saving)return;editorFlushPage();syncWorkingBookFromMetadataInputs(true);editorDirty();crudSelectedPageIdx=0;loadCrudPageIntoForm(0);renderCrudPagesList();};
+      async function editorReadImage(file){if(!file)return null;return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Berkas gambar gagal dibaca.'));reader.readAsDataURL(file);});}
+      document.getElementById('crud-cover-image-input').onchange=e=>{const file=e.target.files&&e.target.files[0];if(!file)return;editorRun('Memuat gambar sampul...',async()=>{const id=crudWorkingBook.id,url=await editorReadImage(file);if(crudWorkingBook.id!==id)return false;crudWorkingBook.hasCustomCoverImage=true;crudWorkingBook.customCoverDataUrl=url;if(crudWorkingPages[0])crudWorkingPages[0].customImageDataUrl=url;editorDirty();editorOriginalMetaPreview();editorStatus('Sampul siap dalam draf.');return true;});};
+      document.getElementById('crud-page-image-input').onchange=e=>{const file=e.target.files&&e.target.files[0];if(!file)return;editorRun('Memuat gambar halaman...',async()=>{const id=crudWorkingBook.id,index=crudSelectedPageIdx,url=await editorReadImage(file);if(crudWorkingBook.id!==id)return false;crudWorkingPages[index].customImageDataUrl=url;editorDirty();loadCrudPageIntoForm(index);editorStatus('Gambar halaman siap dalam draf.');return true;});};
+      document.getElementById('crud-pdf-file-input').onchange=e=>{const file=e.target.files&&e.target.files[0];if(!file)return;editorRun('Memuat konten halaman...',async()=>{const id=crudWorkingBook.id;const [buffer,data]=await Promise.all([file.arrayBuffer(),editorReadImage(file)]);const pdf=(await editorDeadline(openPdfWithCorsFallback({data:new Uint8Array(buffer)}))).pdf;if(crudWorkingBook.id!==id){pdf.destroy();return false;}const result=await editorInstallPdf(pdf,{pdfDataUrl:data,pdfUrl:'',drivePdfFileId:''});await pdf.destroy();return result;});};
+      ['btn-crud-add-page','btn-crud-page-move-up','btn-crud-page-move-down','btn-crud-page-delete','btn-crud-clear-page-image'].forEach(id=>{const b=document.getElementById(id),original=b.onclick;b.onclick=event=>{if(editorSession.loading||editorSession.saving||editorSession.operation)return;editorFlushPage();original(event);editorDirty();};});
+      window.addEventListener('beforeunload',event=>{if(editorSession.dirty||editorSession.saving){event.preventDefault();event.returnValue='';}});
 
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');
