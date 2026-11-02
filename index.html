@@ -13210,6 +13210,10 @@
         if (!user || !user.emailVerified || String(user.email).toLowerCase() !== ADMIN_WHITELIST_EMAIL) throw new Error('Silakan login dengan akun Google Admin yang terverifikasi.');
         return user.getIdToken();
       }
+
+function strictPack(value){const strings=[],seen=new Map();function enc(v){if(typeof v==='string'&&v.length>=1024){if(!seen.has(v)){seen.set(v,strings.length);strings.push(v);}return [0,seen.get(v)];}if(Array.isArray(v))return [1,v.map(enc)];if(v&&typeof v==='object')return [2,Object.keys(v).filter(k=>v[k]!==undefined).map(k=>[k,enc(v[k])])];return v;}return {format:'elib-string-table-v1',data:enc(value),strings};}
+function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;function dec(v){if(!Array.isArray(v))return v;if(v[0]===0){if(!Number.isInteger(v[1])||typeof p.strings[v[1]]!=='string')throw Error('Invalid string reference');return p.strings[v[1]];}if(v[0]===1)return v[1].map(dec);if(v[0]===2){const o={};v[1].forEach(k=>Object.defineProperty(o,k[0],{value:dec(k[1]),enumerable:true,writable:true,configurable:true}));return o;}throw Error('Invalid packed data');}return dec(p.data);}
+
       async function strictHash(text){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return btoa(String.fromCharCode(...new Uint8Array(bytes)));}
       async function strictRequest(payload, publicRead) {
         const headers={'Content-Type':'application/json'};
@@ -13224,9 +13228,9 @@
           }catch(error){if(attempt===0&&(error.retryable||['TypeError','TimeoutError','AbortError'].includes(error.name))){await new Promise(resolve=>setTimeout(resolve,1000));continue;}throw error;}
         }
         if(request.action==='readBook'&&result.transfer){
-          const transfer=result.transfer;if(!Number.isInteger(transfer.total)||transfer.total<1||transfer.total>128)throw Error('Ukuran buku tidak valid.');
+          const transfer=result.transfer;if(!Number.isInteger(transfer.total)||transfer.total<1||transfer.total>512)throw Error('Ukuran buku tidak valid.');
           let raw='';for(let i=0;i<transfer.total;i++){const part=(await strictRequest({...payload,transferPart:i,transferHash:transfer.hash},publicRead)).transferPart;if(!part||part.part!==i||part.hash!==transfer.hash)throw Error('Bagian buku tidak konsisten.');raw+=part.data;}
-          if(await strictHash(raw)!==transfer.hash)throw Error('Verifikasi keutuhan buku gagal.');result.book=JSON.parse(raw);delete result.transfer;
+          if(await strictHash(raw)!==transfer.hash)throw Error('Verifikasi keutuhan buku gagal.');result.book=transfer.encoding==='elib-string-table-v1'?strictUnpack(JSON.parse(raw)):JSON.parse(raw);delete result.transfer;
         }
         return result;
       }
@@ -13260,9 +13264,9 @@
       SheetsApiHandler.saveBook=async(book,asset)=>{
         const payload={action:'saveBook',book:{...book},asset:asset||undefined};
         if(serverBookRevisions.has(String(book.id)))payload.expectedRevision=serverBookRevisions.get(String(book.id));
-        const packed=JSON.stringify(payload);
-        let uploadPayload=payload;
-        if(packed.length>600000){const uploadId=crypto.randomUUID().replace(/-/g,''),total=Math.ceil(packed.length/600000);if(total>64)throw Error('Berkas terlalu besar. Gunakan tautan PDF Google Drive.');for(let part=0;part<total;part++){showToast('Mengunggah berkas '+(part+1)+' dari '+total+'...');await SheetsApiHandler.postAction({action:'uploadChunk',uploadId,total,part,data:packed.slice(part*600000,(part+1)*600000)});}uploadPayload={action:'saveBook',uploadId,total,uploadHash:await strictHash(packed)};}
+        const packedPayload=strictPack(payload),packed=JSON.stringify(packedPayload);
+        let uploadPayload={action:'saveBook',packedPayload};
+        if(packed.length>600000){const uploadId=crypto.randomUUID().replace(/-/g,''),total=Math.ceil(packed.length/600000);if(total>512)throw Error('Ukuran unggahan melebihi kapasitas transfer 300 MB.');for(let part=0;part<total;part++){showToast('Mengunggah berkas '+(part+1)+' dari '+total+'...');await SheetsApiHandler.postAction({action:'uploadChunk',uploadId,total,part,data:packed.slice(part*600000,(part+1)*600000)});}uploadPayload={action:'saveBook',uploadId,total,uploadHash:await strictHash(packed)};}
         const result=await SheetsApiHandler.postAction(uploadPayload);
         if(result.book)serverBookRevisions.set(String(book.id),Number(result.book.updatedAt)||result.updatedAt);
         return result;
