@@ -6428,7 +6428,16 @@
         });
       }
 
+      const readerPdfLoads=new Map();
       async function loadPdfDocumentForReader(book) {
+        if(!book)return null;
+        const key=book.id+':'+(Number(book.updatedAt)||0);
+        if(readerPdfLoads.has(key))return readerPdfLoads.get(key);
+        const task=loadPdfDocumentForReaderOnce(book).finally(()=>readerPdfLoads.delete(key));
+        readerPdfLoads.set(key,task);
+        return task;
+      }
+      async function loadPdfDocumentForReaderOnce(book) {
         if (!book) return null;
         const bookId = book.id;
         if (activeReaderPdfDoc && activeReaderPdfBookId === bookId) {
@@ -6455,6 +6464,7 @@
           const opened = await openPdfWithCorsFallback(pdfSource);
           if (!opened || !opened.pdf) return null;
           const pdf = opened.pdf;
+          if(activeBookId!==bookId){pdf.destroy().catch(()=>{});return null;}
           activeReaderPdfDoc = pdf;
           activeReaderPdfBookId = bookId;
 
@@ -6738,27 +6748,6 @@
               ? String(firebaseConfig.apiKey).trim()
               : '';
 
-          // Jika link Google Drive, coba ambil metadata nama file via Drive API v3
-          if (norm.isGoogleDrive && norm.fileId && (driveToken || gApiKey)) {
-            try {
-              const metaUrl =
-                'https://www.googleapis.com/drive/v3/files/' +
-                encodeURIComponent(norm.fileId) +
-                '?fields=name,mimeType' +
-                (gApiKey ? '&key=' + encodeURIComponent(gApiKey) : '');
-              const metaHeaders = driveToken ? { Authorization: 'Bearer ' + driveToken } : {};
-              const metaRes = await fetch(metaUrl, { headers: metaHeaders });
-              if (metaRes.ok) {
-                const metaJson = await metaRes.json();
-                if (metaJson && metaJson.name) {
-                  detectedFilename = String(metaJson.name);
-                }
-              } else if (metaRes.status === 403 || metaRes.status === 404) {
-                // File mungkin masih Dibatasi (Restricted) untuk publik
-              }
-            } catch (e) {}
-          }
-
           // Daftar kandidat fetch biner PDF yang memvalidasi magic bytes %PDF-
           const binaryFetchCandidates = [];
 
@@ -6808,7 +6797,8 @@
             if (!cand || !cand.url) continue;
             try {
               const res = await fetch(cand.url, {
-                headers: cand.headers || undefined
+                headers: cand.headers || undefined,
+                signal: AbortSignal.timeout(20000)
               });
               if (!res.ok) {
                 if (cand.isProxy && (res.status === 403 || res.status === 422)) {
@@ -6860,6 +6850,13 @@
                 ? 'Gagal memuat PDF dari Google Drive. Pastikan akses file di Google Drive sudah diubah menjadi "Siapa saja yang memiliki link" (Anyone with the link).'
                 : 'Gagal memuat URL PDF publik. Pastikan tautan mengarah langsung ke file PDF yang valid.')
           );
+        }
+        if(sourceObj&&typeof sourceObj.data==='string'&&sourceObj.data.startsWith('data:')){
+          const comma=sourceObj.data.indexOf(',');
+          const binary=atob(sourceObj.data.slice(comma+1));
+          const bytes=new Uint8Array(binary.length);
+          for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+          sourceObj={...sourceObj,data:bytes};
         }
         const loadingTask = window.pdfjsLib.getDocument(sourceObj);
         const pdf = await loadingTask.promise;
@@ -13229,7 +13226,16 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         }
         if(request.action==='readBook'&&result.transfer){
           const transfer=result.transfer;if(!Number.isInteger(transfer.total)||transfer.total<1||transfer.total>512)throw Error('Ukuran buku tidak valid.');
-          let raw='';for(let i=0;i<transfer.total;i++){const part=(await strictRequest({...payload,transferPart:i,transferHash:transfer.hash},publicRead)).transferPart;if(!part||part.part!==i||part.hash!==transfer.hash)throw Error('Bagian buku tidak konsisten.');raw+=part.data;}
+          const chunks=new Array(transfer.total);let nextPart=0,completed=0;
+          await Promise.all(Array.from({length:Math.min(3,transfer.total)},async()=>{
+            while(nextPart<transfer.total){const i=nextPart++;
+              const part=(await strictRequest({...payload,transferPart:i,transferHash:transfer.hash},publicRead)).transferPart;
+              if(!part||part.part!==i||part.hash!==transfer.hash)throw Error('Bagian buku tidak konsisten.');
+              chunks[i]=part.data;completed++;
+              const badge=document.getElementById('header-cloud-sync-badge-text');if(badge)badge.textContent='Memuat buku '+Math.round(completed/transfer.total*100)+'%';
+            }
+          }));
+          const raw=chunks.join('');
           if(await strictHash(raw)!==transfer.hash)throw Error('Verifikasi keutuhan buku gagal.');result.book=transfer.encoding==='elib-string-table-v1'?strictUnpack(JSON.parse(raw)):JSON.parse(raw);delete result.transfer;
         }
         return result;
@@ -13289,19 +13295,41 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
       startCreateNewBookInCrud=function(...args){++strictEditorRequest;['crud-panel-metadata','crud-panel-pages'].forEach(id=>{const el=document.getElementById(id);if(el)el.inert=false;});['btn-crud-save-all','btn-crud-open-in-reader','btn-crud-delete-current-book','btn-crud-duplicate-current-book'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false;});return strictOriginalCreateBook(...args);};
       const strictUnlockedBooks=new Map();
       const strictOriginalOpenBook=openBookInReader;
+      let strictReaderRequest=0;
+      const strictReaderLoads=new Map();
+      const strictReaderCache=new Map();
       openBookInReader=async function(book){
         if(!book)return;
+        const request=++strictReaderRequest;
+        const revision=Number(book.updatedAt)||0;
+        const publicPdf=!book.passwordProtected&&!['private','draft'].includes(String(book.visibility||book.status||'').toLowerCase())&&Boolean(book.pdfUrl||book.drivePdfFileId||book.driveFileId);
         try{
+          if(publicPdf){
+            bookAssetsCache[book.id]={...book};
+            return await strictOriginalOpenBook({...book,passwordProtected:false});
+          }
+          const badge=document.getElementById('header-cloud-sync-badge-text');
+          if(badge)badge.textContent='Membuka '+book.title+'…';
           let fresh=strictUnlockedBooks.get(book.id);strictUnlockedBooks.delete(book.id);
-          if(!fresh)fresh=(await strictRequest({action:'readBook',id:book.id},true)).book;
+          const key=book.id+':'+revision;
+          if(!fresh&&!book.passwordProtected)fresh=strictReaderCache.get(key);
+          if(!fresh){
+            if(!strictReaderLoads.has(key))strictReaderLoads.set(key,strictRequest({action:'readBook',id:book.id},true).then(r=>r.book).finally(()=>strictReaderLoads.delete(key)));
+            fresh=await strictReaderLoads.get(key);
+          }
+          if(request!==strictReaderRequest)return;
+          if(!book.passwordProtected){strictReaderCache.clear();strictReaderCache.set(key,fresh);}
           bookAssetsCache[book.id]={...fresh};
-          return strictOriginalOpenBook({...fresh,passwordProtected:false});
+          return await strictOriginalOpenBook({...fresh,passwordProtected:false});
         }catch(error){
+          if(request!==strictReaderRequest)return;
           if(book.passwordProtected){
             activeBookId=book.id;config.activeBookId=book.id;config.title=book.title;config.author=book.author;config.passwordProtected=true;isLocked=true;currentPage=1;
             pagesDataUrls=[{pageNumber:1,title:'Buku terlindungi',dataUrl:book.coverUrl||null}];
             renderStage('forward');switchViewTo('reader');document.getElementById('password-gate-modal').classList.remove('hidden');
           }else showToast('Buku belum dapat dibuka: '+error.message);
+        }finally{
+          if(request===strictReaderRequest){const badge=document.getElementById('header-cloud-sync-badge-text');if(badge)badge.textContent='Cloud DB ('+books.length+' Buku)';}
         }
       };
       window.openBookInReader=openBookInReader;
