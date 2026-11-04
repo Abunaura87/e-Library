@@ -884,6 +884,25 @@
     }
     body:not(.admin-authenticated) #toolbar-download-btn,
     body:not(.admin-authenticated) #toolbar-print-btn { display: none !important; }
+
+    .personal-bookmarks-card-btn{width:100%;margin-top:12px;padding:9px 12px;border:1px solid #D4AF37;border-radius:9px;background:#0B3B2C;color:#F3E5AB;font-size:12px;font-weight:700;cursor:pointer;min-height:40px;}
+    .personal-bookmarks-card-btn:hover{background:#12543F;}
+    .personal-bookmarks-dialog{width:min(520px,calc(100vw - 24px));max-height:82dvh;overflow:auto;margin:auto;padding:20px;border:2px solid #D4AF37;border-radius:18px;background:#FBF9F5;color:#072A20;box-shadow:0 24px 80px #0008;}
+    .personal-bookmarks-dialog::backdrop{background:#072A20b3;}
+    .personal-bookmarks-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;}
+    .personal-bookmarks-header h2{font-size:22px;font-weight:700;font-family:serif;margin:0 0 6px;}
+    .personal-bookmarks-header p{font-size:14px;margin:0;overflow-wrap:anywhere;}
+    #reader-bookmarks-close{flex-shrink:0;width:44px;height:44px;border:1px solid #D4AF37;border-radius:10px;background:#0B3B2C;color:#F3E5AB;cursor:pointer;}
+    .personal-bookmarks-note{font-size:12px;line-height:1.5;padding:12px 0;color:#12543F;}
+    .personal-bookmarks-empty{border:1px dashed #D4AF37;border-radius:12px;padding:24px 16px;text-align:center;font-size:14px;line-height:1.6;}
+    .personal-bookmark-row{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #D4AF3760;}
+    .personal-bookmark-open{flex:1;min-width:0;text-align:left;min-height:44px;padding:10px 12px;border:1px solid #D4AF37;border-radius:9px;background:#0B3B2C;color:#F3E5AB;font-size:14px;font-weight:700;cursor:pointer;}
+    .personal-bookmark-open small{display:block;font-weight:400;font-size:11px;margin-top:4px;}
+    .personal-bookmark-open:disabled{opacity:.55;cursor:default;}
+    .personal-bookmark-remove{min-height:44px;padding:10px;border:1px solid #9e7b1c;border-radius:9px;color:#8c2222;background:#fff8ef;cursor:pointer;}
+    .personal-bookmarks-dialog button:focus-visible,.personal-bookmarks-card-btn:focus-visible{outline:3px solid #D4AF37;outline-offset:3px;}
+    @media(max-width:640px){#toolbar-add-bookmark-btn,#toolbar-bookmarks-btn{min-height:40px;}.personal-bookmarks-dialog{padding:16px;}}
+
     @media print {
       .no-print { display: none !important; }
       body:not(.admin-authenticated) > *, body.reader-print-blocked > * { display: none !important; }
@@ -1923,6 +1942,8 @@
                 </button>
                 <button type="button" id="toolbar-print-btn" class="hidden sm:inline-block px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Cetak</button>
                 <button type="button" id="toolbar-download-btn" class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-[#D4AF37] text-[#072A20] hover:bg-[#F3E5AB] transition-colors shadow-2xs">Unduh</button>
+                <button type="button" id="toolbar-add-bookmark-btn" aria-pressed="false" class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-[#D4AF37] text-[#072A20] border border-[#D4AF37]">Add Bookmark</button>
+                <button type="button" id="toolbar-bookmarks-btn" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] text-[#F3E5AB] border border-[#D4AF37]/60">Bookmarks (0)</button>
                 <button type="button" id="toolbar-share-btn" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Bagikan</button>
                 <button type="button" id="toolbar-fullscreen-btn" class="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40">Full</button>
               </div>
@@ -6150,7 +6171,7 @@
           card.className = 'group rounded-2xl bg-[#FBF9F5] border-2 border-[#D4AF37]/45 hover:border-[#0B3B2C] p-5 flex flex-col justify-between transition-all duration-300 shadow-[0_14px_30px_-10px_rgba(11,59,44,0.14)] hover:shadow-[0_24px_48px_-12px_rgba(11,59,44,0.28)] cursor-pointer select-none relative';
           card.setAttribute('role','button');card.tabIndex=0;card.setAttribute('aria-label','Buka buku '+book.title);
           card.onclick = () => {const stop=elibBusy(card);Promise.resolve(openBookInReader(book)).finally(stop);};
-          card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click();}};
+          card.onkeydown=e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click();}};
 
           const adminCardToolbarHtml = isAdminMode
             ? '<div class="admin-only-control mt-3 pt-2.5 border-t border-dashed border-[#D4AF37]/60 space-y-1.5" onclick="event.stopPropagation()">' +
@@ -6225,6 +6246,7 @@
               adminCardToolbarHtml +
             '</div>';
 
+          const bookmarkButton=document.createElement('button');bookmarkButton.type='button';bookmarkButton.className='personal-bookmarks-card-btn';bookmarkButton.setAttribute('data-personal-bookmarks',String(book.id));bookmarkButton.textContent='Bookmarks ('+bookmarkRows(book.id).length+')';bookmarkButton.setAttribute('aria-label','Bookmarks untuk '+book.title);bookmarkButton.onclick=event=>{event.stopPropagation();openBookmarksForBook(book.id);};card.appendChild(bookmarkButton);
           grid.appendChild(card);
         });
 
@@ -7078,6 +7100,7 @@
           (visible.length === 2 ? '2 Halaman (Spread)' : '1 Halaman (Tunggal)') + (isFullPageFit ? ' · Full Layar' : '');
 
         updateReaderExportUI();
+        refreshBookmarkControls();
         document.getElementById('slider-bar-container').style.display = config.showThumbnails ? 'flex' : 'none';
         document.getElementById('toolbar-thumbs-btn').style.display = config.showThumbnails ? 'inline-flex' : 'none';
         document.getElementById('toolbar-sound-btn').textContent = config.enableSound ? 'Kertas: Aktif' : 'Kertas: Bisu';
@@ -13593,6 +13616,89 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         if(url&&crudIsNewBook&&!crudWorkingBook.isCustomPdf){if(!await loadPdfUrlIntoCrudWorkingBook(url))return false;}
         return importOriginalSave(openAfter);
       };
+
+
+      // Personal bookmarks: local browser storage only; never sent to the catalog API.
+      const BOOKMARK_KEY_PREFIX = 'elibrary_reader_bookmarks_v1:';
+      let bookmarkDialogBookId = null, bookmarkPendingTarget = null, bookmarkOpenSequence = 0;
+      function bookmarkRead(bookId) {
+        const raw = localStorage.getItem(BOOKMARK_KEY_PREFIX + encodeURIComponent(String(bookId)));
+        if (!raw) return [];
+        const rows = JSON.parse(raw);
+        if (!Array.isArray(rows) || rows.some(row => !row || !Number.isSafeInteger(row.page) || row.page < 1 || row.page > 1000000)) throw Error('Data bookmark browser tidak dapat dibaca. Data lama tetap dipertahankan.');
+        return Array.from(new Map(rows.map(row => [row.page, {page:row.page, createdAt:Number(row.createdAt)||0}])).values()).sort((a,b)=>a.page-b.page);
+      }
+      function bookmarkRows(bookId) { try { return bookmarkRead(bookId); } catch { return []; } }
+      function bookmarkWrite(bookId, rows) {
+        const key=BOOKMARK_KEY_PREFIX+encodeURIComponent(String(bookId)), text=JSON.stringify(rows);
+        localStorage.setItem(key,text);
+        if(localStorage.getItem(key)!==text)throw Error('Bookmark belum berhasil disimpan.');
+      }
+      function bookmarkPage() { return Number(getVisiblePages()[0]) || Number(currentPage) || 1; }
+      function refreshBookmarkControls() {
+        const book=books.find(b=>String(b.id)===String(activeBookId));
+        const rows=book?bookmarkRows(book.id):[], page=bookmarkPage();
+        const add=document.getElementById('toolbar-add-bookmark-btn'), list=document.getElementById('toolbar-bookmarks-btn');
+        if(add){const marked=rows.some(row=>row.page===page);add.textContent=marked?'Bookmarked ✓':'Add Bookmark';add.setAttribute('aria-pressed',String(marked));add.title='Tandai halaman '+page;add.disabled=!book||isLocked;}
+        if(list){list.textContent='Bookmarks ('+rows.length+')';list.disabled=!book;}
+        document.querySelectorAll('[data-personal-bookmarks]').forEach(button=>{const id=button.getAttribute('data-personal-bookmarks');button.textContent='Bookmarks ('+bookmarkRows(id).length+')';});
+      }
+      function bookmarkFailure(error) { showToast(error && error.message && error.message.includes('Data bookmark')?error.message:'Bookmark tidak dapat disimpan di browser ini. Periksa izin penyimpanan atau ruang perangkat, lalu coba lagi.'); }
+      function addCurrentBookmark() {
+        const book=books.find(b=>String(b.id)===String(activeBookId));
+        if(!book||isLocked||currentView!=='reader'){showToast('Buka dan muat halaman buku terlebih dahulu.');return;}
+        const page=bookmarkPage();
+        try{const rows=bookmarkRead(book.id);if(rows.some(row=>row.page===page)){showToast('Halaman '+page+' sudah ditandai.');return;}
+          rows.push({page,createdAt:Date.now()});rows.sort((a,b)=>a.page-b.page);bookmarkWrite(book.id,rows);
+          refreshBookmarkControls();showToast('Bookmark halaman '+page+' tersimpan di browser perangkat ini.');
+        }catch(error){bookmarkFailure(error);}
+      }
+      const bookmarkDialog=document.createElement('dialog');
+      bookmarkDialog.id='reader-bookmarks-dialog';bookmarkDialog.setAttribute('aria-labelledby','reader-bookmarks-title');
+      bookmarkDialog.className='personal-bookmarks-dialog';
+      bookmarkDialog.innerHTML='<div class="personal-bookmarks-header"><div><h2 id="reader-bookmarks-title">Bookmarks</h2><p id="reader-bookmarks-book-title"></p></div><button type="button" id="reader-bookmarks-close" aria-label="Tutup Bookmarks">✕</button></div><p class="personal-bookmarks-note">Tersimpan hanya di browser perangkat ini. Menghapus data situs akan menghapus bookmark.</p><div id="reader-bookmarks-list" aria-live="polite"></div>';
+      document.body.appendChild(bookmarkDialog);
+      function closeBookmarks(){bookmarkDialog.close();}
+      document.getElementById('reader-bookmarks-close').onclick=closeBookmarks;
+      bookmarkDialog.addEventListener('click',event=>{if(event.target===bookmarkDialog){const r=bookmarkDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeBookmarks();}});
+      function renderBookmarkDialog(){
+        const book=books.find(b=>String(b.id)===String(bookmarkDialogBookId));
+        const list=document.getElementById('reader-bookmarks-list');list.replaceChildren();
+        document.getElementById('reader-bookmarks-book-title').textContent=book?book.title:'Buku tidak tersedia';
+        let rows;try{rows=bookmarkRead(bookmarkDialogBookId);}catch(error){const p=document.createElement('p');p.className='personal-bookmarks-empty';p.textContent='Bookmark tidak dapat dibaca. Data tetap dipertahankan; periksa penyimpanan browser dan coba kembali.';list.appendChild(p);return;}
+        if(!rows.length){const p=document.createElement('p');p.className='personal-bookmarks-empty';p.textContent='Belum ada bookmark untuk buku ini. Buka halaman buku, lalu pilih Add Bookmark.';list.appendChild(p);return;}
+        rows.forEach(row=>{
+          const item=document.createElement('div');item.className='personal-bookmark-row';
+          const open=document.createElement('button');open.type='button';open.className='personal-bookmark-open';
+          open.textContent='Halaman '+row.page;open.setAttribute('aria-label','Buka bookmark halaman '+row.page);
+          const invalid=!book||row.page>Math.max(1,Number(book.pageCount)||1);open.disabled=invalid;
+          if(invalid){const info=document.createElement('small');info.textContent='Halaman tidak tersedia pada versi buku ini';open.appendChild(info);}
+          open.onclick=async()=>{if(!book)return;closeBookmarks();bookmarkPendingTarget={id:String(book.id),page:row.page};await openBookInReader(book);};
+          const remove=document.createElement('button');remove.type='button';remove.className='personal-bookmark-remove';remove.textContent='Hapus';remove.setAttribute('aria-label','Hapus bookmark halaman '+row.page);
+          remove.onclick=()=>{try{bookmarkWrite(bookmarkDialogBookId,bookmarkRead(bookmarkDialogBookId).filter(saved=>saved.page!==row.page));renderBookmarkDialog();refreshBookmarkControls();showToast('Bookmark halaman '+row.page+' dihapus.');}catch(error){bookmarkFailure(error);}};
+          item.append(open,remove);list.appendChild(item);
+        });
+      }
+      function openBookmarksForBook(bookId){bookmarkDialogBookId=String(bookId);renderBookmarkDialog();if(!bookmarkDialog.open)bookmarkDialog.showModal();}
+      document.getElementById('toolbar-add-bookmark-btn').onclick=addCurrentBookmark;
+      document.getElementById('toolbar-bookmarks-btn').onclick=()=>openBookmarksForBook(activeBookId);
+      const bookmarkOriginalOpen=openBookInReader;
+      openBookInReader=async function(book){
+        if(!book)return;const sequence=++bookmarkOpenSequence;
+        if(bookmarkPendingTarget&&bookmarkPendingTarget.id!==String(book.id))bookmarkPendingTarget=null;
+        await bookmarkOriginalOpen(book);
+        if(sequence!==bookmarkOpenSequence||String(activeBookId)!==String(book.id)||currentView!=='reader')return;
+        if(isLocked){refreshBookmarkControls();return;}
+        if(bookmarkPendingTarget&&bookmarkPendingTarget.id===String(book.id)){
+          const target=bookmarkPendingTarget;bookmarkPendingTarget=null;
+          const total=pagesDataUrls.length||1;
+          if(target.page>total)showToast('Halaman bookmark sudah tidak tersedia pada versi buku ini.');
+          else{currentPage=target.page;renderStage('forward');showToast('Membuka bookmark halaman '+target.page+'.');}
+        }
+        refreshBookmarkControls();
+      };
+      window.openBookInReader=openBookInReader;
+      window.addEventListener('storage',event=>{if(event.key&&event.key.startsWith(BOOKMARK_KEY_PREFIX)){refreshBookmarkControls();if(bookmarkDialog.open)renderBookmarkDialog();}});
 
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');
