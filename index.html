@@ -1214,6 +1214,27 @@
     }
 
 </style>
+
+  <style id="sia-reader-focus-layout">
+    /* Embedded focus uses a separate control rail, never overlays the page. */
+    body.sia-embedded-reader-focus .topbar-3d-shell { display:none !important; }
+    body.sia-embedded-reader-focus #view-reader { min-height:0; height:100dvh; }
+    body.sia-embedded-reader-focus #reader-stage { min-height:0; height:100%; }
+    body.sia-embedded-reader-focus #reader-stage-container { order:1; flex:1 1 0; min-height:0; padding-top:0; padding-bottom:0; }
+    body.sia-embedded-reader-focus #btn-show-top-bar {
+      position:static !important; inset:auto !important; transform:none !important;
+      order:10; align-self:center; flex:0 0 30px; min-height:30px; margin:0;
+      padding:3px 16px; border:0; border-radius:0; box-shadow:none;
+      background:transparent; color:#466b5c; backdrop-filter:none;
+    }
+    body.sia-embedded-reader-focus #btn-show-bottom-bar,
+    body.sia-embedded-reader-focus #stage-prev-arrow,
+    body.sia-embedded-reader-focus #stage-next-arrow,
+    body.sia-embedded-reader-focus #reader-stage > .library-footer,
+    body.sia-embedded-reader-focus #reader-floating-dock.bar-hidden { display:none !important; }
+    body.sia-embedded-reader-focus #btn-show-top-bar span { display:inline !important; }
+    body.sia-embedded-reader-focus #btn-show-top-bar:focus-visible { outline:2px solid #b99c47; outline-offset:-2px; }
+  </style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
   <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
@@ -7172,7 +7193,41 @@
         persistState();
       }
 
+
+      // SIA appearance bridge: no identity, credentials, or catalogue data.
+      const SIA_EMBED_ORIGINS = new Set([
+        'https://sia.darululumnw.com',
+        'https://siadarululumnw.konsel26.chatgpt.site',
+        'http://terminal.local:4173'
+      ]);
+      let siaEmbedOrigin = '';
+      let siaLastReaderFocus = null;
+      function syncSiaReaderFocus() {
+        const focused = Boolean(siaEmbedOrigin && currentView === 'reader' && isFullPageFit);
+        document.body.classList.toggle('sia-embedded-reader-focus', focused);
+        const trigger = document.getElementById('btn-show-top-bar');
+        const label = trigger && trigger.querySelector('span');
+        if (label) label.textContent = focused ? 'Tampilkan kontrol baca' : 'Menu Atas';
+        if (trigger) trigger.setAttribute('aria-label', focused ? 'Tampilkan kontrol baca' : 'Tampilkan Navigasi Atas');
+        if (siaEmbedOrigin && (currentView === 'reader' || siaLastReaderFocus === true) && siaLastReaderFocus !== focused) {
+          siaLastReaderFocus = focused;
+          window.parent.postMessage({type:'elibrary:reader-focus',enabled:focused}, siaEmbedOrigin);
+        }
+      }
+      window.addEventListener('message', (event) => {
+        if (window.parent === window || event.source !== window.parent || !SIA_EMBED_ORIGINS.has(event.origin)) return;
+        const data = event.data;
+        if (!data || data.type !== 'sia:library-focus' || typeof data.enabled !== 'boolean') return;
+        siaEmbedOrigin = event.origin;
+        const changed = isFullPageFit !== data.enabled;
+        isFullPageFit = data.enabled;
+        setReaderBarsVisibility(!data.enabled, !data.enabled);
+        if (changed && currentView === 'reader') renderStage('forward');
+        else syncSiaReaderFocus();
+      });
+
       function renderStage(direction) {
+        syncSiaReaderFocus();
         const total = pagesDataUrls.length || 1;
         const visible = getVisiblePages();
         const stage = document.getElementById('reader-stage');
@@ -7538,6 +7593,7 @@
 
       function switchViewTo(view) {
         currentView = view;
+        syncSiaReaderFocus();
         const viewLobby = document.getElementById('view-lobby');
         const viewShelf = document.getElementById('view-shelf');
         const viewReader = document.getElementById('view-reader');
@@ -8513,6 +8569,12 @@
       const btnShowTopBar = document.getElementById('btn-show-top-bar');
       if (btnShowTopBar) {
         btnShowTopBar.onclick = () => {
+          if (siaEmbedOrigin && isFullPageFit) {
+            isFullPageFit = false;
+            setReaderBarsVisibility(true, true);
+            renderStage('forward');
+            return;
+          }
           setReaderBarsVisibility(true, isBottomBarVisible);
         };
       }
@@ -13860,3 +13922,4 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
   </script>
 </body>
 </html>
+
