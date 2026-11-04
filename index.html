@@ -646,8 +646,17 @@
     }
     .book-3d-shell {
       transform-style: preserve-3d;
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-origin: center center;
+      transition: none;
+      touch-action: none;
     }
+    #reader-stage-container.reader-zoomed #book-3d-object { cursor: grab; }
+    #reader-stage-container.reader-panning #book-3d-object { cursor: grabbing; }
+    #reader-stage-container { isolation: isolate; }
+    #book-3d-object { z-index: 1; }
+    #stage-prev-arrow, #stage-next-arrow { z-index: 60; }
+    #book-3d-object img { -webkit-user-drag: none; user-select: none; }
+    @media print { #book-3d-object { transform: none !important; } }
     .book-spread-mount {
       position: relative;
       transform-style: preserve-3d;
@@ -6290,6 +6299,7 @@
       // =========================================================
       async function openBookInReader(book) {
         if (!book) return;
+        resetReaderViewport();
         normalizeBookLockState(book);
         activeBookId = book.id;
         config.activeBookId = book.id;
@@ -7207,7 +7217,7 @@
 
         document.getElementById('center-spine-shadow').style.display = visible.length === 2 ? 'block' : 'none';
         document.getElementById('left-paper-stack').style.display = visible.length === 2 ? 'block' : 'none';
-        document.getElementById('book-3d-object').style.transform = 'scale(' + zoomLevel + ')';
+        applyReaderTransform();
 
         updateReaderControlsState(visible, total);
 
@@ -11029,74 +11039,128 @@
         if (e.key === 'ArrowLeft') goPrev();
       });
 
-      let dragStartX = null;
-      let dragStartY = null;
-      let dragStartTime = 0;
       const bookObj = document.getElementById('book-3d-object');
+      const readerViewport = document.getElementById('reader-stage-container');
       const readerStageEl = document.getElementById('reader-stage');
-
-      bookObj.addEventListener('pointerdown', (e) => {
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        dragStartTime = Date.now();
-      });
-
-      bookObj.addEventListener('pointerup', (e) => {
-        if (dragStartX === null) return;
-        const deltaX = e.clientX - dragStartX;
-        const deltaY = (dragStartY !== null && e.clientY !== undefined) ? e.clientY - dragStartY : 0;
-        const elapsed = Date.now() - dragStartTime;
-        dragStartX = null;
-        dragStartY = null;
-
-        // Gestur geser mendatar (horizontal drag)
-        if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15 && elapsed < 800) {
-          if (deltaX < 0) goNext();
-          else if (deltaX > 0) goPrev();
-        }
-      });
-
-      // Dukungan Gestur Usap Layar Sentuh Mobile Asli (Mobile Touch Swipe)
-      if (readerStageEl) {
-        let touchStartX = null;
-        let touchStartY = null;
-        let touchStartTime = 0;
-
-        readerStageEl.addEventListener('touchstart', (e) => {
-          if (!e.touches || e.touches.length !== 1) return;
-          touchStartX = e.touches[0].clientX;
-          touchStartY = e.touches[0].clientY;
-          touchStartTime = Date.now();
-        }, { passive: true });
-
-        readerStageEl.addEventListener('touchend', (e) => {
-          if (touchStartX === null || !e.changedTouches || e.changedTouches.length === 0) return;
-          const endX = e.changedTouches[0].clientX;
-          const endY = e.changedTouches[0].clientY;
-          const deltaX = endX - touchStartX;
-          const deltaY = endY - touchStartY;
-          const elapsed = Date.now() - touchStartTime;
-          touchStartX = null;
-          touchStartY = null;
-
-          // Abaikan jika menyentuh kontrol tombol/input dock bawah atau modal
-          const target = e.target;
-          if (target && (target.closest('button') || target.closest('input') || target.closest('form') || target.closest('#reader-floating-dock') || target.closest('#password-gate-modal'))) {
-            return;
-          }
-
-          // Cek apakah gestur swipe horizontal (geser mendatar)
-          if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15 && elapsed < 750) {
-            if (deltaX < 0) {
-              // Usap dari kanan ke kiri -> Halaman Maju
-              goNext();
-            } else if (deltaX > 0) {
-              // Usap dari kiri ke kanan -> Halaman Mundur!
-              goPrev();
-            }
-          }
-        }, { passive: true });
+      let readerPanX=0, readerPanY=0, readerDrawFrame=0, readerSuppressClickUntil=0;
+      let readerDetailTimer=0, readerDetailSequence=0, readerDetailTask=null, readerPinch=null;
+      const readerPointers=new Map(), readerDetailWidths=new Map();
+      const READER_MIN_ZOOM=.75, READER_MAX_ZOOM=4;
+      function readerBaseGeometry(){
+        const rect=readerViewport.getBoundingClientRect();
+        return {rect,x:rect.left+readerViewport.clientLeft+bookObj.offsetLeft+bookObj.offsetWidth/2-readerViewport.scrollLeft,
+          y:rect.top+readerViewport.clientTop+bookObj.offsetTop+bookObj.offsetHeight/2-readerViewport.scrollTop,w:bookObj.offsetWidth,h:bookObj.offsetHeight};
       }
+      function clampReaderPan(){
+        const g=readerBaseGeometry(), width=g.w*zoomLevel, height=g.h*zoomLevel, pad=12;
+        if(width<=g.rect.width-pad*2)readerPanX=zoomLevel<=1?0:Math.max(g.rect.left+pad-g.x+width/2,Math.min(g.rect.right-pad-g.x-width/2,readerPanX));
+        else readerPanX=Math.max(g.rect.right-pad-g.x-width/2,Math.min(g.rect.left+pad-g.x+width/2,readerPanX));
+        if(height<=g.rect.height-pad*2)readerPanY=zoomLevel<=1?0:Math.max(g.rect.top+pad-g.y+height/2,Math.min(g.rect.bottom-pad-g.y-height/2,readerPanY));
+        else readerPanY=Math.max(g.rect.bottom-pad-g.y-height/2,Math.min(g.rect.top+pad-g.y+height/2,readerPanY));
+      }
+      function cancelReaderDetail(){clearTimeout(readerDetailTimer);readerDetailSequence++;if(readerDetailTask){try{readerDetailTask.cancel();}catch{}}}
+      function scheduleReaderDetail(){
+        cancelReaderDetail();
+        if(zoomLevel<=1.02||isLocked||currentView!=='reader')return;
+        const sequence=readerDetailSequence;
+        readerDetailTimer=setTimeout(()=>renderReaderDetail(sequence).catch(error=>{if(error.name!=='RenderingCancelledException')console.warn('Detail zoom belum tersedia:',error.message);}),240);
+      }
+      async function renderReaderDetail(sequence){
+        const book=books.find(b=>b.id===activeBookId), id=activeBookId, visible=getVisiblePages().slice();
+        if(!book||sequence!==readerDetailSequence)return;
+        let pdf=activeReaderPdfBookId===id?activeReaderPdfDoc:null;
+        if(!pdf&&(book.pdfUrl||book.isCustomPdf||book.drivePdfFileId||book.driveFileId))pdf=await loadPdfDocumentForReader(book);
+        if(!pdf)return;
+        for(const number of visible){
+          if(sequence!==readerDetailSequence||id!==activeBookId||isLocked||currentView!=='reader')return;
+          const key=id+'-'+number, pending=pendingPageRenderPromises.get(key);if(pending)await pending;
+          if(sequence!==readerDetailSequence||id!==activeBookId)return;
+          const img=bookObj.querySelector('img[data-page-no="'+number+'"]');if(!img||number>pdf.numPages)continue;
+          const desired=Math.min(3200,Math.ceil(img.clientWidth*zoomLevel*Math.min(window.devicePixelRatio||1,2)));
+          if(Math.max(img.naturalWidth||0,readerDetailWidths.get(key)||0)>=desired*.92)continue;
+          const page=await pdf.getPage(number), base=page.getViewport({scale:1});
+          if(sequence!==readerDetailSequence||id!==activeBookId)return;
+          const maxPixels=window.innerWidth<768?3000000:6000000;
+          const scale=Math.min(desired/base.width,Math.sqrt(maxPixels/(base.width*base.height)));
+          const viewport=page.getViewport({scale}), canvas=document.createElement('canvas');
+          if((readerDetailWidths.get(key)||0)>=viewport.width*.92)continue;
+          canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+          let task;
+          try{
+            const context=canvas.getContext('2d',{alpha:false});context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);
+            task=page.render({canvasContext:context,viewport});readerDetailTask=task;await task.promise;
+            if(sequence!==readerDetailSequence||id!==activeBookId||!getVisiblePages().includes(number))continue;
+            const data=canvas.toDataURL('image/jpeg',.94);readerDetailWidths.set(key,viewport.width);readerPageRenderCache.set(key,data);
+            if(pagesDataUrls[number-1])pagesDataUrls[number-1].dataUrl=data;
+            bookObj.querySelectorAll('img[data-page-no="'+number+'"]').forEach(image=>{image.src=data;image.draggable=false;});
+          }finally{if(readerDetailTask===task)readerDetailTask=null;canvas.width=0;canvas.height=0;}
+        }
+      }
+      function applyReaderTransform(){
+        clampReaderPan();bookObj.style.transform='translate3d('+readerPanX+'px,'+readerPanY+'px,0) scale('+zoomLevel+')';
+        const zoomed=zoomLevel>1.01;readerViewport.classList.toggle('reader-zoomed',zoomed);
+        document.getElementById('zoom-value-label').textContent=Math.round(zoomLevel*100)+'%';
+        bookObj.querySelectorAll('img').forEach(img=>{img.draggable=false;});scheduleReaderDetail();
+      }
+      function queueReaderTransform(){if(!readerDrawFrame)readerDrawFrame=requestAnimationFrame(()=>{readerDrawFrame=0;applyReaderTransform();});}
+      function setReaderZoom(value,clientX,clientY){
+        if(isLocked||isPageTurning)return;
+        const next=Math.max(READER_MIN_ZOOM,Math.min(READER_MAX_ZOOM,Number(value)||1)), g=readerBaseGeometry();
+        const x=Number.isFinite(clientX)?clientX:g.rect.left+g.rect.width/2,y=Number.isFinite(clientY)?clientY:g.rect.top+g.rect.height/2;
+        const ratio=next/zoomLevel;readerPanX+=(x-g.x-readerPanX)*(1-ratio);readerPanY+=(y-g.y-readerPanY)*(1-ratio);
+        zoomLevel=next;if(zoomLevel<=1){readerPanX=0;readerPanY=0;}queueReaderTransform();
+      }
+      function resetReaderViewport(){
+        cancelReaderDetail();if(readerDrawFrame)cancelAnimationFrame(readerDrawFrame);readerDrawFrame=0;
+        zoomLevel=1;readerPanX=0;readerPanY=0;readerPinch=null;readerPointers.clear();readerDetailWidths.clear();
+        readerViewport.classList.remove('reader-panning');applyReaderTransform();
+      }
+      readerViewport.title='Roda mouse untuk zoom. Klik-tahan dan geser saat buku diperbesar. Reset untuk kembali ke ukuran awal.';
+      readerViewport.addEventListener('wheel',event=>{
+        if(!event.target.closest('#book-3d-object')||isLocked)return;
+        event.preventDefault();if(isPageTurning)return;
+        const unit=event.deltaMode===1?16:event.deltaMode===2?readerViewport.clientHeight:1;
+        const delta=Math.max(-240,Math.min(240,event.deltaY*unit));
+        setReaderZoom(zoomLevel*Math.exp(-delta*.0018),event.clientX,event.clientY);
+      },{passive:false});
+      function readerPointerDistance(points){return Math.hypot(points[1].x-points[0].x,points[1].y-points[0].y);}
+      readerViewport.addEventListener('pointerdown',event=>{
+        if(!event.target.closest('#book-3d-object')||event.button!==0||isLocked||isPageTurning)return;
+        const point={x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,time:Date.now(),moved:false,type:event.pointerType,pageElement:event.target.closest('[data-page-no]')};
+        readerPointers.set(event.pointerId,point);
+        if(zoomLevel>1.01||event.pointerType==='touch'){readerViewport.setPointerCapture(event.pointerId);event.preventDefault();}
+        if(readerPointers.size===2){const p=Array.from(readerPointers.values());readerPinch={distance:readerPointerDistance(p),zoom:zoomLevel,x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2};p.forEach(v=>{v.moved=true;v.pinched=true;});readerSuppressClickUntil=Date.now()+500;}
+        if(zoomLevel>1.01)readerViewport.classList.add('reader-panning');
+      });
+      window.addEventListener('pointermove',event=>{
+        const point=readerPointers.get(event.pointerId);if(!point)return;
+        point.x=event.clientX;point.y=event.clientY;
+        if(Math.hypot(point.x-point.startX,point.y-point.startY)>7)point.moved=true;
+        if(readerPointers.size>=2&&readerPinch){
+          const p=Array.from(readerPointers.values()),x=(p[0].x+p[1].x)/2,y=(p[0].y+p[1].y)/2;
+          setReaderZoom(readerPinch.zoom*readerPointerDistance(p)/Math.max(1,readerPinch.distance),readerPinch.x,readerPinch.y);
+          readerPanX+=x-readerPinch.x;readerPanY+=y-readerPinch.y;readerPinch.x=x;readerPinch.y=y;queueReaderTransform();event.preventDefault();
+        }else if(zoomLevel>1.01){readerPanX+=point.x-point.lastX;readerPanY+=point.y-point.lastY;queueReaderTransform();event.preventDefault();}
+        point.lastX=point.x;point.lastY=point.y;
+      },{passive:false});
+      function finishReaderPointer(event,cancelled){
+        const point=readerPointers.get(event.pointerId);if(!point)return;
+        const wasPinch=Boolean(readerPinch);readerPointers.delete(event.pointerId);
+        if(readerViewport.hasPointerCapture(event.pointerId))readerViewport.releasePointerCapture(event.pointerId);
+        readerViewport.classList.remove('reader-panning');
+        if(wasPinch){readerPinch=null;readerPointers.forEach(p=>{p.startX=p.lastX=p.x;p.startY=p.lastY=p.y;p.moved=true;});}
+        const dx=event.clientX-point.startX,dy=event.clientY-point.startY;
+        if(cancelled||wasPinch||point.moved||zoomLevel>1.01)readerSuppressClickUntil=Date.now()+500;
+        if(cancelled||wasPinch||point.pinched||zoomLevel>1.01)return;
+        if(Math.abs(dx)>35&&Math.abs(dx)>Math.abs(dy)*1.15&&Date.now()-point.time<800){readerSuppressClickUntil=Date.now()+500;if(dx<0)goNext();else goPrev();}
+        else if(point.type==='touch'&&!point.moved){readerSuppressClickUntil=Date.now()+500;const page=point.pageElement;if(page&&page.isConnected){const r=page.getBoundingClientRect();if(event.clientX-r.left<r.width*.48)goPrev();else goNext();}}
+      }
+      window.addEventListener('pointerup',event=>finishReaderPointer(event,false));
+      window.addEventListener('pointercancel',event=>finishReaderPointer(event,true));
+      window.addEventListener('blur',()=>{readerPointers.clear();readerPinch=null;readerViewport.classList.remove('reader-panning');});
+      readerViewport.addEventListener('click',event=>{if(event.target.closest('button,input,select,form'))return;if(zoomLevel>1.01||Date.now()<readerSuppressClickUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
+      bookObj.addEventListener('dragstart',event=>event.preventDefault());
+      bookObj.addEventListener('load',event=>{if(event.target.tagName==='IMG')queueReaderTransform();},true);
 
       // Proteksi Klik Kanan Kanvas
       document.getElementById('reader-stage').addEventListener('contextmenu', (e) => {
@@ -11107,21 +11171,9 @@
       });
 
       // Toolbar Zoom & Aksi
-      document.getElementById('zoom-in-btn').onclick = () => {
-        zoomLevel = Math.min(1.5, +(zoomLevel + 0.15).toFixed(2));
-        document.getElementById('zoom-value-label').textContent = Math.round(zoomLevel * 100) + '%';
-        renderStage('forward');
-      };
-      document.getElementById('zoom-out-btn').onclick = () => {
-        zoomLevel = Math.max(0.75, +(zoomLevel - 0.15).toFixed(2));
-        document.getElementById('zoom-value-label').textContent = Math.round(zoomLevel * 100) + '%';
-        renderStage('forward');
-      };
-      document.getElementById('zoom-reset-btn').onclick = () => {
-        zoomLevel = 1;
-        document.getElementById('zoom-value-label').textContent = '100%';
-        renderStage('forward');
-      };
+      document.getElementById('zoom-in-btn').onclick = () => setReaderZoom(zoomLevel*1.2);
+      document.getElementById('zoom-out-btn').onclick = () => setReaderZoom(zoomLevel/1.2);
+      document.getElementById('zoom-reset-btn').onclick = resetReaderViewport;
 
       document.getElementById('toolbar-sound-btn').onclick = () => {
         config.enableSound = !config.enableSound;
