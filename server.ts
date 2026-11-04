@@ -140,7 +140,15 @@ async function startServer() {
   });
 
   const isProduction = process.env.NODE_ENV === 'production';
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  // Parse explicit --port argument if provided (e.g. npm run dev --port 3000)
+  const portArgIndex = process.argv.indexOf('--port');
+  const cliPort = portArgIndex !== -1 ? parseInt(process.argv[portArgIndex + 1], 10) : NaN;
+  // If running inside container where Nginx uses 8080, dev server must run on port 3000
+  const port = !isNaN(cliPort)
+    ? cliPort
+    : (process.env.APP_PORT
+      ? parseInt(process.env.APP_PORT, 10)
+      : (process.env.PORT && process.env.PORT !== '8080' ? parseInt(process.env.PORT, 10) : 3000));
 
   app.use(express.static(path.join(__dirname, 'public')));
 
@@ -156,6 +164,21 @@ async function startServer() {
       appType: 'spa'
     });
     app.use(vite.middlewares);
+
+    // Fallback for SPA HTML routing
+    app.use('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      try {
+        let template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e: any) {
+        if (vite && typeof vite.ssrFixStacktrace === 'function') {
+          vite.ssrFixStacktrace(e);
+        }
+        next(e);
+      }
+    });
   } else {
     app.use(express.static(path.join(__dirname, 'dist')));
     app.get('*', (req, res) => {
@@ -163,30 +186,58 @@ async function startServer() {
     });
   }
 
-  const startHttpServer = (targetPort: number, attemptsLeft = 5) => {
-    const server = app.listen(targetPort, '0.0.0.0', () => {
+  let activeServer: any = null;
+
+  const startHttpServer = (targetPort: number, attemptsLeft = 10) => {
+    activeServer = app.listen(targetPort, '0.0.0.0', () => {
       console.log(`e-Library Cloud Database Server running on http://0.0.0.0:${targetPort}`);
     });
 
-    server.on('error', (err: any) => {
+    activeServer.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
         console.warn(`Port ${targetPort} is currently in use.`);
         if (attemptsLeft > 0) {
           console.log(`Retrying on port ${targetPort} in 1 second... (${attemptsLeft} attempts remaining)`);
           setTimeout(() => {
-            server.close();
-            startHttpServer(targetPort, attemptsLeft - 1);
+            try {
+              if (activeServer) {
+                activeServer.close(() => {
+                  startHttpServer(targetPort, attemptsLeft - 1);
+                });
+              } else {
+                startHttpServer(targetPort, attemptsLeft - 1);
+              }
+            } catch (_) {
+              startHttpServer(targetPort, attemptsLeft - 1);
+            }
           }, 1000);
         } else {
-          const fallbackPort = targetPort + 1;
-          console.warn(`Falling back to port ${fallbackPort}...`);
-          startHttpServer(fallbackPort, 5);
+          console.error(`Port ${targetPort} could not be bound after retries. Dev server requires port ${targetPort}.`);
+          process.exit(1);
         }
       } else {
         console.error('Server error:', err);
       }
     });
   };
+
+  const handleTermination = (signal: string) => {
+    console.log(`Received ${signal}, closing server gracefully...`);
+    if (activeServer) {
+      try {
+        activeServer.close(() => {
+          process.exit(0);
+        });
+      } catch (_) {
+        process.exit(0);
+      }
+    } else {
+      process.exit(0);
+    }
+  };
+
+  process.on('SIGINT', () => handleTermination('SIGINT'));
+  process.on('SIGTERM', () => handleTermination('SIGTERM'));
 
   startHttpServer(port);
 }
