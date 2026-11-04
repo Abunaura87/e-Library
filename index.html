@@ -6789,142 +6789,46 @@
         return false;
       }
 
-      async function openPdfWithCorsFallback(sourceObj) {
-        if (sourceObj && typeof sourceObj.url === 'string' && sourceObj.url.trim()) {
-          const rawInputUrl = sourceObj.url.trim();
-          const norm = window.normalizePublicPdfUrl
-            ? window.normalizePublicPdfUrl(rawInputUrl)
-            : {
-                directUrl: rawInputUrl,
-                proxyUrl: '/api/pdf-proxy?url=' + encodeURIComponent(rawInputUrl),
-                isGoogleDrive: false,
-                fileId: ''
-              };
-
-          let detectedFilename = '';
-          let specificErrorMsg = '';
-          const driveToken =
-            typeof cachedDriveAccessToken === 'string' && cachedDriveAccessToken.trim()
-              ? cachedDriveAccessToken.trim()
-              : '';
-          const gApiKey =
-            typeof firebaseConfig === 'object' && firebaseConfig && firebaseConfig.apiKey
-              ? String(firebaseConfig.apiKey).trim()
-              : '';
-
-          // Daftar kandidat fetch biner PDF yang memvalidasi magic bytes %PDF-
-          const binaryFetchCandidates = [];
-
-          // 1. Same-origin /api/pdf-proxy (berfungsi di AI Studio server.ts & Vercel /api/pdf-proxy.js)
-          const sameOriginProxyUrl =
-            '/api/pdf-proxy?url=' +
-            encodeURIComponent(norm.directUrl || rawInputUrl) +
-            (driveToken ? '&token=' + encodeURIComponent(driveToken) : '');
-          binaryFetchCandidates.push({ url: sameOriginProxyUrl, isProxy: true });
-
-          // 2. Google Drive API v3 alt=media langsung dari browser (mendukung CORS!)
-          if (norm.isGoogleDrive && norm.fileId) {
-            if (driveToken) {
-              binaryFetchCandidates.push({
-                url: 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(norm.fileId) + '?alt=media',
-                headers: { Authorization: 'Bearer ' + driveToken }
-              });
+      async function openPdfWithCorsFallback(sourceObj,options={}) {
+        const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),options.timeoutMs||120000);
+        const externalAbort=()=>controller.abort();if(options.signal){if(options.signal.aborted)controller.abort();else options.signal.addEventListener('abort',externalAbort,{once:true});}
+        const progress=event=>{if(options.onProgress)options.onProgress(event);};
+        async function parse(params){if(controller.signal.aborted)throw new DOMException('Pemuatan PDF dibatalkan atau melewati batas waktu.','AbortError');const task=window.pdfjsLib.getDocument(params);task.onProgress=progress;const abort=()=>task.destroy().catch(()=>{});controller.signal.addEventListener('abort',abort,{once:true});try{return await task.promise;}finally{controller.signal.removeEventListener('abort',abort);}}
+        try{
+          if(sourceObj&&typeof sourceObj.url==='string'&&sourceObj.url.trim()){
+            const raw=sourceObj.url.trim();const parsed=new URL(raw);if(!['https:','http:'].includes(parsed.protocol))throw Error('Gunakan tautan PDF HTTP/HTTPS yang valid.');
+            const norm=window.normalizePublicPdfUrl?window.normalizePublicPdfUrl(raw):{directUrl:raw,isGoogleDrive:false,fileId:''};
+            const token=typeof cachedDriveAccessToken==='string'?cachedDriveAccessToken.trim():'';
+            const key=typeof firebaseConfig==='object'?String(firebaseConfig.apiKey||''):'';
+            const candidates=[];
+            // Google media supports browser CORS and avoids relaying large PDFs through the app server.
+            if(norm.isGoogleDrive&&norm.fileId){
+              if(token)candidates.push({url:'https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(norm.fileId)+'?alt=media',headers:{Authorization:'Bearer '+token}});
+              if(key)candidates.push({url:'https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(norm.fileId)+'?alt=media&key='+encodeURIComponent(key)});
+            }else candidates.push({url:raw});
+            candidates.push({url:'/api/pdf-proxy?url='+encodeURIComponent(raw),headers:token&&norm.isGoogleDrive?{Authorization:'Bearer '+token}:{},proxy:true});
+            let lastError='Tautan belum mengembalikan berkas PDF. Periksa izin akses Google Drive atau unggah file PDF langsung.';
+            for(const candidate of candidates){
+              if(controller.signal.aborted)throw new DOMException('Pemuatan PDF dibatalkan atau melewati batas waktu.','AbortError');
+              const attempt=new AbortController();const cancel=()=>attempt.abort();controller.signal.addEventListener('abort',cancel,{once:true});const headerTimer=setTimeout(cancel,candidate.proxy?55000:18000);
+              try{
+                progress({phase:'download',loaded:0,total:0});
+                const response=await fetch(candidate.url,{headers:candidate.headers,credentials:candidate.proxy?'same-origin':'omit',signal:attempt.signal});clearTimeout(headerTimer);
+                if(!response.ok){const detail=await response.json().catch(()=>null);lastError=detail&&(detail.error||detail.message)||('Unduhan PDF gagal (HTTP '+response.status+').');continue;}
+                const reader=response.body&&response.body.getReader();let bytes;
+                if(reader){const chunks=[];let size=0;const total=Number(response.headers.get('content-length'))||0;while(true){const part=await reader.read();if(part.done)break;chunks.push(part.value);size+=part.value.length;progress({phase:'download',loaded:size,total});}bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}}
+                else bytes=new Uint8Array(await response.arrayBuffer());
+                if(!hasValidPdfHeaderBytes(bytes)){lastError='Tautan mengembalikan halaman web, bukan file PDF. Gunakan link berbagi file PDF atau unggah berkas lokal.';continue;}
+                progress({phase:'parse',loaded:bytes.length,total:bytes.length});
+                const pdf=await parse({data:bytes});let filename=response.headers.get('X-PDF-Filename')||'';try{filename=decodeURIComponent(filename);}catch{}return {pdf,normalized:norm,filename};
+              }catch(error){if(controller.signal.aborted)throw new DOMException('Pemuatan PDF dibatalkan atau melewati batas waktu.','AbortError');lastError=error.message||lastError;}
+              finally{clearTimeout(headerTimer);controller.signal.removeEventListener('abort',cancel);attempt.abort();}
             }
-            if (gApiKey) {
-              binaryFetchCandidates.push({
-                url:
-                  'https://www.googleapis.com/drive/v3/files/' +
-                  encodeURIComponent(norm.fileId) +
-                  '?alt=media&key=' +
-                  encodeURIComponent(gApiKey)
-              });
-            }
-            const driveConfirmUrl =
-              'https://drive.usercontent.google.com/download?id=' +
-              encodeURIComponent(norm.fileId) +
-              '&export=download&confirm=t';
-            binaryFetchCandidates.push({
-              url: 'https://corsproxy.io/?' + encodeURIComponent(driveConfirmUrl)
-            });
-            binaryFetchCandidates.push({
-              url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(driveConfirmUrl)
-            });
-          } else {
-            binaryFetchCandidates.push({ url: norm.directUrl });
-            binaryFetchCandidates.push({
-              url: 'https://corsproxy.io/?' + encodeURIComponent(norm.directUrl)
-            });
+            throw Error(lastError);
           }
-
-          for (let i = 0; i < binaryFetchCandidates.length; i++) {
-            const cand = binaryFetchCandidates[i];
-            if (!cand || !cand.url) continue;
-            try {
-              const res = await fetch(cand.url, {
-                headers: cand.headers || undefined,
-                signal: AbortSignal.timeout(20000)
-              });
-              if (!res.ok) {
-                if (cand.isProxy && (res.status === 403 || res.status === 422)) {
-                  const errData = await res.json().catch(() => null);
-                  if (errData && errData.error) {
-                    specificErrorMsg = errData.error;
-                  }
-                } else if (res.status === 403 || res.status === 404) {
-                  if (norm.isGoogleDrive && !specificErrorMsg) {
-                    specificErrorMsg =
-                      'Akses file Google Drive masih "Dibatasi" (Restricted). Buka Google Drive -> Klik Bagikan (Share) -> Ubah Akses Umum menjadi "Siapa saja yang memiliki link" (Anyone with the link).';
-                  }
-                }
-                continue;
-              }
-              const headerFname = res.headers.get('X-PDF-Filename');
-              if (headerFname && !detectedFilename) {
-                try {
-                  detectedFilename = decodeURIComponent(headerFname);
-                } catch (e) {
-                  detectedFilename = headerFname;
-                }
-              }
-              const ab = await res.arrayBuffer();
-              const uint8 = new Uint8Array(ab);
-              if (hasValidPdfHeaderBytes(uint8)) {
-                const doc = await window.pdfjsLib.getDocument({ data: uint8 }).promise;
-                return { pdf: doc, normalized: norm, filename: detectedFilename };
-              }
-            } catch (e) {
-              // Lanjut ke kandidat berikutnya
-            }
-          }
-
-          // Fallback terakhir: coba panggil pdfjsLib.getDocument({ url }) langsung
-          const fallbackUrls = norm.isGoogleDrive ? [norm.directUrl] : [norm.directUrl, norm.proxyUrl];
-          for (let j = 0; j < fallbackUrls.length; j++) {
-            const fUrl = fallbackUrls[j];
-            if (!fUrl) continue;
-            try {
-              const doc = await window.pdfjsLib.getDocument({ url: fUrl }).promise;
-              return { pdf: doc, normalized: norm, filename: detectedFilename };
-            } catch (e) {}
-          }
-
-          throw new Error(
-            specificErrorMsg ||
-              (norm.isGoogleDrive
-                ? 'Gagal memuat PDF dari Google Drive. Pastikan akses file di Google Drive sudah diubah menjadi "Siapa saja yang memiliki link" (Anyone with the link).'
-                : 'Gagal memuat URL PDF publik. Pastikan tautan mengarah langsung ke file PDF yang valid.')
-          );
-        }
-        if(sourceObj&&typeof sourceObj.data==='string'&&sourceObj.data.startsWith('data:')){
-          const comma=sourceObj.data.indexOf(',');
-          const binary=atob(sourceObj.data.slice(comma+1));
-          const bytes=new Uint8Array(binary.length);
-          for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-          sourceObj={...sourceObj,data:bytes};
-        }
-        const loadingTask = window.pdfjsLib.getDocument(sourceObj);
-        const pdf = await loadingTask.promise;
-        return { pdf: pdf, normalized: null, filename: '' };
+          let params={...sourceObj};if(typeof params.data==='string'&&params.data.startsWith('data:')){const binary=atob(params.data.slice(params.data.indexOf(',')+1));const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);params.data=bytes;}
+          progress({phase:'parse',loaded:0,total:0});return {pdf:await parse(params),normalized:null,filename:''};
+        }finally{clearTimeout(timeout);if(options.signal)options.signal.removeEventListener('abort',externalAbort);}
       }
 
       async function loadPdfDocument(sourceObj, labelName, pdfDataUrlForIdb) {
@@ -13566,8 +13470,9 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
           const previous=bookAssetsCache[id]||{};const pages=crudWorkingPages.map((p,i)=>({...p,pageNumber:i+1}));
           const record={...(books.find(b=>b.id===id)||{}),id,shelfId:crudWorkingBook.shelfId,title:crudWorkingBook.title,author:crudWorkingBook.author,description:crudWorkingBook.description,kicker:crudWorkingBook.kicker,accent:crudWorkingBook.accent,spineColor:crudWorkingBook.accent,pageCount:pages.length,passwordProtected:!!crudWorkingBook.passwordProtected,password:crudWorkingBook.password||'',coverUrl:crudWorkingBook.customCoverDataUrl||document.getElementById('crud-preview-cover-img').src,hasCustomCoverImage:!!crudWorkingBook.hasCustomCoverImage,editablePages:pages,isCustomPdf:!!crudWorkingBook.isCustomPdf,pdfUrl:crudWorkingBook.pdfUrl||'',drivePdfFileId:crudWorkingBook.drivePdfFileId||''};
           // Retain original assets; previews of unedited text pages are disposable and regenerated on demand.
-          const asset={...previous,bookMeta:record,coverUrl:record.coverUrl,editablePages:pages,pagesDataUrls:pages.map((p,i)=>({pageNumber:i+1,title:p.title,dataUrl:p.customImageDataUrl||null,isOriginalPdfPage:!!p.isOriginalPdfPage})),originalPagesDataUrls:crudWorkingBook.originalPagesDataUrls||previous.originalPagesDataUrls||[],pdfDataUrl:crudWorkingBook.pdfDataUrl||previous.pdfDataUrl||'',pdfUrl:record.pdfUrl,drivePdfFileId:record.drivePdfFileId,isCustomPdf:record.isCustomPdf};
+          const asset={...previous,bookMeta:record,coverUrl:record.coverUrl,editablePages:pages,pagesDataUrls:pages.map((p,i)=>({pageNumber:i+1,title:p.title,dataUrl:p.customImageDataUrl||null,isOriginalPdfPage:!!p.isOriginalPdfPage})),originalPagesDataUrls:crudWorkingBook.originalPagesDataUrls||previous.originalPagesDataUrls||[],pdfDataUrl:typeof crudWorkingBook.pdfDataUrl==='string'?crudWorkingBook.pdfDataUrl:(previous.pdfDataUrl||''),pdfUrl:record.pdfUrl,drivePdfFileId:record.drivePdfFileId,isCustomPdf:record.isCustomPdf};
           delete asset.editablePagesJson;delete record.editablePagesJson;
+          for(const key of ['pdfDataUrl','originalPagesDataUrls','pagesDataUrls','bookMeta'])delete record[key];record.driveFileId=record.drivePdfFileId||'';
           const result=await SheetsApiHandler.saveBook(record,asset);
           if(result.status!=='success'||!result.book||result.book.id!==id)throw Error('Database belum mengonfirmasi penyimpanan buku.');
           const committed=editorMergeCommitted(record,asset,result);crudIsNewBook=false;editorSession.loadedId=id;
@@ -13611,6 +13516,47 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
       document.getElementById('crud-pdf-file-input').onchange=e=>{const file=e.target.files&&e.target.files[0];if(!file)return;editorRun('Memuat konten halaman...',async()=>{const id=crudWorkingBook.id;const [buffer,data]=await Promise.all([file.arrayBuffer(),editorReadImage(file)]);const pdf=(await editorDeadline(openPdfWithCorsFallback({data:new Uint8Array(buffer)}))).pdf;if(crudWorkingBook.id!==id){pdf.destroy();return false;}const result=await editorInstallPdf(pdf,{pdfDataUrl:data,pdfUrl:'',drivePdfFileId:''});await pdf.destroy();return result;});};
       ['btn-crud-add-page','btn-crud-page-move-up','btn-crud-page-move-down','btn-crud-page-delete','btn-crud-clear-page-image'].forEach(id=>{const b=document.getElementById(id),original=b.onclick;b.onclick=event=>{if(editorSession.loading||editorSession.saving||editorSession.operation)return;editorFlushPage();original(event);editorDirty();};});
       window.addEventListener('beforeunload',event=>{if(editorSession.dirty||editorSession.saving){event.preventDefault();event.returnValue='';}});
+
+
+      // Import owns its cancellation and preserves the original source until the database confirms saving.
+      function importProgress(event){if(!editorSession.importController)return;const mb=n=>(n/1048576).toFixed(1)+' MB';const text=event.phase==='parse'?'Membaca struktur PDF...':event.total?'Mengunduh PDF '+Math.min(100,Math.round(event.loaded/event.total*100))+'% ('+mb(event.loaded)+' / '+mb(event.total)+')':'Mengunduh PDF'+(event.loaded?' '+mb(event.loaded):'...');editorStatus(text,true);addImportCancel();}
+      function addImportCancel(){const el=document.getElementById('elib-editor-status');if(!el||!editorSession.importController||el.querySelector('.elib-import-cancel'))return;const cancel=document.createElement('button');cancel.type='button';cancel.className='elib-import-cancel';cancel.textContent='Batalkan impor';cancel.onclick=()=>{editorSession.importCancelled=true;editorSession.importController.abort();};el.appendChild(cancel);}
+      async function runPdfImport(label,read,retry){if(editorSession.operation||editorSession.loading||editorSession.saving)return false;
+        const id=crudWorkingBook.id;const controller=new AbortController();editorSession.importController=controller;editorSession.importCancelled=false;editorSession.pendingImport={bookId:id,retry,status:'loading'};
+        try{return await editorRun(label,async()=>{addImportCancel();const opened=await read(controller.signal);if(controller.signal.aborted||crudWorkingBook.id!==id){opened.pdf.destroy().catch(()=>{});throw new DOMException('Impor dibatalkan.','AbortError');}if(opened.filename&&['Judul Buku Baru Koleksi 3D','Publikasi Tanpa Judul'].includes(crudWorkingBook.title)){crudWorkingBook.title=opened.filename.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').trim();document.getElementById('crud-inp-title').value=crudWorkingBook.title;}const ok=await installImportedPdf(opened.pdf,opened.source,controller.signal);if(ok)editorSession.pendingImport.status='ready';return ok;},retry);}
+        finally{if(editorSession.importCancelled){editorSession.pendingImport=null;editorStatus('Impor dihentikan. Draf yang sudah terbentuk tetap tersedia.');}else if(editorSession.pendingImport&&editorSession.pendingImport.status!=='ready')editorSession.pendingImport.status='error';editorSession.importController=null;const cancel=document.querySelector('.elib-import-cancel');if(cancel)cancel.remove();}
+      }
+      async function installImportedPdf(pdf,source,signal){
+        const id=crudWorkingBook.id;const total=pdf.numPages;if(!total)throw Error('PDF tidak memiliki halaman.');
+        // Commit the validated PDF and page metadata before attempting its optional cover render.
+        crudWorkingPages=Array.from({length:total},(_,i)=>({pageNumber:i+1,title:i===0?crudWorkingBook.title:'Halaman '+(i+1),kicker:i===0?'SAMPUL DOKUMEN ASLI':'HALAMAN PDF '+(i+1),subtitle:'',body:'',customImageDataUrl:'',isOriginalPdfPage:true}));
+        Object.assign(crudWorkingBook,{pageCount:total,isCustomPdf:true,hasCustomCoverImage:false,customCoverDataUrl:'',originalPagesDataUrls:[],...source});crudSelectedPageIdx=0;
+        const previous=editorSession.pdf;if(previous&&previous!==pdf)previous.destroy().catch(()=>{});editorSession.pdf=pdf;editorSession.pdfKey=id+':'+(crudWorkingBook.pdfUrl||crudWorkingBook.drivePdfFileId||'upload')+':'+(crudWorkingBook.pdfDataUrl||'').length;editorSession.pdfTask=null;
+        editorDirty();let coverError=false;editorStatus('PDF valid: '+total+' halaman. Menyiapkan sampul...',true);addImportCancel();
+        try{const cover=await editorPdfImage(pdf,0);if(signal.aborted)throw new DOMException('Impor dibatalkan.','AbortError');crudWorkingBook.hasCustomCoverImage=true;crudWorkingBook.customCoverDataUrl=cover;crudWorkingPages[0].customImageDataUrl=cover;}
+        catch(error){if(signal.aborted)throw error;coverError=true;}
+        populateCrudMetadataFormFromWorking();renderCrudPagesList();loadCrudPageIntoForm(0);
+        editorStatus('PDF '+total+' halaman siap disimpan ke rak.'+(coverError?' Sampul belum berhasil dirender; berkas PDF asli tetap tersedia.':''));return true;
+      }
+      loadPdfUrlIntoCrudWorkingBook=async function(raw){const url=String(raw||document.getElementById('crud-inp-pdf-url').value).trim();if(!url||!crudWorkingBook)return false;
+        try{const parsed=new URL(url);if(!['https:','http:'].includes(parsed.protocol))throw Error();}catch{editorStatus('Masukkan link file PDF HTTP/HTTPS yang valid.');return false;}
+        const retry=()=>loadPdfUrlIntoCrudWorkingBook(url);
+        return runPdfImport('Memuat PDF dari tautan...',async signal=>{const opened=await openPdfWithCorsFallback({url},{signal,timeoutMs:120000,onProgress:importProgress});return {...opened,source:{pdfUrl:opened.normalized&&opened.normalized.directUrl||url,drivePdfFileId:opened.normalized&&opened.normalized.fileId||'',pdfDataUrl:''}};},retry);
+      };
+      document.getElementById('crud-pdf-file-input').onchange=event=>{
+        const file=event.target.files&&event.target.files[0];if(!file||!crudWorkingBook)return;event.target.value='';
+        const retry=()=>runPdfImport('Membaca file PDF '+file.name+'...',async signal=>{
+          const [buffer,data]=await Promise.all([file.arrayBuffer(),editorReadImage(file)]);if(signal.aborted)throw new DOMException('Impor dibatalkan.','AbortError');if(!hasValidPdfHeaderBytes(new Uint8Array(buffer)))throw Error('Berkas yang dipilih bukan PDF yang valid.');
+          const opened=await openPdfWithCorsFallback({data:new Uint8Array(buffer)},{signal,timeoutMs:120000,onProgress:importProgress});return {...opened,filename:file.name,source:{pdfDataUrl:data,pdfUrl:'',drivePdfFileId:''}};
+        },retry);retry();
+      };
+      const importOriginalSave=saveCrudWorkingBookPermanently;
+      saveCrudWorkingBookPermanently=async function(openAfter){if(editorSession.operation||editorSession.saving||editorSession.loading)return false;const pending=editorSession.pendingImport;
+        if(pending&&pending.bookId===crudWorkingBook.id&&pending.status!=='ready'){editorStatus('PDF belum berhasil dimuat. Draf tetap tersedia; coba kembali atau batalkan impor sebelum menyimpan.',false,pending.retry);return false;}
+        const url=document.getElementById('crud-inp-pdf-url').value.trim();if(url&&url!==crudWorkingBook.pdfUrl){if(!await loadPdfUrlIntoCrudWorkingBook(url))return false;}
+        if(url&&crudIsNewBook&&!crudWorkingBook.isCustomPdf){if(!await loadPdfUrlIntoCrudWorkingBook(url))return false;}
+        return importOriginalSave(openAfter);
+      };
 
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');
