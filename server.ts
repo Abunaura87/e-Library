@@ -62,7 +62,7 @@ async function startServer() {
   // Authenticate every mutation on the server; no IP/email/local-storage trust.
   app.use('/api', async (req, res, next) => {
     if (!['GET','HEAD','OPTIONS'].includes(req.method)) {
-      const publicRead = req.path === '/gas' && parseIncomingBody(req).action === 'readBook';
+      const publicRead = req.path === '/gas' && ['readBook','recordBookVisit'].includes(parseIncomingBody(req).action);
       if (!publicRead) {
         if (!await verifyAdminRequest(req)) return res.status(401).json({status:'error',message:'Admin authentication required'});
         (req as any).verifiedAdmin = true;

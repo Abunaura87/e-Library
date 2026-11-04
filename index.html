@@ -1571,6 +1571,7 @@
               <i data-lucide="search" class="w-3.5 h-3.5 text-[#9E7B1C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
               <input id="shelf-search-input" type="text" placeholder="Cari judul atau penulis..." class="w-full pl-8 pr-3 py-2 text-xs bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] placeholder:text-[#12543F]/60 focus:outline-none focus:border-[#0B3B2C] focus:ring-1 focus:ring-[#0B3B2C]/30 shadow-2xs" />
             </div>
+            <label class="w-full sm:w-auto text-xs text-[#0B3B2C] flex items-center gap-2"><span>Urutkan:</span><select id="shelf-book-sort" aria-label="Urutkan buku" class="flex-1 px-3 py-2 bg-[#FBF9F5] border border-[#D4AF37] rounded-lg text-[#072A20] min-h-[40px]"><option value="shelf">Urutan Rak</option><option value="popular">Paling Sering Dibuka</option></select></label>
             <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-start sm:justify-end">
               <button type="button" id="btn-open-crud-etalase-modal" class="admin-only-control hidden inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] border border-[#072A20]/20 whitespace-nowrap shadow-sm cursor-pointer transition-all">
                 <i data-lucide="file-pen-line" class="w-4 h-4 text-[#072A20]"></i>
@@ -6190,6 +6191,8 @@
           );
         });
 
+        if(document.getElementById('shelf-book-sort')?.value==='popular')shelfBooks.sort((a,b)=>(Number(b.viewCount)||0)-(Number(a.viewCount)||0));
+
         const countBadge = document.getElementById('active-shelf-count-badge');
         if (countBadge) {
           countBadge.textContent = books.filter((b) => isBookOnShelf(b, activeShelfId)).length + ' Koleksi Buku 3D';
@@ -6301,6 +6304,7 @@
               adminCardToolbarHtml +
             '</div>';
 
+          const viewBadge=document.createElement('div');viewBadge.className='mt-3 flex items-center gap-1.5 text-xs font-semibold text-[#9E7B1C]';viewBadge.title='Jumlah pembukaan berhasil. Refresh tidak menambah hitungan dalam 30 menit.';viewBadge.innerHTML='<i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i>';const viewText=document.createElement('span');viewText.setAttribute('data-book-view-count',String(book.id));viewText.textContent=bookViewLabel(book.viewCount);viewBadge.appendChild(viewText);card.appendChild(viewBadge);
           const bookmarkButton=document.createElement('button');bookmarkButton.type='button';bookmarkButton.className='personal-bookmarks-card-btn';bookmarkButton.setAttribute('data-personal-bookmarks',String(book.id));bookmarkButton.textContent='Bookmarks ('+bookmarkRows(book.id).length+')';bookmarkButton.setAttribute('aria-label','Bookmarks untuk '+book.title);bookmarkButton.onclick=event=>{event.stopPropagation();openBookmarksForBook(book.id);};card.appendChild(bookmarkButton);
           grid.appendChild(card);
         });
@@ -7157,6 +7161,7 @@
 
         updateReaderExportUI();
         refreshBookmarkControls();
+        maybeRecordBookVisit();
         document.getElementById('slider-bar-container').style.display = config.showThumbnails ? 'flex' : 'none';
         document.getElementById('toolbar-thumbs-btn').style.display = config.showThumbnails ? 'inline-flex' : 'none';
         document.getElementById('toolbar-sound-btn').textContent = config.enableSound ? 'Kertas: Aktif' : 'Kertas: Bisu';
@@ -13797,6 +13802,41 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
       };
       window.openBookInReader=openBookInReader;
       window.addEventListener('storage',event=>{if(event.key&&event.key.startsWith(BOOKMARK_KEY_PREFIX)){refreshBookmarkControls();if(bookmarkDialog.open)renderBookmarkDialog();}});
+
+
+      // Anonymous readership: counts are cloud data; browser storage only limits repeats.
+      const bookVisitPending=new Map(),bookVisitNextTry=new Map();
+      let bookVisitReady=false;
+      function bookViewLabel(value){return new Intl.NumberFormat('id-ID').format(Math.max(0,Number(value)||0))+' kali dibuka';}
+      function refreshBookViewLabels(id,count){
+        const book=books.find(b=>String(b.id)===String(id));if(book)book.viewCount=Math.max(Number(book.viewCount)||0,Number(count)||0);
+        document.querySelectorAll('[data-book-view-count]').forEach(el=>{if(el.getAttribute('data-book-view-count')===String(id))el.textContent=bookViewLabel(book?book.viewCount:count);});
+      }
+      function visitIdentity(){for(const storageName of ['localStorage','sessionStorage']){try{const storage=window[storageName],key='elibrary_visit_device_v1';let value=storage.getItem(key);if(!/^v1_[a-f0-9]{32}$/.test(value||'')){value='v1_'+crypto.randomUUID().replace(/-/g,'');storage.setItem(key,value);}return value;}catch{}}return null;}
+      function visitIsAdmin(){const user=firebaseAuth&&firebaseAuth.currentUser;return Boolean(isAdminMode||currentAdminUser||(user&&user.emailVerified&&String(user.email).toLowerCase()===ADMIN_WHITELIST_EMAIL));}
+      function maybeRecordBookVisit(){
+        if(!bookVisitReady||currentView!=='reader'||isLocked||visitIsAdmin()||document.hidden)return;
+        const book=books.find(b=>String(b.id)===String(activeBookId));if(!book)return;const id=String(book.id),page=getVisiblePages()[0];
+        const image=document.querySelector('#pages-spread-Mount img[data-page-no="'+page+'"]');if(!image||!image.complete||!image.naturalWidth)return;
+        const pdf=Boolean(book.pdfUrl||book.isCustomPdf||book.drivePdfFileId||book.driveFileId);
+        if(pdf&&(!activeReaderPdfDoc||String(activeReaderPdfBookId)!==id||!activeReaderPdfDoc.numPages))return;
+        const now=Date.now(),key='elibrary_visit_next_v1:'+encodeURIComponent(id);
+        try{if(Number(localStorage.getItem(key)||0)>now)return;}catch{}
+        if(bookVisitPending.get(id)?.inFlight||(bookVisitNextTry.get(id)||0)>now)return;
+        const visitorId=visitIdentity();if(!visitorId)return;
+        const pending=bookVisitPending.get(id)||{requestId:crypto.randomUUID().replace(/-/g,''),visitorId};pending.inFlight=true;bookVisitPending.set(id,pending);
+        fetch('/api/gas',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:AbortSignal.timeout(20000),body:JSON.stringify({action:'recordBookVisit',id,visitorId:pending.visitorId,requestId:pending.requestId})})
+          .then(async response=>{const result=await response.json();if(!response.ok||result.status!=='success')throw Error(result.message||'Statistik belum tersedia');
+            refreshBookViewLabels(id,result.viewCount);const next=Number(result.nextAllowedAt)||Date.now()+1800000;
+            bookVisitNextTry.set(id,next);try{localStorage.setItem(key,String(next));}catch{}bookVisitPending.delete(id);
+          }).catch(()=>{pending.inFlight=false;bookVisitNextTry.set(id,Date.now()+30000);});
+      }
+      document.getElementById('shelf-book-sort').onchange=()=>renderShelfBooksGrid(document.getElementById('shelf-search-input').value);
+      document.getElementById('book-3d-object').addEventListener('load',maybeRecordBookVisit,true);
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)maybeRecordBookVisit();});
+      const statsOriginalPdfLoad=loadPdfDocumentForReader;
+      loadPdfDocumentForReader=async function(book){const pdf=await statsOriginalPdfLoad(book);if(pdf)requestAnimationFrame(maybeRecordBookVisit);return pdf;};
+      bookVisitReady=true;
 
       // Eksekusi Tampilan Awal: Lobi Lemari Rak Klasikal
       renderLobbyView('');

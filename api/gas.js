@@ -1,5 +1,5 @@
 // Durable proxy: Apps Script + Sheets/Drive are the only catalog source.
-const ACTIONS = new Set(['saveBook','deleteBook','saveRack','deleteRack','readBook','uploadChunk']);
+const ACTIONS = new Set(['saveBook','deleteBook','saveRack','deleteRack','readBook','uploadChunk','recordBookVisit']);
 const FIREBASE_KEY = 'AIzaSyD10bfzaau3mEQND0-hqBSXyg2rRt1c0PM';
 export async function verifyAdminRequest(req) {
  const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
@@ -21,7 +21,7 @@ export default async function handler(req,res) {
  if(!/^https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec$/.test(gasUrl))return res.status(503).json({status:'error',code:'CLOUD_NOT_CONFIGURED',message:'Database cloud belum dikonfigurasi. Hubungi pengelola.'});
  let payload={};if(req.method==='POST'){try{payload=typeof req.body==='string'?JSON.parse(req.body):req.body||{};}catch{return res.status(400).json({status:'error',message:'Invalid JSON'});}if(!ACTIONS.has(payload.action))return res.status(400).json({status:'error',message:'Unsupported action; bulk overwrite disabled'});}
  const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
- if(req.method==='POST'&&payload.action!=='readBook'&&!await verifyAdminRequest(req))return res.status(401).json({status:'error',message:'Login Google Admin yang valid diperlukan.'});
+ if(req.method==='POST'&&!['readBook','recordBookVisit'].includes(payload.action)&&!await verifyAdminRequest(req))return res.status(401).json({status:'error',message:'Login Google Admin yang valid diperlukan.'});
  const upstreamBody=req.method==='GET'?{action:'catalog'}:{...payload};delete upstreamBody.secretKey;delete upstreamBody.adminSecret;delete upstreamBody.authToken;
  if(token)upstreamBody.authToken=token;
  const response=await fetch(gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8','Accept':'application/json'},body:JSON.stringify(upstreamBody),redirect:'follow',signal:AbortSignal.timeout(60000)});
