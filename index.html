@@ -1167,6 +1167,52 @@
 
 #modal-crud-etalase-book>div{height:min(94dvh,980px);min-height:0}#modal-crud-etalase-book aside{min-height:0}#crud-books-list-container,#crud-panel-metadata,#crud-panel-pages,#crud-pages-list{overscroll-behavior:contain;scrollbar-gutter:stable;min-height:0;-webkit-overflow-scrolling:touch}#crud-panel-metadata,#crud-panel-pages{overflow-y:auto}#crud-books-list-container{overflow-y:auto;flex:1}#elib-editor-status{flex-shrink:0;padding:9px 16px;color:#f3e5ab;background:#072a20;border-bottom:1px solid #d4af3760;font-size:12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}#elib-editor-status[hidden]{display:none}#elib-editor-status .elib-spinner{width:19px;height:19px;border-width:2px}#elib-editor-status button{border:1px solid #d4af37;border-radius:6px;padding:4px 10px;margin-left:auto}#elib-editor-dirty{font-size:10px;color:#f3e5ab;margin-left:8px}.elib-page-pagination{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;padding:8px 0;color:#f3e5ab}.elib-page-pagination button,.elib-page-pagination input{background:#072a20;border:1px solid #d4af3760;border-radius:5px;padding:4px 7px}.elib-page-pagination input{width:60px}#crud-page-live-preview-img{max-width:100%;height:auto;object-fit:contain}@media(max-width:1023px){#modal-crud-etalase-book aside{max-height:185px}#crud-pages-list{max-height:220px}#modal-crud-etalase-book>div{max-height:96dvh;height:96dvh}}
 @media(max-width:1023px){#elib-crud-header{padding:8px 10px;gap:6px}#elib-crud-header h3{font-size:14px}#elib-crud-header>div:first-child{gap:7px}#elib-crud-header>div:first-child>div:first-child{width:28px;height:28px}#modal-crud-etalase-book aside{max-height:145px}#modal-crud-etalase-book aside>div:first-child{padding:8px}#modal-crud-etalase-book aside>div:first-child .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}#modal-crud-etalase-book aside input,#modal-crud-etalase-book aside select{font-size:10px}#elib-crud-footer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;padding:7px 9px}#elib-crud-footer>div{display:contents}#elib-crud-footer button{padding:6px;font-size:10px;line-height:1.2;justify-content:center;min-height:32px}#elib-crud-footer button svg{width:12px;height:12px;flex-shrink:0}#elib-editor-status{padding:6px 10px;font-size:11px}#tab-btn-crud-metadata,#tab-btn-crud-pages{font-size:10px;padding:7px 5px}#crud-panel-metadata,#crud-panel-pages{padding:12px}}
+
+    /* Quiet reader arrows and responsive shelf/footer copy. */
+    #stage-prev-arrow, #stage-next-arrow {
+      opacity: .24; min-width: 44px; min-height: 44px;
+      background: rgba(7,42,32,.06) !important; border-color: transparent !important;
+      box-shadow: none !important; backdrop-filter: none !important;
+      transition: opacity .16s ease, background-color .16s ease;
+    }
+    #stage-prev-arrow svg, #stage-next-arrow svg { color: #0B3B2C; }
+    #reader-stage-container.reader-zoomed #stage-prev-arrow,
+    #reader-stage-container.reader-zoomed #stage-next-arrow { opacity: .13; }
+    #reader-stage-container.reader-panning #stage-prev-arrow,
+    #reader-stage-container.reader-panning #stage-next-arrow { opacity: .06; }
+    #stage-prev-arrow:active, #stage-next-arrow:active,
+    #stage-prev-arrow:focus-visible, #stage-next-arrow:focus-visible {
+      opacity: .95 !important; background: #0B3B2C !important; outline: 2px solid #D4AF37; outline-offset: 2px;
+    }
+    #stage-prev-arrow:active svg, #stage-next-arrow:active svg,
+    #stage-prev-arrow:focus-visible svg, #stage-next-arrow:focus-visible svg { color: #D4AF37; }
+    @media (hover: hover) {
+      #stage-prev-arrow:hover, #stage-next-arrow:hover { opacity: .95 !important; background: #0B3B2C !important; }
+      #stage-prev-arrow:hover svg, #stage-next-arrow:hover svg { color: #D4AF37; }
+    }
+    #stage-prev-arrow:disabled, #stage-next-arrow:disabled { opacity: .06 !important; }
+    #view-shelf .shelf-caption-bar {
+      height: auto; min-height: 32px; display: flex; flex-direction: column; justify-content: center;
+      align-items: center; gap: 5px; padding: 10px 12px; text-align: center;
+    }
+    #view-shelf .shelf-caption-bar > span { display: block; max-width: 100%; line-height: 1.6; letter-spacing: .06em; overflow-wrap: normal; }
+    body .library-footer { position: relative; display: flex; align-items: center; justify-content: center; padding: 12px 44px; gap: 0; }
+    body .library-footer-copy { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 6px; margin: 0; padding: 0; max-width: 100%; line-height: 1.6; letter-spacing: .035em; }
+    .library-footer-credit, .library-footer-rights { display: inline-block; white-space: nowrap; }
+    body .library-footer > .btn-secret-admin-gate { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); flex-shrink: 0; }
+    #reader-stage .library-footer { padding-top: 6px; padding-bottom: 6px; }
+    @media(min-width:640px) {
+      #view-shelf .shelf-caption-bar { flex-direction: row; justify-content: space-between; gap: 16px; padding: 7px 20px; }
+      #view-shelf .shelf-caption-bar > span { max-width: 49%; }
+    }
+    @media(max-width:639px) {
+      body .library-footer-copy { font-size: 10px; letter-spacing: .025em; }
+      body .library-footer { padding-left: 40px; padding-right: 40px; }
+      .library-footer-rights { flex-basis: 100%; }
+      #reader-floating-dock { bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
+      #btn-show-bottom-bar { bottom: calc(46px + env(safe-area-inset-bottom, 0px)); }
+    }
+
 </style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
@@ -1473,9 +1519,9 @@
       </div>
 
       <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan & Gerbang Rahasia Admin -->
-      <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center gap-1.5 border-t border-[#D4AF37]/50 shadow-inner z-10">
-        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-2 select-none">
-          © 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>. All rights reserved.
+      <div class="w-full py-3.5 sm:py-4 wood-plank-floor mt-2 shrink-0 flex items-center justify-center gap-1.5 border-t border-[#D4AF37]/50 shadow-inner z-10 library-footer">
+        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-2 select-none library-footer-copy">
+          <span class="library-footer-credit">© 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>.</span><span class="library-footer-rights"> All rights reserved.</span>
         </p>
         <button type="button" id="btn-secret-admin-gate" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="btn-secret-admin-gate opacity-45 hover:opacity-100 active:opacity-100 text-[#F3E5AB] hover:text-[#D4AF37] p-2 min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-lg transition-all cursor-pointer">
           <i data-lucide="lock" class="w-3.5 h-3.5"></i>
@@ -1559,7 +1605,7 @@
           </div>
 
           <!-- Bilah Panggung Rak Hijau Zamrud & Gold 3D -->
-          <div class="w-full h-6 wood-shelf-ledge rounded-sm flex items-center justify-between px-4 sm:px-6">
+          <div class="w-full wood-shelf-ledge rounded-sm shelf-caption-bar">
             <span class="text-[9px] sm:text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">ETALASE KOLEKSI KLASIKAL 3D INTERAKTIF</span>
             <span class="text-[9px] sm:text-[10px] font-classical-label uppercase tracking-widest text-[#F3E5AB]">KLIK SAMPUL BUKU UNTUK MEMBUKA FLIPBOOK 3D</span>
           </div>
@@ -1567,9 +1613,9 @@
       </div>
 
       <!-- Lantai Kayu Perspektif dengan Footer Hak Cipta Sesuai Ketentuan & Gerbang Rahasia Admin -->
-      <div class="w-full py-3.5 sm:py-4 wood-plank-floor shrink-0 flex items-center justify-center gap-1.5 border-t border-[#D4AF37]/50 shadow-inner">
-        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-2 select-none">
-          © 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>. All rights reserved.
+      <div class="w-full py-3.5 sm:py-4 wood-plank-floor shrink-0 flex items-center justify-center gap-1.5 border-t border-[#D4AF37]/50 shadow-inner library-footer">
+        <p class="text-[11px] sm:text-xs font-classical-label text-[#F3E5AB] tracking-wider text-center px-2 select-none library-footer-copy">
+          <span class="library-footer-credit">© 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>.</span><span class="library-footer-rights"> All rights reserved.</span>
         </p>
         <button type="button" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="btn-secret-admin-gate opacity-45 hover:opacity-100 active:opacity-100 text-[#F3E5AB] hover:text-[#D4AF37] p-2 min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-lg transition-all cursor-pointer">
           <i data-lucide="lock" class="w-3.5 h-3.5"></i>
@@ -1961,9 +2007,9 @@
         </div>
 
         <!-- Footer Hak Cipta Resmi Baku di Bagian Bawah Ruang Baca -->
-        <div class="no-print w-full py-1.5 bg-[#072A20] border-t border-[#D4AF37]/30 flex items-center justify-center gap-1.5 shrink-0 z-20">
-          <p class="text-[10px] sm:text-[11px] font-classical-label text-[#F3E5AB]/90 tracking-wider text-center px-2 select-none">
-            © 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>. All rights reserved.
+        <div class="no-print w-full py-1.5 bg-[#072A20] border-t border-[#D4AF37]/30 flex items-center justify-center gap-1.5 shrink-0 z-20 library-footer">
+          <p class="text-[10px] sm:text-[11px] font-classical-label text-[#F3E5AB]/90 tracking-wider text-center px-2 select-none library-footer-copy">
+            <span class="library-footer-credit">© 2026 e-Library by <button type="button" class="secret-admin-author-trigger underline decoration-dotted decoration-[#D4AF37]/40 hover:decoration-[#D4AF37] hover:text-[#D4AF37] cursor-pointer bg-transparent border-0 p-0 font-inherit text-inherit" title="Login Admin">@abunaura</button>.</span><span class="library-footer-rights"> All rights reserved.</span>
           </p>
           <button type="button" title="Otentikasi Pengelola Perpustakaan (#admin-access)" aria-label="Gerbang Otentikasi Admin" class="btn-secret-admin-gate opacity-45 hover:opacity-100 active:opacity-100 text-[#F3E5AB] hover:text-[#D4AF37] p-1.5 min-w-[28px] min-h-[28px] inline-flex items-center justify-center rounded-lg transition-all cursor-pointer">
             <i data-lucide="lock" class="w-3 h-3"></i>
