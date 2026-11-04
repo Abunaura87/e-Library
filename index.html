@@ -882,8 +882,15 @@
       box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
       background-color: #FBF9F5;
     }
+    body:not(.admin-authenticated) #toolbar-download-btn,
+    body:not(.admin-authenticated) #toolbar-print-btn { display: none !important; }
     @media print {
       .no-print { display: none !important; }
+      body:not(.admin-authenticated) > *, body.reader-print-blocked > * { display: none !important; }
+      body:not(.admin-authenticated)::after, body.reader-print-blocked::after {
+        content: "Cetak buku hanya tersedia untuk Admin.";
+        display: block !important; color: #072A20; background: #fff; padding: 24px;
+      }
     }
 
     /* =========================================================
@@ -1641,15 +1648,15 @@
           <div class="divide-y divide-[#D4AF37]/30 border border-[#D4AF37]/60 rounded-lg bg-[#FBF9F5] px-3.5">
             <label class="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
               <div>
-                <span class="block text-xs font-medium text-[#072A20]">Izinkan Unduh PDF Asli</span>
-                <span class="block text-[11px] text-[#12543F]">Sembunyikan tombol & blokir klik kanan jika nonaktif</span>
+                <span class="block text-xs font-medium text-[#072A20]">Izinkan Unduh PDF Asli (Admin)</span>
+                <span class="block text-[11px] text-[#12543F]">Pengunjung selalu tanpa tombol unduh; opsi ini hanya untuk Admin</span>
               </div>
               <input id="chk-download" type="checkbox" class="w-4 h-4 accent-[#0B3B2C] rounded" />
             </label>
             <label class="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
               <div>
-                <span class="block text-xs font-medium text-[#072A20]">Izinkan Cetak (Print)</span>
-                <span class="block text-[11px] text-[#12543F]">Tampilkan tombol cetak halaman di toolbar pembaca</span>
+                <span class="block text-xs font-medium text-[#072A20]">Izinkan Cetak (Admin)</span>
+                <span class="block text-[11px] text-[#12543F]">Pengunjung selalu tanpa cetak; opsi ini hanya untuk Admin</span>
               </div>
               <input id="chk-print" type="checkbox" class="w-4 h-4 accent-[#0B3B2C] rounded" />
             </label>
@@ -7070,8 +7077,7 @@
         document.getElementById('reader-spread-mode-label').textContent =
           (visible.length === 2 ? '2 Halaman (Spread)' : '1 Halaman (Tunggal)') + (isFullPageFit ? ' · Full Layar' : '');
 
-        document.getElementById('toolbar-download-btn').style.display = config.allowDownload ? 'inline-flex' : 'none';
-        document.getElementById('toolbar-print-btn').style.display = config.allowPrint ? 'inline-flex' : 'none';
+        updateReaderExportUI();
         document.getElementById('slider-bar-container').style.display = config.showThumbnails ? 'flex' : 'none';
         document.getElementById('toolbar-thumbs-btn').style.display = config.showThumbnails ? 'inline-flex' : 'none';
         document.getElementById('toolbar-sound-btn').textContent = config.enableSound ? 'Kertas: Aktif' : 'Kertas: Bisu';
@@ -8200,6 +8206,30 @@
         if (errBox) errBox.classList.remove('hidden');
       }
 
+      // Export controls are available only to the verified Admin session.
+      function canExportReader(action) {
+        if (!document.body.classList.contains('admin-authenticated')) return false;
+        const user = firebaseAuth && firebaseAuth.currentUser;
+        return Boolean(isAdminMode && currentAdminUser && user === currentAdminUser && user.emailVerified &&
+          String(user.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL &&
+          (action === 'print' ? config.allowPrint : config.allowDownload));
+      }
+      function updateReaderExportUI() {
+        ['download', 'print'].forEach(action => {
+          const button = document.getElementById('toolbar-' + action + '-btn');
+          const allowed = canExportReader(action);
+          if (button) { button.style.display = allowed ? 'inline-flex' : 'none'; button.disabled = !allowed; button.setAttribute('aria-hidden', String(!allowed)); }
+        });
+        document.body.classList.toggle('reader-print-blocked', !canExportReader('print'));
+      }
+      document.addEventListener('keydown', event => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'p' && !canExportReader('print')) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          showToast('Cetak buku hanya tersedia untuk Admin.');
+        }
+      }, true);
+      window.addEventListener('beforeprint', updateReaderExportUI);
+
       function updateAdminModeUI() {
         const isAuthorized = Boolean(
           isAdminMode &&
@@ -8207,6 +8237,7 @@
           (currentAdminUser.email || '').trim().toLowerCase() === ADMIN_WHITELIST_EMAIL
         );
         document.body.classList.toggle('admin-authenticated', isAuthorized);
+        updateReaderExportUI();
 
         const adminControlIds = [
           'header-music-settings-btn',
@@ -11046,7 +11077,7 @@
 
       // Proteksi Klik Kanan Kanvas
       document.getElementById('reader-stage').addEventListener('contextmenu', (e) => {
-        if (!config.allowDownload) {
+        if (!canExportReader('download')) {
           e.preventDefault();
           showToast('Proteksi Hak Cipta: Klik kanan dan unduhan dinonaktifkan.');
         }
@@ -11075,14 +11106,19 @@
         renderStage('forward');
       };
 
-      document.getElementById('toolbar-print-btn').onclick = () => {
-        if (config.allowPrint) window.print();
+      document.getElementById('toolbar-print-btn').onclick = async () => {
+        if (!canExportReader('print')) { showToast('Cetak buku hanya tersedia untuk Admin.'); return; }
+        try { await strictAdminToken(); if (canExportReader('print')) window.print(); }
+        catch (error) { showToast(error.message || 'Sesi Admin tidak tersedia.'); updateReaderExportUI(); }
       };
 
-      document.getElementById('toolbar-download-btn').onclick = () => {
-        if (!config.allowDownload) return;
+      document.getElementById('toolbar-download-btn').onclick = async () => {
+        if (!canExportReader('download')) { showToast('Unduh buku hanya tersedia untuk Admin.'); return; }
+        try { await strictAdminToken(); } catch (error) { showToast(error.message || 'Sesi Admin tidak tersedia.'); updateReaderExportUI(); return; }
+        if (!canExportReader('download')) return;
         const link = document.createElement('a');
-        link.href = rawPdfBlobUrl || config.pdfUrl || pagesDataUrls[0].dataUrl;
+        link.href = rawPdfBlobUrl || config.pdfUrl || (pagesDataUrls[0] && pagesDataUrls[0].dataUrl) || '';
+        if (!link.href || link.href === window.location.href) { showToast('Berkas buku belum tersedia untuk diunduh.'); return; }
         link.download = (config.title || 'publikasi') + (rawPdfBlobUrl || config.pdfUrl ? '.pdf' : '-cover.jpg');
         link.click();
         showToast('Mengunduh berkas publikasi...');
