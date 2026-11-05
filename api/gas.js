@@ -19,6 +19,18 @@ export default async function handler(req,res) {
  try {
  const gasUrl=process.env.GAS_WEB_APP_URL||process.env.SCRIPT_API_URL||'';
  if(!/^https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec$/.test(gasUrl))return res.status(503).json({status:'error',code:'CLOUD_NOT_CONFIGURED',message:'Database cloud belum dikonfigurasi. Hubungi pengelola.'});
+
+ if(req.method==='GET'&&req.query?.cover){
+  const id=String(req.query.cover);if(!/^[a-zA-Z0-9_-]{10,150}$/.test(id))return res.status(400).end();
+  const upstream=await fetch(gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'catalogCover',id}),redirect:'follow',signal:AbortSignal.timeout(60000)});
+  if(!upstream.ok)return res.status(502).end();const image=await upstream.json();
+  if(image.status!=='success')return res.status(image.code===404?404:502).end();
+  const match=String(image.cover||'').match(/^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,([A-Za-z0-9+/=\r\n]+)$/);
+  if(!match)return res.status(404).end();
+  res.setHeader('Content-Type',match[1]);res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Cache-Control','public, max-age=86400, immutable');res.setHeader('CDN-Cache-Control','public, max-age=86400');res.setHeader('Vercel-CDN-Cache-Control','public, max-age=86400');
+  return res.status(200).send(Buffer.from(match[2],'base64'));
+ }
+
  let payload={};if(req.method==='POST'){try{payload=typeof req.body==='string'?JSON.parse(req.body):req.body||{};}catch{return res.status(400).json({status:'error',message:'Invalid JSON'});}if(!ACTIONS.has(payload.action))return res.status(400).json({status:'error',message:'Unsupported action; bulk overwrite disabled'});}
  const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
  if(req.method==='POST'&&!['readBook','recordBookVisit'].includes(payload.action)&&!await verifyAdminRequest(req))return res.status(401).json({status:'error',message:'Login Google Admin yang valid diperlukan.'});
@@ -32,3 +44,4 @@ export default async function handler(req,res) {
  return res.status(200).json(result);
  }catch{return res.status(502).json({status:'error',code:'CLOUD_UNAVAILABLE',message:'Database cloud tidak merespons. Data belum dinyatakan tersimpan; coba lagi dengan requestId yang sama.'});}
 }
+
