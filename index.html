@@ -205,8 +205,7 @@
       pointer-events: none;
     }
     .ceiling-lamps-reader-top .pendant-bulb,
-    .ceiling-lamps-reader-top #pull-chain-assembly,
-    .ceiling-lamps-reader-top #pull-switch-hint {
+    .ceiling-lamps-reader-top #pull-chain-assembly {
       pointer-events: auto;
     }
 
@@ -286,46 +285,6 @@
     body.lights-off .knob-halo-circle {
       opacity: 0.9;
       animation: knobHaloPulse 2.2s ease-in-out infinite;
-    }
-
-    /* Lencana Petunjuk Menarik Sakelar (Interaktif & Bisa Diklik Langsung) */
-    .pull-switch-hint {
-      position: absolute;
-      top: 74px;
-      left: 34px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 11px;
-      border-radius: 9999px;
-      background: rgba(7, 42, 32, 0.96);
-      border: 1.5px solid #D4AF37;
-      color: #F3E5AB;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 14px rgba(212, 175, 55, 0.45);
-      pointer-events: auto;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      animation: hintGlowPulse 2.8s ease-in-out infinite;
-    }
-    .pull-switch-hint:hover {
-      background: #0B3B2C;
-      border-color: #FEF08A;
-      color: #FFFFFF;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 22px rgba(254, 240, 138, 0.75);
-    }
-    @keyframes hintGlowPulse {
-      0%, 100% { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(212, 175, 55, 0.35); }
-      50% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 22px rgba(254, 240, 138, 0.75); }
-    }
-    .hint-bullet {
-      width: 7px;
-      height: 7px;
-      border-radius: 9999px;
-      background: #FEF08A;
-      box-shadow: 0 0 8px #FEF08A;
     }
 
     /* Animasi Tarikan Sakelar Membal Elastis (Spring Recoil Physics) */
@@ -1408,7 +1367,7 @@
             <div class="w-[2px] h-13 pendant-cord"></div>
             <div class="w-3.5 h-3.5 rounded-t-sm pendant-socket relative">
               <!-- Sakelar Tarik (Pull-Chain Assembly) -->
-              <div id="pull-chain-assembly" class="pull-chain-wrapper pointer-events-auto" role="button" aria-label="Tarik sakelar untuk menyalakan atau mematikan lampu perpustakaan" tabindex="0">
+              <div id="pull-chain-assembly" class="pull-chain-wrapper pointer-events-auto" role="button" aria-label="Tarik tali ke bawah untuk menyalakan atau mematikan lampu" aria-pressed="false" tabindex="0">
                 <svg id="pull-chain-svg" class="pull-chain-svg" width="24" height="114" viewBox="0 0 24 114" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <radialGradient id="beadGold" cx="35%" cy="35%" r="65%">
@@ -1461,13 +1420,6 @@
                     <circle cx="10.5" cy="93" r="1.2" fill="#FFFFFF" opacity="0.9" />
                   </g>
                 </svg>
-
-                <!-- Lencana Petunjuk Menarik Sakelar (Hero Hint) -->
-                <div id="pull-switch-hint" class="pull-switch-hint">
-                  <span class="hint-bullet"></span>
-                  <span id="pull-hint-text" class="hint-label font-serif-editorial">Tarik Sakelar</span>
-                  <i data-lucide="arrow-down" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-                </div>
               </div>
             </div>
             <div class="w-7 h-8 rounded-full pendant-bulb -mt-0.5" data-lamp-idx="2" title="Klik bohlam atau tarik sakelar untuk pencahayaan"></div>
@@ -8681,7 +8633,8 @@
 
         const lobby = document.getElementById('view-lobby');
         const shelfView = document.getElementById('view-shelf');
-        const hintText = document.getElementById('pull-hint-text');
+        const chainControl = document.getElementById('pull-chain-assembly');
+        if (chainControl) chainControl.setAttribute('aria-pressed', String(isLobbyLightOn));
 
         if (isLobbyLightOn) {
           document.body.classList.remove('lights-off');
@@ -8694,7 +8647,6 @@
             shelfView.classList.remove('lights-off');
             shelfView.classList.add('lights-on');
           }
-          if (hintText) hintText.textContent = 'Matikan Lampu';
 
           syncCeilingLampsPosition(currentView);
 
@@ -8722,7 +8674,6 @@
             shelfView.classList.remove('lights-on');
             shelfView.classList.add('lights-off');
           }
-          if (hintText) hintText.textContent = 'Tarik Sakelar';
           syncCeilingLampsPosition(currentView);
           if (showNotification) {
             showToast('Klik! Lampu perpustakaan dimatikan (Mode Temaram).');
@@ -8749,18 +8700,6 @@
 
       const pullChainAssembly = document.getElementById('pull-chain-assembly');
       const pullChainSvg = document.getElementById('pull-chain-svg');
-      const pullSwitchHint = document.getElementById('pull-switch-hint');
-
-      if (pullSwitchHint) {
-        pullSwitchHint.addEventListener('pointerdown', (e) => {
-          e.stopPropagation();
-        });
-        pullSwitchHint.addEventListener('click', (e) => {
-          e.stopPropagation();
-          toggleLobbyLighting();
-        });
-      }
-
       if (pullChainAssembly && pullChainSvg) {
         pullChainAssembly.addEventListener('pointerdown', (e) => {
           e.stopPropagation();
@@ -13976,6 +13915,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
   </script>
 </body>
 </html>
+
 
 
 
