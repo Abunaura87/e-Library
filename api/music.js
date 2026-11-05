@@ -1,8 +1,8 @@
 import {verifyAdminRequest} from './gas.js';
-export const config={maxDuration:60};
+export const config={maxDuration:300};
 const MAX_RANGE=196608;
 function gasUrl(){const url=process.env.GAS_WEB_APP_URL||process.env.SCRIPT_API_URL||'';if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url))throw Error('CLOUD_NOT_CONFIGURED');return url;}
-async function upstream(body){const r=await fetch(gasUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow',signal:AbortSignal.timeout(50000)});if(!r.ok)throw Error('CLOUD_UNAVAILABLE');const result=await r.json();if(result.status!=='success'){const e=Error(result.message||'Musik belum tersimpan di server.');e.status=[400,401,403,404,409,413,416,429,503].includes(result.code)?result.code:502;throw e;}return result;}
+async function upstream(body){const r=await fetch(gasUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow',signal:AbortSignal.timeout(body.action==='saveMusic'?240000:50000)});if(!r.ok)throw Error('CLOUD_UNAVAILABLE');const result=await r.json();if(result.status!=='success'){const e=Error(result.message||'Musik belum tersimpan di server.');e.status=[400,401,403,404,409,413,416,429,503].includes(result.code)?result.code:502;throw e;}return result;}
 export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');
  try{
@@ -20,5 +20,6 @@ export default async function handler(req,res){
  let payload;try{payload=typeof req.body==='string'?JSON.parse(req.body):req.body;}catch{return res.status(400).json({status:'error',message:'Invalid JSON'});}
  if(!payload||payload.action!=='saveMusic')return res.status(400).json({status:'error',message:'Unsupported music action'});
  const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');return res.status(200).json(await upstream({...payload,authToken:token}));
- }catch(e){return res.status(e.status||502).json({status:'error',message:e.status?e.message:'Layanan musik belum merespons. Perubahan belum dinyatakan tersimpan.'});}
+ }catch(e){return res.status(e.status||502).json({status:'error',message:e.status?e.message:'Layanan musik belum merespons. Pilihan tetap tersedia. Klik Simpan kembali untuk memeriksa atau melanjutkan permintaan yang sama.'});}
 }
+

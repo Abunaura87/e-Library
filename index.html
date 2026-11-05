@@ -4590,7 +4590,25 @@
       let sharedMusicRevision=null,sharedMusicConfig=null,sharedMusicFetch=null,sharedMusicBusy=false,sharedMusicDraft=false;
       let musicLocalPaused=false,musicPublishRequest=null,musicUploadDraft=null;
       function markSharedMusicDraft(){if(!canConfigureLibraryMusic())return;sharedMusicDraft=true;musicPublishRequest=null;musicFeedback('Pratinjau untuk Admin. Klik Simpan untuk Semua Pengunjung agar tersinkron.');}
-      async function musicJsonRequest(body){const headers={};if(body){headers['Content-Type']='application/json';headers.Authorization='Bearer '+await strictAdminToken();}const response=await fetch('/api/music',{method:body?'POST':'GET',cache:'no-store',headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(60000)});let result;try{result=await response.json();}catch{throw Error('Respons layanan musik tidak valid.');}if(!response.ok||result.status!=='success'){const e=Error(result.message||'Sinkronisasi musik belum berhasil.');e.status=response.status;throw e;}return result;}
+      async function musicJsonRequest(body){
+        const headers={};if(body){headers['Content-Type']='application/json';headers.Authorization='Bearer '+await strictAdminToken();}
+        const slow=body?setTimeout(()=>musicFeedback('Server masih memproses penyimpanan musik. Pilihan tetap tersedia; mohon tunggu verifikasi.'),25000):null;
+        try{
+          // File assembly in Drive can exceed a minute. Keep the same requestId
+          // on retries so a committed save is acknowledged instead of duplicated.
+          for(let attempt=0;attempt<2;attempt++){
+            try{
+              const response=await fetch('/api/music',{method:body?'POST':'GET',cache:'no-store',headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(body?255000:60000)});
+              let result;try{result=await response.json();}catch{const e=Error('Respons layanan musik tidak valid.');e.status=response.status;throw e;}
+              if(!response.ok||result.status!=='success'){const e=Error(result.message||'Sinkronisasi musik belum berhasil.');e.status=response.status;throw e;}
+              return result;
+            }catch(error){
+              if(attempt===0&&(!error.status||[502,503,504].includes(error.status))){if(body)musicFeedback('Memeriksa kembali permintaan simpan yang sama. Jangan tutup pengaturan musik.');continue;}
+              throw error;
+            }
+          }
+        }finally{if(slow)clearTimeout(slow);}
+      }
       function validateSharedMusic(cfg){if(!cfg||!MUSIC_THEMES[cfg.theme]||!Number.isFinite(cfg.volume)||cfg.volume<0||cfg.volume>1||typeof cfg.isPlaying!=='boolean'||!Number.isFinite(cfg.revision)||cfg.revision<0)throw Error('Pengaturan musik server tidak valid.');return cfg;}
       async function applySharedMusic(cfg){
         validateSharedMusic(cfg);const oldSource=customMusicUrl,oldTheme=currentMusicTheme;
@@ -14123,6 +14141,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
   </script>
 </body>
 </html>
+
 
 
 
