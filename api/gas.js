@@ -34,12 +34,14 @@ export default async function handler(req,res) {
 
  let payload={};if(req.method==='POST'){try{payload=typeof req.body==='string'?JSON.parse(req.body):req.body||{};}catch{return res.status(400).json({status:'error',message:'Invalid JSON'});}if(!ACTIONS.has(payload.action))return res.status(400).json({status:'error',message:'Unsupported action; bulk overwrite disabled'});}
  const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+ if(req.method==='GET'&&!token&&req.query?.catalog!=='public'){res.setHeader('Location','/api/gas?catalog=public');return res.status(307).end();}
+ if(req.method==='GET'&&token&&req.query?.catalog==='public')return res.status(400).json({status:'error',message:'Use the authenticated catalog endpoint.'});
  if(req.method==='POST'&&!['readBook','recordBookVisit'].includes(payload.action)&&!await verifyAdminRequest(req))return res.status(401).json({status:'error',message:'Login Google Admin yang valid diperlukan.'});
  const upstreamBody=req.method==='GET'?{action:'catalog'}:{...payload};delete upstreamBody.secretKey;delete upstreamBody.adminSecret;delete upstreamBody.authToken;
  if(token)upstreamBody.authToken=token;
  const publicGet=req.method==='GET'&&!token;
  const epoch=catalogEpoch;
- if(publicGet&&catalogMemory&&catalogMemory.url===gasUrl&&Date.now()<catalogMemory.until)return res.status(200).json(catalogMemory.value);
+ if(publicGet&&catalogMemory&&catalogMemory.url===gasUrl&&Date.now()<catalogMemory.until)return sendPublicCatalog(res,catalogMemory.value);
  if(req.method==='POST'&&!['readBook','recordBookVisit','uploadChunk'].includes(payload.action)){catalogMemory=null;catalogFlight=null;catalogEpoch++;}
  const load=async()=>{const response=await fetch(gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8','Accept':'application/json'},body:JSON.stringify(upstreamBody),redirect:'follow',signal:AbortSignal.timeout(60000)});if(!response.ok)throw Error('UPSTREAM_FAILED');return response.json();};
  let result;
@@ -48,9 +50,11 @@ export default async function handler(req,res) {
   result=await catalogFlight.promise;
  }else result=await load();
  if(!result||result.status!=='success')return res.status([400,401,403,404,409,413,429,503].includes(result?.code)?result.code:502).json({status:'error',message:result?.message||'Penyimpanan cloud gagal.',code:result?.code||'UPSTREAM_FAILED'});
- if(req.method==='GET'){const value=publicCatalog(result);if(publicGet&&epoch===catalogEpoch)catalogMemory={url:gasUrl,value,until:Date.now()+15000};return res.status(200).json(value);}
+ if(req.method==='GET'){const value=publicCatalog(result);if(publicGet&&epoch===catalogEpoch)catalogMemory={url:gasUrl,value,until:Date.now()+15000};return publicGet?sendPublicCatalog(res,value):res.status(200).json(value);}
  if(result.book){delete result.book.password;delete result.book.passwordHash;}
  return res.status(200).json(result);
  }catch{return res.status(502).json({status:'error',code:'CLOUD_UNAVAILABLE',message:'Database cloud tidak merespons. Data belum dinyatakan tersimpan; coba lagi dengan requestId yang sama.'});}
 }
 
+
+function sendPublicCatalog(res,value){res.setHeader("Vercel-CDN-Cache-Control","public, s-maxage=15, stale-while-revalidate=15");res.setHeader("CDN-Cache-Control","public, s-maxage=15, stale-while-revalidate=15");return res.status(200).json(value);}
