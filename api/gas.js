@@ -12,6 +12,7 @@ function publicCatalog(data) {
  const clean=data.books.map(b=>{const x={...b};delete x.password;delete x.passwordHash;delete x.secretKey;delete x.assetRefsJson;delete x.snapshotFileId;if(x.passwordProtected){for(const k of ['pdfUrl','driveFileId','drivePdfFileId','editablePages','editablePagesJson','pagesDataUrls','originalPagesDataUrls','pdfDataUrl'])delete x[k];}return x;});
  return {...data,racks,shelves:racks,books:clean};
 }
+let catalogMemory=null,catalogFlight=null,catalogEpoch=0;
 export default async function handler(req,res) {
  res.setHeader('Cache-Control','no-store, max-age=0');res.setHeader('CDN-Cache-Control','no-store');res.setHeader('Vercel-CDN-Cache-Control','no-store');res.setHeader('Content-Type','application/json');
  if(req.method==='OPTIONS'){res.setHeader('Allow','GET, POST, OPTIONS');return res.status(204).end();}
@@ -36,10 +37,18 @@ export default async function handler(req,res) {
  if(req.method==='POST'&&!['readBook','recordBookVisit'].includes(payload.action)&&!await verifyAdminRequest(req))return res.status(401).json({status:'error',message:'Login Google Admin yang valid diperlukan.'});
  const upstreamBody=req.method==='GET'?{action:'catalog'}:{...payload};delete upstreamBody.secretKey;delete upstreamBody.adminSecret;delete upstreamBody.authToken;
  if(token)upstreamBody.authToken=token;
- const response=await fetch(gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8','Accept':'application/json'},body:JSON.stringify(upstreamBody),redirect:'follow',signal:AbortSignal.timeout(60000)});
- if(!response.ok)throw Error('UPSTREAM_FAILED');const result=await response.json();
+ const publicGet=req.method==='GET'&&!token;
+ const epoch=catalogEpoch;
+ if(publicGet&&catalogMemory&&catalogMemory.url===gasUrl&&Date.now()<catalogMemory.until)return res.status(200).json(catalogMemory.value);
+ if(req.method==='POST'&&!['readBook','recordBookVisit','uploadChunk'].includes(payload.action)){catalogMemory=null;catalogFlight=null;catalogEpoch++;}
+ const load=async()=>{const response=await fetch(gasUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8','Accept':'application/json'},body:JSON.stringify(upstreamBody),redirect:'follow',signal:AbortSignal.timeout(60000)});if(!response.ok)throw Error('UPSTREAM_FAILED');return response.json();};
+ let result;
+ if(publicGet){
+  if(!catalogFlight||catalogFlight.url!==gasUrl){const promise=load();const flight={url:gasUrl,promise};catalogFlight=flight;promise.finally(()=>{if(catalogFlight===flight)catalogFlight=null;}).catch(()=>{});}
+  result=await catalogFlight.promise;
+ }else result=await load();
  if(!result||result.status!=='success')return res.status([400,401,403,404,409,413,429,503].includes(result?.code)?result.code:502).json({status:'error',message:result?.message||'Penyimpanan cloud gagal.',code:result?.code||'UPSTREAM_FAILED'});
- if(req.method==='GET')return res.status(200).json(publicCatalog(result));
+ if(req.method==='GET'){const value=publicCatalog(result);if(publicGet&&epoch===catalogEpoch)catalogMemory={url:gasUrl,value,until:Date.now()+15000};return res.status(200).json(value);}
  if(result.book){delete result.book.password;delete result.book.passwordHash;}
  return res.status(200).json(result);
  }catch{return res.status(502).json({status:'error',code:'CLOUD_UNAVAILABLE',message:'Database cloud tidak merespons. Data belum dinyatakan tersimpan; coba lagi dengan requestId yang sama.'});}
