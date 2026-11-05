@@ -1,6 +1,7 @@
 import pdfProxyHandler from './api/pdf-proxy.js';
 import express from 'express';
 import gasHandler, { verifyAdminRequest } from './api/gas.js';
+import musicHandler from './api/music.js';
 import { createServer as createViteServer } from 'vite';
 import fs from 'fs';
 import path from 'path';
@@ -77,51 +78,8 @@ async function startServer() {
   app.get('/api/catalog', gasHandler);
   app.post('/api/catalog', (req,res)=>res.status(410).json({status:'error',message:'Bulk catalog replacement disabled; use individual operations.'}));
 
-  // Real-time Background Music & Custom Audio Storage API
-  app.get('/api/music', (req, res) => {
-    try {
-      if (fs.existsSync(MUSIC_FILE)) {
-        const raw = fs.readFileSync(MUSIC_FILE, 'utf-8');
-        return res.json(JSON.parse(raw));
-      }
-      return res.json({
-        theme: 'library',
-        volume: 0.5,
-        customUrl: '',
-        fileName: '',
-        mimeType: 'audio/mpeg',
-        isPlaying: false,
-        audioDataUrl: '',
-        updatedAt: 1000
-      });
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message });
-    }
-  });
-
-  app.post('/api/music', (req, res) => {
-    try {
-      const body = req.body || {};
-      let prev: any = {};
-      if (fs.existsSync(MUSIC_FILE)) {
-        try { prev = JSON.parse(fs.readFileSync(MUSIC_FILE, 'utf-8')); } catch (e) {}
-      }
-      const next = {
-        theme: body.theme !== undefined ? body.theme : (prev.theme || 'library'),
-        volume: typeof body.volume === 'number' ? body.volume : (typeof prev.volume === 'number' ? prev.volume : 0.5),
-        customUrl: body.customUrl !== undefined ? body.customUrl : (prev.customUrl || ''),
-        fileName: body.fileName !== undefined ? body.fileName : (prev.fileName || ''),
-        mimeType: body.mimeType !== undefined ? body.mimeType : (prev.mimeType || 'audio/mpeg'),
-        isPlaying: body.isPlaying !== undefined ? Boolean(body.isPlaying) : Boolean(prev.isPlaying),
-        audioDataUrl: body.audioDataUrl !== undefined ? body.audioDataUrl : (prev.audioDataUrl || ''),
-        updatedAt: getSafeServerTimestamp(body.updatedAt)
-      };
-      fs.writeFileSync(MUSIC_FILE, JSON.stringify(next, null, 2), 'utf-8');
-      return res.json({ success: true, updatedAt: next.updatedAt });
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message });
-    }
-  });
+  // Shared durable music service, identical to production.
+  app.all('/api/music', musicHandler);
 
   // Legacy asset paths read the same cloud record and never expose local snapshots.
   app.get('/api/books/:id', async (req,res)=>{
@@ -243,3 +201,4 @@ async function startServer() {
 }
 
 startServer();
+

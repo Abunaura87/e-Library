@@ -1237,7 +1237,7 @@
     body.sia-embedded-reader-focus #btn-show-top-bar span { display:inline !important; }
     body.sia-embedded-reader-focus #btn-show-top-bar:focus-visible { outline:2px solid #b99c47; outline-offset:-2px; }
   </style>
-<style id="music-settings-hotfix">#music-custom-panel{min-width:0}#music-custom-url-input{min-width:0;width:100%}#music-custom-file-name{overflow-wrap:anywhere}#music-custom-feedback:empty{display:none}.music-feedback-error{color:#ffcfad!important}#music-themes-grid button:focus-visible{outline:2px solid #f3e5ab;outline-offset:2px}#modal-music-settings>div{max-height:calc(100dvh - 24px)}@media(max-width:540px){#music-custom-url-input{flex:1 1 100%}#music-custom-url-input+button{width:100%}}</style><style id="music-admin-access-hotfix">
+<style id="music-settings-hotfix">#music-custom-panel{min-width:0}#music-custom-url-input{min-width:0;width:100%}#music-custom-file-name{overflow-wrap:anywhere}#music-custom-feedback:empty{display:none}.music-feedback-error{color:#ffcfad!important}#music-themes-grid button:focus-visible{outline:2px solid #f3e5ab;outline-offset:2px}#modal-music-settings>div{max-height:calc(100dvh - 24px)}@media(max-width:540px){#music-custom-url-input{flex:1 1 100%}#music-custom-url-input+button{width:100%}}</style><style id="music-shared-sync-v1">#btn-done-music-modal:disabled{opacity:.65;cursor:wait}</style><style id="music-admin-access-hotfix">
     body:not(.admin-authenticated) #header-music-settings-btn,
     body:not(.admin-authenticated) #toolbar-music-settings-btn,
     body:not(.admin-authenticated) #admin-open-music-settings-btn,
@@ -2609,7 +2609,7 @@
           <div class="flex items-center justify-between">
             <span class="text-xs font-serif-editorial font-bold text-[#F3E5AB] flex items-center gap-1.5">
               <i data-lucide="radio" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
-              Sumber Musik Kustom Pengguna
+              Sumber Musik Latar dari Admin
             </span>
             <span class="text-[10px] text-[#D4AF37] font-mono-tabular font-bold">Streaming / File Lokal</span>
           </div>
@@ -2639,7 +2639,7 @@
           <div class="pt-2.5 border-t border-[#D4AF37]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <span class="block text-[11px] font-medium text-[#F3E5AB]">Atau Unggah File Audio dari Perangkat Anda:</span>
-              <span id="music-custom-file-name" class="block text-[10px] text-[#E6E1D6]/70">MP3, WAV, OGG, M4A · Maksimal 25 MB · Tersimpan di browser ini</span>
+              <span id="music-custom-file-name" class="block text-[10px] text-[#E6E1D6]/70">MP3, WAV, OGG, M4A · Maksimal 25 MB · Simpan ke Google Drive untuk semua pengunjung</span>
             </div>
             <label for="music-custom-file-input" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B3B2C] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/70 cursor-pointer whitespace-nowrap shrink-0 shadow-2xs">
               <i data-lucide="upload" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
@@ -2647,7 +2647,7 @@
               <input id="music-custom-file-input" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" class="sr-only" />
             </label>
           </div>
-          <p id="music-custom-feedback" role="status" aria-live="polite" class="text-xs text-[#F3E5AB] leading-relaxed">Pilih file audio atau gunakan tautan audio langsung. File tersimpan pada perangkat ini.</p>
+          <p id="music-custom-feedback" role="status" aria-live="polite" class="text-xs text-[#F3E5AB] leading-relaxed">Pilih file atau URL audio, lalu Simpan untuk Semua Pengunjung.</p>
         </div>
         <p class="text-[11px] font-classical-label uppercase tracking-widest text-[#D4AF37] font-semibold">
           Koleksi Pilihan Tema Musik & Suasana:
@@ -2661,9 +2661,9 @@
 
       <!-- Modal Footer -->
       <div class="pt-3 border-t border-[#D4AF37]/40 flex items-center justify-between text-xs text-[#F3E5AB]/70 shrink-0">
-        <span>Musik dan volume tersimpan di browser/perangkat ini.</span>
+        <span>Pilihan Admin tersinkron setelah disimpan ke server.</span>
         <button type="button" id="btn-done-music-modal" class="px-4 py-1.5 font-bold rounded-lg bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#072A20] shadow-xs">
-          Selesai & Terapkan
+          Simpan untuk Semua Pengunjung
         </button>
       </div>
     </div>
@@ -3747,8 +3747,7 @@
         },
 
         saveMusicPreferences(prefs) {
-          // Pengaturan visual & audio personal HANYA disimpan di localStorage perangkat masing-masing pengguna
-          // dan TIDAK PERNAH dikirim ke database server maupun Google Sheets.
+          // Cache pratinjau Admin saja. Musik pengunjung selalu berasal dari /api/music.
           try {
             if (prefs.theme !== undefined) localStorage.setItem(STORAGE_MUSIC_THEME_KEY, prefs.theme);
             if (prefs.volume !== undefined) localStorage.setItem(STORAGE_MUSIC_VOL_KEY, String(prefs.volume));
@@ -4581,22 +4580,64 @@
         if (savedUrl) customMusicUrl = savedUrl;
       } catch(e) {}
 
-      function restoreLocalMusic(){
-        if(musicRestorePromise)return musicRestorePromise;
-        const revision=musicSelectionRevision;
-        musicRestorePromise=(async()=>{
-          const cfg=StorageHandler.loadMusicConfig(),saved=await StorageHandler.getCustomAudio();
-          if(revision!==musicSelectionRevision)return;
-          const useUrl=cfg?.sourceType==='url'||(!cfg?.sourceType&&cfg?.customUrl);
-          if(useUrl&&cfg?.customUrl){customMusicUrl=cfg.customUrl;const input=document.getElementById('music-custom-url-input');if(input)input.value=customMusicUrl;}
-          else if(saved?.audioDataUrl){customMusicUrl=saved.audioDataUrl;const label=document.getElementById('music-custom-file-name');if(label)label.textContent='File tersimpan di browser ini: '+(saved.fileName||'Musik Kustom');}
-          if(!musicThemeTouched&&cfg?.theme)currentMusicTheme=MUSIC_THEMES[cfg.theme]?cfg.theme:'library';
-          if(!musicVolumeTouched&&Number.isFinite(cfg?.volume))musicVolume=Math.max(0,Math.min(1,cfg.volume));
-          syncVolumeUI(Math.round(musicVolume*100));renderMusicThemesGrid();updateAmbientButtonsUI();
-          if(cfg?.isPlaying&&!musicThemeTouched)await startLibraryAmbience(true);
-        })().catch(()=>musicFeedback('Preferensi musik belum dapat dipulihkan. Pilih kembali sumber audio.',true));
-        return musicRestorePromise;
+      // One durable music selection for every visitor; local pause never writes shared settings.
+      let sharedMusicRevision=null,sharedMusicConfig=null,sharedMusicFetch=null,sharedMusicBusy=false,sharedMusicDraft=false;
+      let musicLocalPaused=false,musicPublishRequest=null,musicUploadDraft=null;
+      function markSharedMusicDraft(){if(!canConfigureLibraryMusic())return;sharedMusicDraft=true;musicPublishRequest=null;musicFeedback('Pratinjau untuk Admin. Klik Simpan untuk Semua Pengunjung agar tersinkron.');}
+      async function musicJsonRequest(body){const headers={};if(body){headers['Content-Type']='application/json';headers.Authorization='Bearer '+await strictAdminToken();}const response=await fetch('/api/music',{method:body?'POST':'GET',cache:'no-store',headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(60000)});let result;try{result=await response.json();}catch{throw Error('Respons layanan musik tidak valid.');}if(!response.ok||result.status!=='success'){const e=Error(result.message||'Sinkronisasi musik belum berhasil.');e.status=response.status;throw e;}return result;}
+      function validateSharedMusic(cfg){if(!cfg||!MUSIC_THEMES[cfg.theme]||!Number.isFinite(cfg.volume)||cfg.volume<0||cfg.volume>1||typeof cfg.isPlaying!=='boolean'||!Number.isFinite(cfg.revision)||cfg.revision<0)throw Error('Pengaturan musik server tidak valid.');return cfg;}
+      async function applySharedMusic(cfg){
+        validateSharedMusic(cfg);const oldSource=customMusicUrl,oldTheme=currentMusicTheme;
+        sharedMusicConfig=cfg;sharedMusicRevision=cfg.revision;currentMusicTheme=cfg.theme;musicVolume=cfg.volume;
+        customMusicUrl=cfg.assetId?'/api/music?asset='+encodeURIComponent(cfg.assetId):(cfg.customUrl||'');
+        const sourceChanged=oldSource!==customMusicUrl||oldTheme!==currentMusicTheme;
+        document.body.dataset.musicRevision=String(cfg.revision);document.body.dataset.musicSource=cfg.assetId||cfg.customUrl||cfg.theme;
+        const fileLabel=document.getElementById('music-custom-file-name');if(fileLabel)fileLabel.textContent=cfg.fileName?'Musik bersama: '+cfg.fileName:'MP3, WAV, OGG, M4A · Maksimal 25 MB · Disimpan ke Google Drive';
+        const input=document.getElementById('music-custom-url-input');if(input)input.value=cfg.customUrl||'';
+        syncVolumeUI(Math.round(musicVolume*100));renderMusicThemesGrid();
+        if(!cfg.isPlaying||musicLocalPaused){stopLibraryAmbience(true);}
+        else if(sourceChanged||!['playing','blocked','loading'].includes(ambientPlaybackState)){await startLibraryAmbience(true);}
+        else if(customAudioElement)customAudioElement.volume=musicVolume;
+        if(ambientMasterGain&&audioCtx){try{ambientMasterGain.gain.setTargetAtTime(Math.max(.0001,musicVolume*.45),audioCtx.currentTime,.08);}catch{}}
+        updateAmbientButtonsUI();
       }
+      async function refreshSharedMusic(){
+        if(sharedMusicFetch)return sharedMusicFetch;
+        sharedMusicFetch=(async()=>{const cfg=validateSharedMusic((await musicJsonRequest()).music);
+          if(sharedMusicRevision===null)sharedMusicRevision=cfg.revision;
+          if(sharedMusicDraft||sharedMusicBusy)return cfg;
+          if(!sharedMusicConfig||cfg.revision!==sharedMusicConfig.revision)await applySharedMusic(cfg);
+          return cfg;
+        })().catch(error=>{if(canConfigureLibraryMusic())musicFeedback('Musik bersama belum dapat dimuat: '+error.message,true);return null;}).finally(()=>{sharedMusicFetch=null;});return sharedMusicFetch;
+      }
+      function normalizedMusicMime(fileName,mime){if(mime&&mime.startsWith('audio/'))return mime;const ext=String(fileName||'').split('.').pop().toLowerCase();return {mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',m4a:'audio/mp4',aac:'audio/aac',flac:'audio/flac',opus:'audio/opus'}[ext]||'audio/mpeg';}
+      async function publishSharedMusic(){
+        if(sharedMusicBusy||customMusicBusy)return false;if(!canConfigureLibraryMusic()){requireAdminAuth(openMusicSettingsModal);return false;}
+        const button=document.getElementById('btn-done-music-modal');sharedMusicBusy=true;customMusicControlsBusy(true);if(button){button.disabled=true;button.textContent='Menyimpan ke server…';}
+        try{
+          if(sharedMusicRevision===null){const cfg=validateSharedMusic((await musicJsonRequest()).music);sharedMusicRevision=cfg.revision;}
+          const cfg={theme:currentMusicTheme,volume:musicVolume,isPlaying:isAmbientPlaying||ambientPlaybackState==='blocked',customUrl:'',assetId:'',fileName:'',mimeType:''};
+          let upload={};
+          if(cfg.theme==='custom'){
+            const labelCfg=StorageHandler.loadMusicConfig();cfg.fileName=labelCfg?.fileName||sharedMusicConfig?.fileName||'Musik Latar';
+            if(String(customMusicUrl).startsWith('data:')){
+              const data=customMusicUrl;if(!musicUploadDraft||musicUploadDraft.source!==data){musicUploadDraft={source:data,uploadId:crypto.randomUUID().replace(/-/g,''),total:Math.ceil(data.length/600000),hash:await strictHash(data),completed:0};}
+              const u=musicUploadDraft;for(let part=u.completed;part<u.total;part++){
+                if(!canConfigureLibraryMusic())throw Error('Sesi Admin berakhir. Login kembali untuk menyimpan musik.');musicFeedback('Mengunggah musik ke Google Drive: '+Math.round(part/u.total*100)+'%');
+                await strictRequest({action:'uploadChunk',uploadId:u.uploadId,total:u.total,part,data:data.slice(part*600000,(part+1)*600000)},false);u.completed=part+1;
+              }
+              upload={uploadId:u.uploadId,total:u.total,uploadHash:u.hash,mimeType:normalizedMusicMime(cfg.fileName,data.slice(5,data.indexOf(';')))};
+            }else if(sharedMusicConfig?.assetId&&customMusicUrl==='/api/music?asset='+encodeURIComponent(sharedMusicConfig.assetId)){cfg.assetId=sharedMusicConfig.assetId;cfg.fileName=sharedMusicConfig.fileName;}
+            else cfg.customUrl=validateMusicUrl(customMusicUrl);
+          }
+          if(!canConfigureLibraryMusic())throw Error('Sesi Admin berakhir. Login kembali.');
+          if(!musicPublishRequest)musicPublishRequest={action:'saveMusic',requestId:crypto.randomUUID().replace(/-/g,''),expectedRevision:sharedMusicRevision,music:cfg,...upload};
+          musicFeedback('Memverifikasi penyimpanan musik bersama…');const result=await musicJsonRequest(musicPublishRequest);validateSharedMusic(result.music);
+          sharedMusicDraft=false;musicPublishRequest=null;musicUploadDraft=null;musicLocalPaused=false;await applySharedMusic(result.music);musicFeedback('Tersimpan di server. Semua pengunjung mengikuti pilihan musik Admin.');showToast('Musik bersama tersimpan dan terverifikasi di server.');return true;
+        }catch(error){if(error.status===409)musicPublishRequest=null;musicFeedback('Belum tersinkron: '+error.message+' Pilihan Admin tetap tersedia untuk dicoba kembali.',true);return false;}
+        finally{sharedMusicBusy=false;customMusicControlsBusy(false);if(button){button.disabled=false;button.textContent='Simpan untuk Semua Pengunjung';}}
+      }
+      function restoreLocalMusic(){return refreshSharedMusic();}
 
       function musicDeadline(promise,ms,message) {
         let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]).finally(()=>clearTimeout(timer));
@@ -5066,18 +5107,19 @@
         setPlaybackState('idle');StorageHandler.saveMusicPreferences({theme:currentMusicTheme,volume:musicVolume,customUrl:customMusicUrl,isPlaying:false});
       }
       async function toggleLibraryAmbience() {
-        if(isAmbientPlaying||ambientPlaybackState==='loading'){stopLibraryAmbience();return;}
-        const started=await startLibraryAmbience();if(started)showToast('Memutar musik: '+(MUSIC_THEMES[currentMusicTheme]?.name||'Suasana Tenang'));
+        if(isAmbientPlaying||ambientPlaybackState==='loading'){musicLocalPaused=true;stopLibraryAmbience();return;}
+        musicLocalPaused=false;const started=await startLibraryAmbience();if(started)showToast('Memutar musik: '+(MUSIC_THEMES[currentMusicTheme]?.name||'Suasana Tenang'));
       }
       function setMusicTheme(themeId) {
         if (!canConfigureLibraryMusic()) return;
-        if(!MUSIC_THEMES[themeId])return;musicThemeTouched=true;const resume=isAmbientPlaying||ambientPlaybackState==='loading';
+        if(!MUSIC_THEMES[themeId])return;markSharedMusicDraft();musicThemeTouched=true;const resume=isAmbientPlaying||ambientPlaybackState==='loading';
         stopLibraryAmbience();currentMusicTheme=themeId;ambientErrorMessage='';
         StorageHandler.saveMusicPreferences({theme:themeId,volume:musicVolume,customUrl:customMusicUrl,isPlaying:resume});
         renderMusicThemesGrid();updateAmbientButtonsUI();if(resume)void startLibraryAmbience();
       }
 
       function setMusicVolume(valPercent) {
+        if(canConfigureLibraryMusic()&&!sharedMusicBusy)markSharedMusicDraft();
         musicVolumeTouched=true;
         const pct = Math.max(0, Math.min(100, parseInt(valPercent, 10) || 0));
         musicVolume = pct / 100;
@@ -8334,7 +8376,10 @@
         );
         document.body.classList.toggle('admin-authenticated', isAuthorized);
         updateReaderExportUI();
-        if (!isAuthorized) closeMusicSettingsModal();
+        if (!isAuthorized) {
+          closeMusicSettingsModal();
+          if(sharedMusicDraft&&!sharedMusicBusy){sharedMusicDraft=false;musicPublishRequest=null;if(sharedMusicConfig)void applySharedMusic(sharedMusicConfig);}
+        }
 
         const adminControlIds = [
           'header-music-settings-btn',
@@ -11298,12 +11343,12 @@
       const btnCloseMusic = document.getElementById('btn-close-music-modal');
       if (btnCloseMusic) btnCloseMusic.onclick = closeMusicSettingsModal;
       const btnDoneMusic = document.getElementById('btn-done-music-modal');
-      if (btnDoneMusic) btnDoneMusic.onclick = closeMusicSettingsModal;
+      if (btnDoneMusic) btnDoneMusic.onclick = () => void publishSharedMusic();
 
       const modalPlayBtn = document.getElementById('music-modal-play-btn');
-      if (modalPlayBtn) modalPlayBtn.onclick = toggleLibraryAmbience;
+      if (modalPlayBtn) modalPlayBtn.onclick = () => {if(canConfigureLibraryMusic()){markSharedMusicDraft();void toggleLibraryAmbience();}};
       const modalMuteBtn = document.getElementById('music-modal-mute-btn');
-      if (modalMuteBtn) modalMuteBtn.onclick = toggleMute;
+      if (modalMuteBtn) modalMuteBtn.onclick = () => {if(canConfigureLibraryMusic())toggleMute();};
 
       const modalVolSlider = document.getElementById('music-modal-volume-slider');
       if (modalVolSlider) {
@@ -11331,11 +11376,11 @@
       function readMusicFile(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reader.onabort=()=>reject(new Error('File audio belum dapat dibaca. Pilih kembali file tersebut.'));reader.readAsDataURL(file);});}
       async function applyCustomMusicUrl(raw){
         if (!canConfigureLibraryMusic()) return;
-        if(customMusicBusy)return;++musicSelectionRevision;musicThemeTouched=true;customMusicControlsBusy(true);musicFeedback('Memeriksa tautan audio…');
+        if(customMusicBusy||sharedMusicBusy)return;markSharedMusicDraft();++musicSelectionRevision;musicThemeTouched=true;customMusicControlsBusy(true);musicFeedback('Memeriksa tautan audio…');
         try{const url=validateMusicUrl(raw);await validateAudioSource(url);if (!canConfigureLibraryMusic()) return;stopLibraryAmbience();customMusicUrl=url;currentMusicTheme='custom';
           const persisted=StorageHandler.saveMusicConfig({theme:'custom',volume:musicVolume,customUrl:url,sourceType:'url',fileName:'',isPlaying:false})!==false;
           const inp=document.getElementById('music-custom-url-input');if(inp)inp.value=url;document.getElementById('music-custom-file-name').textContent='Sumber aktif: tautan audio';renderMusicThemesGrid();
-          const played=await startLibraryAmbience();musicFeedback(played?(persisted?'Tautan tersimpan di browser ini. Musik diputar berulang.':'Musik diputar, tetapi preferensi belum tersimpan karena penyimpanan browser dibatasi.'):ambientErrorMessage,ambientPlaybackState==='error');
+          const played=await startLibraryAmbience();musicFeedback(played?(persisted?'Pratinjau URL siap. Klik Simpan untuk Semua Pengunjung.':'Musik diputar, tetapi preferensi belum tersimpan karena penyimpanan browser dibatasi.'):ambientErrorMessage,ambientPlaybackState==='error');
         }catch(error){musicFeedback(error.message,true);}finally{customMusicControlsBusy(false);}
       }
       const btnLoadCustomUrl=document.getElementById('btn-load-custom-music-url');
@@ -11344,7 +11389,7 @@
       const fileInputCustom=document.getElementById('music-custom-file-input');
       if(fileInputCustom)fileInputCustom.onchange=async event=>{
         if (!canConfigureLibraryMusic()) {event.target.value='';return;}
-        const file=event.target.files?.[0];if(!file||customMusicBusy)return;++musicSelectionRevision;musicThemeTouched=true;customMusicControlsBusy(true);musicFeedback('Membaca dan memeriksa file audio…');
+        const file=event.target.files?.[0];if(!file||customMusicBusy||sharedMusicBusy)return;markSharedMusicDraft();++musicSelectionRevision;musicThemeTouched=true;customMusicControlsBusy(true);musicFeedback('Membaca dan memeriksa file audio…');
         try{
           if(!file.size||file.size>MUSIC_MAX_BYTES)throw new Error('Pilih file audio berukuran 1 byte sampai 25 MB.');
           if(!file.type.startsWith('audio/')&&!/\.(mp3|wav|ogg|m4a|aac|flac|opus)$/i.test(file.name))throw new Error('Format tidak didukung. Pilih MP3, WAV, OGG, M4A, AAC, atau FLAC.');
@@ -11354,7 +11399,7 @@
           stopLibraryAmbience();customMusicUrl=data;currentMusicTheme='custom';
           const persisted=StorageHandler.saveMusicConfig({theme:'custom',volume:musicVolume,customUrl:'',sourceType:'file',fileName:file.name,isPlaying:false})!==false;
           document.getElementById('music-custom-file-name').textContent='File tersimpan di browser ini: '+file.name;document.getElementById('music-custom-url-input').value='';renderMusicThemesGrid();
-          const played=await startLibraryAmbience();musicFeedback(played?'Tersimpan: '+file.name+(persisted?'. Musik diputar berulang.':'. Preferensi browser belum dapat disimpan.'):'Tersimpan: '+file.name+'. '+ambientErrorMessage,ambientPlaybackState==='error');
+          const played=await startLibraryAmbience();musicFeedback(played?'Pratinjau: '+file.name+'. Klik Simpan untuk Semua Pengunjung untuk mengunggah ke cloud.':'Tersimpan: '+file.name+'. '+ambientErrorMessage,ambientPlaybackState==='error');
         }catch(error){musicFeedback(error.message,true);}finally{customMusicControlsBusy(false);event.target.value='';}
       };
 
@@ -11362,6 +11407,8 @@
       syncVolumeUI(Math.round(musicVolume * 100));
       updateAmbientButtonsUI();
       void restoreLocalMusic();
+      setInterval(()=>{if(!document.hidden)void refreshSharedMusic();},30000);
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSharedMusic();});
 
       document.getElementById('toolbar-thumbs-btn').onclick = () => {
         document.getElementById('thumbnail-drawer').classList.toggle('hidden');
@@ -12212,15 +12259,9 @@
           return true;
         }
 
-        async function pushMusicAndSettingsToCloud() {
-          return true;
-        }
-
-        function scheduleMusicSync() {}
-
-        async function pullMusicAndSettingsFromCloud() {
-          return { deletionsChanged: false, parsedSettings: null };
-        }
+        async function pushMusicAndSettingsToCloud() {return publishSharedMusic();}
+        function scheduleMusicSync() {return publishSharedMusic();}
+        async function pullMusicAndSettingsFromCloud() {return {deletionsChanged:false,parsedSettings:await refreshSharedMusic()};}
 
         // =========================================================
         // SINKRONISASI KATALOG & BUKU KE GOOGLE SHEETS WEB APP API (SCRIPT_API_URL) + GOOGLE DRIVE
@@ -13826,6 +13867,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
   </script>
 </body>
 </html>
+
 
 
 
