@@ -1243,6 +1243,21 @@
     body:not(.admin-authenticated) #admin-open-music-settings-btn,
     body:not(.admin-authenticated) #modal-music-settings { display: none !important; }
   </style>
+  <link id="branding-manifest" rel="manifest" href="/api/branding?manifest=1" />
+  <link id="branding-favicon" rel="icon" type="image/png" sizes="32x32" href="/api/branding?icon=32&amp;default=1" />
+  <link id="branding-apple-icon" rel="apple-touch-icon" sizes="180x180" href="/api/branding?icon=180&amp;default=1" />
+  <meta name="theme-color" content="#0B3B2C" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="e-Library" />
+  <style id="branding-admin-hotfix">
+    body:not(.admin-authenticated) #header-branding-settings-btn,body:not(.admin-authenticated) #branding-editor-modal{display:none!important}
+    #navbar-brand-image{width:100%;height:100%;object-fit:contain;border-radius:inherit}
+    .branding-upload-label{display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;border:1px solid #D4AF37;border-radius:10px;padding:10px;font-size:12px;font-weight:600;background:#0B3B2C}
+    .branding-upload-label:focus-within{outline:2px solid #F3E5AB;outline-offset:3px}
+    #branding-editor-modal button:disabled{opacity:.55;cursor:wait}.branding-error{color:#ffcfad}
+    #branding-editor-modal input:disabled{cursor:wait}
+  </style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
   <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
@@ -1256,7 +1271,7 @@
     <div class="flex items-center flex-wrap gap-1.5 sm:gap-2 shrink-0">
       <a href="#view=catalog" id="brand-home" class="brand-card-3d text-[#072A20] group whitespace-nowrap shrink-0" title="Kembali ke Lobi Utama e-Library">
         <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg brand-emblem-3d flex items-center justify-center shrink-0">
-          <i data-lucide="book-open" class="w-3.5 h-3.5 text-[#FEF08A]"></i>
+          <span id="navbar-brand-default" class="flex items-center justify-center"><i data-lucide="book-open" class="w-3.5 h-3.5 text-[#FEF08A]"></i></span><img id="navbar-brand-image" class="hidden" alt="Logo e-Library" decoding="async" />
         </div>
         <div class="pr-0.5">
           <div class="flex items-center gap-1">
@@ -1311,6 +1326,7 @@
         <span class="hidden md:inline">Suasana<span class="hidden 2xl:inline"> Hening</span></span>
       </button>
 
+      <button type="button" id="header-branding-settings-btn" title="Logo Navbar & Ikon Install (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer"><i data-lucide="image" class="w-3.5 h-3.5 text-[#D4AF37]"></i><span>Logo &amp; Ikon</span></button>
       <button type="button" id="header-music-settings-btn" title="Pengaturan Musik & Suasana Perpustakaan (Khusus Admin)" class="admin-only-control hidden inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded-lg topbar-keycap-3d whitespace-nowrap cursor-pointer">
         <i data-lucide="music" class="w-3.5 h-3.5 text-[#D4AF37] shrink-0"></i>
         <span class="hidden xl:inline">Musik</span>
@@ -3025,6 +3041,39 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="branding-editor-modal" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-5 bg-[#072A20]/85 backdrop-blur-xs" role="dialog" aria-modal="true" aria-labelledby="branding-editor-title">
+    <div class="w-full max-w-3xl bg-[#0B3B2C] border-2 border-[#D4AF37] rounded-2xl shadow-2xl text-[#F3E5AB] flex flex-col max-h-[92dvh]">
+      <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-[#D4AF37]/40 shrink-0">
+        <div><p class="text-[10px] uppercase tracking-widest text-[#D4AF37]">Pengaturan Khusus Admin</p><h3 id="branding-editor-title" class="text-lg font-bold font-serif-editorial">Logo Navbar & Ikon Aplikasi</h3><p class="text-xs opacity-80 mt-1">Satu identitas aplikasi untuk seluruh pengunjung dan perangkat.</p></div>
+        <button id="branding-close" type="button" aria-label="Tutup pengaturan logo" class="p-2 rounded-lg hover:bg-[#072A20]"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="p-4 sm:p-5 overflow-y-auto min-h-0 space-y-4">
+        <div id="branding-feedback" role="status" aria-live="polite" class="text-xs p-3 rounded-xl bg-[#072A20] border border-[#D4AF37]/40">Memuat pengaturan logo…</div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <section class="rounded-xl border border-[#D4AF37]/50 bg-[#072A20]/60 p-4 space-y-3">
+            <h4 class="font-bold">Logo Navbar</h4><p class="text-xs opacity-80">Mengganti ikon buku di sebelah nama e-Library. Proporsi gambar tetap terjaga.</p>
+            <div class="p-3 bg-[#F7F4EE] rounded-xl flex items-center gap-3 text-[#072A20]"><img id="branding-nav-preview" class="w-11 h-11 object-contain" alt="Pratinjau logo navbar" src="/api/branding?icon=192&amp;default=1"/><div><strong class="font-serif-editorial">e-Library</strong><p class="text-[9px] uppercase tracking-wide">Perpustakaan Elektronik 3D</p></div></div>
+            <label class="branding-upload-label"><span>Pilih Logo Navbar</span><input id="branding-navbar-file" type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" /></label>
+            <button id="branding-reset-navbar" type="button" class="text-xs underline underline-offset-4">Gunakan ikon navbar bawaan</button>
+          </section>
+          <section class="rounded-xl border border-[#D4AF37]/50 bg-[#072A20]/60 p-4 space-y-3">
+            <h4 class="font-bold">Ikon Install / Layar Utama</h4><p class="text-xs opacity-80">Ikon aplikasi di Android, iPhone/iPad, desktop, dan tab browser.</p>
+            <div class="flex items-center justify-around gap-2 py-1"><div class="text-center"><img id="branding-android-preview" src="/api/branding?icon=512&amp;default=1" alt="Pratinjau ikon Android" class="w-16 h-16 object-contain rounded-full bg-[#0B3B2C]"/><span class="text-[10px]">Android</span></div><div class="text-center"><img id="branding-apple-preview" src="/api/branding?icon=180&amp;default=1" alt="Pratinjau ikon iPhone dan iPad" class="w-16 h-16 object-contain rounded-2xl bg-[#0B3B2C]"/><span class="text-[10px]">iPhone / iPad</span></div><div class="text-center"><img id="branding-desktop-preview" src="/api/branding?icon=192&amp;default=1" alt="Pratinjau ikon desktop" class="w-16 h-16 object-contain rounded-lg"/><span class="text-[10px]">Desktop</span></div></div>
+            <label class="flex gap-2 items-start text-xs"><input id="branding-use-navbar" type="checkbox" class="accent-[#D4AF37] mt-0.5"/><span>Gunakan logo navbar untuk ikon install</span></label>
+            <label class="branding-upload-label"><span>Pilih Ikon Install Tersendiri</span><input id="branding-install-file" type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" /></label>
+            <button id="branding-reset-icons" type="button" class="text-xs underline underline-offset-4">Gunakan ikon install bawaan</button>
+          </section>
+        </div>
+        <p class="text-xs opacity-80">PNG, JPG, atau WebP, maksimal 5 MB per gambar. Disarankan gambar berukuran minimal 512 × 512 piksel. Ukuran ikon dan area aman Android dibuat otomatis.</p>
+        <p class="text-[11px] opacity-70">Ikon aplikasi yang sudah terpasang mengikuti pembaruan browser/perangkat. Beberapa perangkat memerlukan persetujuan pembaruan atau pemasangan ulang ikon.</p>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-4 border-t border-[#D4AF37]/40 shrink-0">
+        <button id="branding-reload" type="button" class="px-3 py-2 rounded-lg border border-[#D4AF37]/60 text-xs">Muat Ulang</button>
+        <button id="branding-save" type="button" class="px-4 py-2 rounded-lg bg-[#D4AF37] text-[#072A20] font-bold text-sm">Simpan & Terapkan ke Semua Perangkat</button>
       </div>
     </div>
   </div>
@@ -8381,10 +8430,12 @@
         updateReaderExportUI();
         if (!isAuthorized) {
           closeMusicSettingsModal();
+          document.getElementById('branding-editor-modal').classList.add('hidden');
           if(sharedMusicDraft&&!sharedMusicBusy){sharedMusicDraft=false;musicPublishRequest=null;if(sharedMusicConfig)void applySharedMusic(sharedMusicConfig);}
         }
 
         const adminControlIds = [
+          'header-branding-settings-btn',
           'header-music-settings-btn',
           'toolbar-music-settings-btn',
           'admin-open-music-settings-btn',
@@ -8449,7 +8500,7 @@
         }
         const sidebar = document.getElementById('admin-sidebar');
         if (sidebar) sidebar.classList.add('hidden');
-        ['modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings', 'modal-admin-security', 'modal-crud-etalase-book', 'modal-cloud-drive-sync'].forEach((mid) => {
+        ['branding-editor-modal', 'modal-admin-shelves-crud', 'modal-add-shelf', 'modal-edit-shelf', 'modal-music-settings', 'modal-admin-security', 'modal-crud-etalase-book', 'modal-cloud-drive-sync'].forEach((mid) => {
           const m = document.getElementById(mid);
           if (m) m.classList.add('hidden');
         });
@@ -13877,11 +13928,55 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         }
       })();
 
+      // Shared branding controller: all mutations require the existing verified Admin session.
+      let brandingCurrent=null,brandingFetch=null,brandingDraft=null,brandingUploads={},brandingPending=null,brandingBusy=false,brandingDirty=false;
+      const brandVariants=['32','180','192','512','mask512'];
+      const brandingDefaultIcon=k=>'/api/branding?icon='+k+'&default=1';
+      const brandingAsset=id=>'/api/branding?asset='+encodeURIComponent(id);
+      function brandingMessage(text,error=false){const el=document.getElementById('branding-feedback');el.textContent=text;el.classList.toggle('branding-error',error);}
+      function brandingLock(busy){brandingBusy=busy;document.querySelectorAll('#branding-editor-modal input,#branding-editor-modal button').forEach(el=>el.disabled=busy);if(!busy)document.getElementById('branding-install-file').disabled=document.getElementById('branding-use-navbar').checked;}
+      function brandingChanged(){brandingDirty=true;brandingPending=null;brandingMessage('Pratinjau siap. Simpan untuk menerapkan logo ke semua perangkat.');}
+      async function brandingRequest(payload){const headers={};if(payload){headers['Content-Type']='application/json';headers.Authorization='Bearer '+await strictAdminToken();}const response=await fetch('/api/branding',{method:payload?'POST':'GET',cache:'no-store',headers,body:payload?JSON.stringify(payload):undefined,signal:AbortSignal.timeout(60000)});let result;try{result=await response.json();}catch{throw Error('Respons pengaturan logo tidak valid.');}if(!response.ok||result.status!=='success'){const error=Error(result.message||'Logo belum tersimpan.');error.status=response.status;throw error;}return result;}
+      function brandingValidate(cfg){if(!cfg||!Number.isFinite(cfg.revision)||cfg.revision<0||typeof cfg.navbarAssetId!=='string'||!cfg.iconAssets)throw Error('Pengaturan logo server tidak valid.');return cfg;}
+      function brandingApply(cfg){
+        brandingValidate(cfg);brandingCurrent=cfg;document.body.dataset.brandingRevision=String(cfg.revision);
+        const image=document.getElementById('navbar-brand-image'),fallback=document.getElementById('navbar-brand-default');
+        if(cfg.navbarAssetId){const src=brandingAsset(cfg.navbarAssetId);image.onload=()=>{if(image.getAttribute('src')===src&&image.naturalWidth){image.classList.remove('hidden');fallback.classList.add('hidden');}};image.onerror=()=>{image.classList.add('hidden');fallback.classList.remove('hidden');};if(image.getAttribute('src')!==src)image.src=src;else if(image.complete&&image.naturalWidth){image.classList.remove('hidden');fallback.classList.add('hidden');}}
+        else{image.classList.add('hidden');image.removeAttribute('src');fallback.classList.remove('hidden');}
+        const setLink=(id,href)=>{const el=document.getElementById(id);if(el&&el.getAttribute('href')!==href)el.href=href;};
+        setLink('branding-favicon',cfg.iconAssets['32']?brandingAsset(cfg.iconAssets['32']):brandingDefaultIcon('32'));
+        setLink('branding-apple-icon',cfg.iconAssets['180']?brandingAsset(cfg.iconAssets['180']):brandingDefaultIcon('180'));
+        setLink('branding-manifest','/api/branding?manifest=1&v='+cfg.revision);
+      }
+      async function brandingLoad(){if(brandingFetch)return brandingFetch;brandingFetch=(async()=>{const cfg=brandingValidate((await brandingRequest()).branding);if(!brandingDirty&&!brandingBusy)brandingApply(cfg);return cfg;})().finally(()=>brandingFetch=null);return brandingFetch;}
+      function brandingPreview(){if(!brandingDraft)return;const get=k=>brandingUploads[k]||(brandingDraft.iconAssets[k]?brandingAsset(brandingDraft.iconAssets[k]):brandingDefaultIcon(k));document.getElementById('branding-nav-preview').src=brandingUploads.navbar||(brandingDraft.navbarAssetId?brandingAsset(brandingDraft.navbarAssetId):brandingDefaultIcon('192'));document.getElementById('branding-android-preview').src=get('mask512');document.getElementById('branding-apple-preview').src=get('180');document.getElementById('branding-desktop-preview').src=get('192');document.getElementById('branding-use-navbar').checked=brandingDraft.useNavbarForInstall===true;document.getElementById('branding-install-file').disabled=brandingBusy||brandingDraft.useNavbarForInstall===true;}
+      async function brandingOpen(){if(!canConfigureLibraryMusic()){requireAdminAuth(brandingOpen);return;}document.getElementById('branding-editor-modal').classList.remove('hidden');brandingLock(true);brandingMessage('Memuat pengaturan logo dari server…');try{const cfg=await brandingLoad();brandingApply(cfg);brandingDraft=JSON.parse(JSON.stringify(cfg));brandingUploads={};brandingPending=null;brandingDirty=false;brandingPreview();brandingMessage('Pengaturan tersinkron dari server. Perubahan baru diterapkan setelah disimpan.');}catch(error){brandingDraft=null;brandingMessage(error.message+' Gunakan Muat Ulang untuk mencoba kembali.',true);}finally{brandingLock(false);}}
+      function brandingClose(){if(brandingBusy)return;if(brandingDirty&&!window.confirm('Perubahan logo belum disimpan. Tutup dan batalkan pratinjau ini?'))return;brandingDirty=false;brandingUploads={};brandingPending=null;document.getElementById('branding-editor-modal').classList.add('hidden');}
+      async function brandingImage(src){const image=new Image();image.decoding='async';image.src=src;await musicDeadline(image.decode(),15000,'Gambar terlalu lama dibaca. Pilih ulang berkas.');if(!image.naturalWidth||image.naturalWidth>10000||image.naturalHeight>10000||image.naturalWidth*image.naturalHeight>25000000)throw Error('Ukuran piksel gambar terlalu besar. Gunakan gambar hingga 25 megapiksel.');return image;}
+      function brandingPng(image,size,{background=false,mask=false}={}){const canvas=document.createElement('canvas');canvas.width=canvas.height=size;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Browser belum mendukung pengolahan gambar.');if(background){ctx.fillStyle='#0B3B2C';ctx.fillRect(0,0,size,size);}const area=size*(mask?.56:.9),scale=Math.min(area/image.naturalWidth,area/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale;ctx.imageSmoothingQuality='high';ctx.drawImage(image,(size-w)/2,(size-h)/2,w,h);return canvas.toDataURL('image/png');}
+      function brandingMakeIcons(image){brandVariants.forEach(k=>{const n=k==='mask512'?512:Number(k);brandingUploads[k]=brandingPng(image,n,{background:k==='180'||k==='mask512',mask:k==='mask512'});});}
+      async function brandingPick(event,kind){const file=event.target.files?.[0];if(!file||brandingBusy)return;if(!canConfigureLibraryMusic()||!brandingDraft){event.target.value='';return;}brandingLock(true);brandingMessage('Menyiapkan gambar dan ukuran ikon…');let url;try{if(file.size<1||file.size>5*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Gunakan gambar PNG, JPG, atau WebP dengan ukuran maksimal 5 MB.');url=URL.createObjectURL(file);const image=await brandingImage(url);if(!canConfigureLibraryMusic())throw Error('Sesi Admin berakhir. Login kembali.');if(kind==='navbar'){brandingUploads.navbar=brandingPng(image,256);if(brandingDraft.useNavbarForInstall)brandingMakeIcons(image);}else brandingMakeIcons(image);brandingChanged();brandingPreview();}catch(error){brandingMessage(error.message,true);}finally{if(url)URL.revokeObjectURL(url);event.target.value='';brandingLock(false);}}
+      async function brandingUseNavbar(event){if(brandingBusy||!canConfigureLibraryMusic()||!brandingDraft)return;const same=event.target.checked;brandingLock(true);try{if(same){const src=brandingUploads.navbar||(brandingDraft.navbarAssetId?brandingAsset(brandingDraft.navbarAssetId):brandingDefaultIcon('512'));const image=await brandingImage(src);if(!canConfigureLibraryMusic())throw Error('Sesi Admin berakhir.');brandingMakeIcons(image);}brandingDraft.useNavbarForInstall=same;brandingChanged();brandingPreview();}catch(error){event.target.checked=brandingDraft.useNavbarForInstall===true;brandingMessage(error.message,true);}finally{brandingLock(false);}}
+      async function brandingSave(){if(brandingBusy||!brandingDraft)return;if(!canConfigureLibraryMusic()){requireAdminAuth(brandingOpen);return;}brandingLock(true);const button=document.getElementById('branding-save');button.textContent='Menyimpan & memverifikasi…';brandingMessage('Menyimpan logo dan ikon ke cloud. Mohon tunggu…');try{if(!brandingPending)brandingPending={action:'saveBranding',requestId:crypto.randomUUID().replace(/-/g,''),expectedRevision:brandingDraft.revision,branding:{navbarAssetId:brandingDraft.navbarAssetId,iconAssets:brandingDraft.iconAssets,useNavbarForInstall:brandingDraft.useNavbarForInstall},uploads:{...brandingUploads}};const result=await brandingRequest(brandingPending),cfg=brandingValidate(result.branding);brandingDirty=false;brandingPending=null;brandingUploads={};brandingApply(cfg);brandingDraft=JSON.parse(JSON.stringify(cfg));brandingPreview();brandingMessage('Tersimpan dan terverifikasi. Logo navbar, favicon, dan ikon install sudah diterapkan untuk semua pengunjung.');showToast('Logo & ikon aplikasi tersimpan di server.');}catch(error){if(error.status===409)brandingPending=null;brandingMessage('Belum tersimpan: '+error.message+' Pratinjau tetap tersedia; coba simpan kembali.',true);}finally{brandingLock(false);button.textContent='Simpan & Terapkan ke Semua Perangkat';}}
+      document.getElementById('header-branding-settings-btn').onclick=brandingOpen;
+      document.getElementById('branding-close').onclick=brandingClose;
+      document.getElementById('branding-reload').onclick=()=>{if(brandingDirty&&!window.confirm('Muat pengaturan server dan batalkan perubahan yang belum disimpan?'))return;brandingDirty=false;void brandingOpen();};
+      document.getElementById('branding-save').onclick=()=>void brandingSave();
+      document.getElementById('branding-navbar-file').onchange=e=>void brandingPick(e,'navbar');
+      document.getElementById('branding-install-file').onchange=e=>void brandingPick(e,'install');
+      document.getElementById('branding-use-navbar').onchange=e=>void brandingUseNavbar(e);
+      document.getElementById('branding-reset-navbar').onclick=()=>{if(!brandingDraft||brandingBusy||!canConfigureLibraryMusic())return;brandingDraft.navbarAssetId='';brandingDraft.useNavbarForInstall=false;delete brandingUploads.navbar;brandingChanged();brandingPreview();};
+      document.getElementById('branding-reset-icons').onclick=()=>{if(!brandingDraft||brandingBusy||!canConfigureLibraryMusic())return;brandingDraft.iconAssets={};brandingDraft.useNavbarForInstall=false;brandVariants.forEach(k=>delete brandingUploads[k]);brandingChanged();brandingPreview();};
+      void brandingLoad().catch(()=>{});
+      setInterval(()=>{if(!document.hidden&&!brandingDirty&&!brandingBusy)void brandingLoad().catch(()=>{});},60000);
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!brandingDirty&&!brandingBusy)void brandingLoad().catch(()=>{});});
+
       if (window.lucide) window.lucide.createIcons();
     })();
   </script>
 </body>
 </html>
+
 
 
 

@@ -2,6 +2,7 @@ import pdfProxyHandler from './api/pdf-proxy.js';
 import express from 'express';
 import gasHandler, { verifyAdminRequest } from './api/gas.js';
 import musicHandler from './api/music.js';
+import brandingHandler from './api/branding.js';
 import { createServer as createViteServer } from 'vite';
 import fs from 'fs';
 import path from 'path';
@@ -80,6 +81,7 @@ async function startServer() {
 
   // Shared durable music service, identical to production.
   app.all('/api/music', musicHandler);
+  app.all('/api/branding', brandingHandler);
 
   // Legacy asset paths read the same cloud record and never expose local snapshots.
   app.get('/api/books/:id', async (req,res)=>{
@@ -201,4 +203,5 @@ async function startServer() {
 }
 
 startServer();
+
 
