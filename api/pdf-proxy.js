@@ -1,3 +1,21 @@
+function repairArabicEncoding(value){
+ let text=String(value||'');const arab=s=>(s.match(/[\u0600-\u06ff]/g)||[]).length;
+ if(!/[ØÙÚÛ]/.test(text))return text;
+ const reverse=new Map();const decoder=new TextDecoder('windows-1252');
+ for(let i=0;i<256;i++)reverse.set(decoder.decode(Uint8Array.of(i)),i);
+ for(let pass=0;pass<2;pass++){try{
+ const bytes=Array.from(text,c=>{const n=c.charCodeAt(0);if(n<=255)return n;if(reverse.has(c))return reverse.get(c);throw Error('Not reversible');});
+ const fixed=new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(bytes));
+ if(arab(fixed)<=arab(text))break;text=fixed;
+ }catch{break;}}
+ return text;
+}
+function pdfFilename(disposition){
+ const extended=String(disposition).match(/filename\*\s*=\s*(?:"([^"]*)"|([^;]*))/i);
+ if(extended){const value=(extended[1]||extended[2]||'').trim();const parts=value.match(/^UTF-8'[^']*'(.*)$/i);if(parts){try{return decodeURIComponent(parts[1]);}catch{}}}
+ const basic=String(disposition).match(/filename\s*=\s*(?:"((?:\\.|[^"])*)"|([^;]*))/i);
+ return basic?repairArabicEncoding((basic[1]||basic[2]||'').replace(/\\(["\\])/g,'$1').trim()):'';
+}
 import { Readable } from 'node:stream';
 
 // A single PDF proxy shared by the development server and Vercel.
@@ -29,7 +47,7 @@ export default async function handler(req,res){
           if(id&&html.includes('download-form')){const confirm=new URL('https://drive.usercontent.google.com/download');confirm.searchParams.set('id',id);confirm.searchParams.set('export','download');confirm.searchParams.set('confirm','t');let count=0;for(const input of html.matchAll(/<input\b[^>]*>/gi)){const name=input[0].match(/\bname=["']([^"']+)["']/i),value=input[0].match(/\bvalue=["']([^"']*)["']/i);if(name&&value&&['confirm','uuid','at','resourcekey'].includes(name[1])&&value[1].length<2048){confirm.searchParams.set(name[1],value[1].replace(/&amp;/g,'&'));count++;}}if(count&&index<3)candidates.splice(index+1,0,{url:confirm.href});}
           continue;
         }
-        const disposition=upstream.headers.get('content-disposition')||'';const filename=disposition.match(/filename="?([^";]+)"?/i);if(filename)res.setHeader('X-PDF-Filename',encodeURIComponent(filename[1]));
+        const disposition=upstream.headers.get('content-disposition')||'';const filename=pdfFilename(disposition);if(filename)res.setHeader('X-PDF-Filename',encodeURIComponent(filename));
         res.setHeader('Content-Type','application/pdf');res.setHeader('Cache-Control',auth?'private, no-store':'public, max-age=3600');
         // Forward bytes as they arrive instead of buffering the entire PDF in server memory.
         const stream=Readable.from((async function*(){try{yield first.value;while(true){const next=await reader.read();if(next.done)break;yield next.value;}}finally{release();}})());

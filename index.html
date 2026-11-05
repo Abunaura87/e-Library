@@ -1221,7 +1221,27 @@
     #branding-editor-modal button:disabled{opacity:.55;cursor:wait}.branding-error{color:#ffcfad}
     #branding-editor-modal input:disabled{cursor:wait}
   </style>
-</head>
+<style id="arabic-title-support">#crud-inp-title,#crud-preview-title,.arabic-book-title{font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",Georgia,serif;unicode-bidi:plaintext;letter-spacing:normal;line-height:1.65;text-align:start}</style>
+<script>function repairArabicEncoding(value){
+ let text=String(value||'');const arab=s=>(s.match(/[\u0600-\u06ff]/g)||[]).length;
+ if(!/[ØÙÚÛ]/.test(text))return text;
+ const reverse=new Map();const decoder=new TextDecoder('windows-1252');
+ for(let i=0;i<256;i++)reverse.set(decoder.decode(Uint8Array.of(i)),i);
+ for(let pass=0;pass<2;pass++){try{
+ const bytes=Array.from(text,c=>{const n=c.charCodeAt(0);if(n<=255)return n;if(reverse.has(c))return reverse.get(c);throw Error('Not reversible');});
+ const fixed=new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(bytes));
+ if(arab(fixed)<=arab(text))break;text=fixed;
+ }catch{break;}}
+ return text;
+}
+function pdfFilename(disposition){
+ const extended=String(disposition).match(/filename\*\s*=\s*(?:"([^"]*)"|([^;]*))/i);
+ if(extended){const value=(extended[1]||extended[2]||'').trim();const parts=value.match(/^UTF-8'[^']*'(.*)$/i);if(parts){try{return decodeURIComponent(parts[1]);}catch{}}}
+ const basic=String(disposition).match(/filename\s*=\s*(?:"((?:\\.|[^"])*)"|([^;]*))/i);
+ return basic?repairArabicEncoding((basic[1]||basic[2]||'').replace(/\\(["\\])/g,'$1').trim()):'';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('crud-inp-title');if(el)el.addEventListener('blur',()=>{const fixed=repairArabicEncoding(el.value);if(fixed!==el.value){el.value=fixed;el.dispatchEvent(new Event('input',{bubbles:true}));}});});</script></head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
   <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
   <div id="global-ambient-veil" class="global-dark-veil" aria-hidden="true"></div>
@@ -2039,7 +2059,7 @@
       <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="folder-plus" class="w-5 h-5 text-[#D4AF37]"></i>
-          <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Tambah Kotak Rak Klasikal Baru</h3>
+          <h3 dir="auto" class="arabic-book-title text-lg font-bold font-serif-editorial text-[#F3E5AB]">Tambah Kotak Rak Klasikal Baru</h3>
         </div>
         <button type="button" id="btn-close-shelf-modal" class="text-[#F3E5AB] hover:text-white p-1">
           <i data-lucide="x" class="w-4 h-4"></i>
@@ -2120,7 +2140,7 @@
       <div class="flex items-center justify-between border-b border-[#D4AF37]/40 pb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="edit-3" class="w-4 h-4 text-[#D4AF37]"></i>
-          <h3 class="text-lg font-bold font-serif-editorial text-[#F3E5AB]">Sunting Nama &amp; Detail Rak</h3>
+          <h3 dir="auto" class="arabic-book-title text-lg font-bold font-serif-editorial text-[#F3E5AB]">Sunting Nama &amp; Detail Rak</h3>
         </div>
         <button type="button" id="btn-close-edit-shelf-modal" class="text-[#F3E5AB] hover:text-white p-1 cursor-pointer">
           <i data-lucide="x" class="w-4 h-4"></i>
@@ -2250,7 +2270,7 @@
                     <label for="crud-inp-title" class="block text-xs font-semibold text-[#F3E5AB] mb-1">
                       Judul Buku di Etalase &amp; Sampul 3D <span class="text-[#D4AF37]">*</span>
                     </label>
-                    <input id="crud-inp-title" type="text" required placeholder="Masukkan judul lengkap buku..." class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]" />
+                    <input dir="auto" id="crud-inp-title" type="text" required placeholder="Masukkan judul lengkap buku..." class="w-full px-3.5 py-2 text-xs sm:text-sm bg-[#072A20] border border-[#D4AF37]/80 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]" />
                   </div>
 
                   <div>
@@ -2371,7 +2391,7 @@
                     <span id="crud-preview-page-count">6 HALAMAN</span>
                     <span class="px-1.5 py-0.5 rounded bg-[#0B3B2C]/10 text-[#0B3B2C] border border-[#D4AF37]/40">EDISI 3D</span>
                   </div>
-                  <h4 id="crud-preview-title" class="text-sm font-bold font-serif-editorial text-[#072A20] line-clamp-2 leading-snug">
+                  <h4 dir="auto" id="crud-preview-title" class="text-sm font-bold font-serif-editorial text-[#072A20] line-clamp-2 leading-snug">
                     Judul Buku Pratinjau
                   </h4>
                   <p id="crud-preview-author" class="text-xs font-semibold text-[#9E7B1C] mt-0.5 truncate">
@@ -6325,7 +6345,7 @@
                 '<span>' + book.pageCount + ' HALAMAN</span>' +
                 '<span class="px-2 py-0.5 rounded bg-[#0B3B2C]/10 text-[#0B3B2C] border border-[#D4AF37]/40">EDISI 3D</span>' +
               '</div>' +
-              '<h3 class="text-lg font-bold font-serif-editorial text-[#072A20] group-hover:text-[#0B3B2C] transition-colors line-clamp-2 leading-snug min-h-[2.75rem]">' +
+              '<h3 dir="auto" class="arabic-book-title text-lg font-bold font-serif-editorial text-[#072A20] group-hover:text-[#0B3B2C] transition-colors line-clamp-2 leading-snug min-h-[2.75rem]">' +
                 book.title +
               '</h3>' +
               '<p class="text-xs font-semibold text-[#9E7B1C] mt-1 truncate">' +
@@ -6955,7 +6975,7 @@
                 else bytes=new Uint8Array(await response.arrayBuffer());
                 if(!hasValidPdfHeaderBytes(bytes)){lastError='Tautan mengembalikan halaman web, bukan file PDF. Gunakan link berbagi file PDF atau unggah berkas lokal.';continue;}
                 progress({phase:'parse',loaded:bytes.length,total:bytes.length});
-                const pdf=await parse({data:bytes});let filename=response.headers.get('X-PDF-Filename')||'';try{filename=decodeURIComponent(filename);}catch{}return {pdf,normalized:norm,filename};
+                const pdf=await parse({data:bytes});let filename=response.headers.get('X-PDF-Filename')||'';try{filename=repairArabicEncoding(decodeURIComponent(filename));}catch{}return {pdf,normalized:norm,filename};
               }catch(error){if(controller.signal.aborted)throw new DOMException('Pemuatan PDF dibatalkan atau melewati batas waktu.','AbortError');lastError=error.message||lastError;}
               finally{clearTimeout(headerTimer);controller.signal.removeEventListener('abort',cancel);attempt.abort();}
             }
@@ -13923,7 +13943,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
       function addImportCancel(){const el=document.getElementById('elib-editor-status');if(!el||!editorSession.importController||el.querySelector('.elib-import-cancel'))return;const cancel=document.createElement('button');cancel.type='button';cancel.className='elib-import-cancel';cancel.textContent='Batalkan impor';cancel.onclick=()=>{editorSession.importCancelled=true;editorSession.importController.abort();};el.appendChild(cancel);}
       async function runPdfImport(label,read,retry){if(editorSession.operation||editorSession.loading||editorSession.saving)return false;
         const id=crudWorkingBook.id;const controller=new AbortController();editorSession.importController=controller;editorSession.importCancelled=false;editorSession.pendingImport={bookId:id,retry,status:'loading'};
-        try{return await editorRun(label,async()=>{addImportCancel();const opened=await read(controller.signal);if(controller.signal.aborted||crudWorkingBook.id!==id){opened.pdf.destroy().catch(()=>{});throw new DOMException('Impor dibatalkan.','AbortError');}if(opened.filename&&['Judul Buku Baru Koleksi 3D','Publikasi Tanpa Judul'].includes(crudWorkingBook.title)){crudWorkingBook.title=opened.filename.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').trim();document.getElementById('crud-inp-title').value=crudWorkingBook.title;}const ok=await installImportedPdf(opened.pdf,opened.source,controller.signal);if(ok)editorSession.pendingImport.status='ready';return ok;},retry);}
+        try{return await editorRun(label,async()=>{addImportCancel();const opened=await read(controller.signal);if(controller.signal.aborted||crudWorkingBook.id!==id){opened.pdf.destroy().catch(()=>{});throw new DOMException('Impor dibatalkan.','AbortError');}if(opened.filename&&['Judul Buku Baru Koleksi 3D','Publikasi Tanpa Judul'].includes(crudWorkingBook.title)){crudWorkingBook.title=repairArabicEncoding(opened.filename).replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').trim();document.getElementById('crud-inp-title').value=crudWorkingBook.title;}const ok=await installImportedPdf(opened.pdf,opened.source,controller.signal);if(ok)editorSession.pendingImport.status='ready';return ok;},retry);}
         finally{if(editorSession.importCancelled){editorSession.pendingImport=null;editorStatus('Impor dihentikan. Draf yang sudah terbentuk tetap tersedia.');}else if(editorSession.pendingImport&&editorSession.pendingImport.status!=='ready')editorSession.pendingImport.status='error';editorSession.importController=null;const cancel=document.querySelector('.elib-import-cancel');if(cancel)cancel.remove();}
       }
       async function installImportedPdf(pdf,source,signal){
