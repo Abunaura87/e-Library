@@ -7136,6 +7136,9 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
         const activeClass = 'px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-bold btn-emerald-gold text-[#F3E5AB] shadow-xs';
         const inactiveClass = 'px-2 sm:px-2.5 py-1 rounded text-[10px] sm:text-xs font-semibold text-[#F3E5AB]/75 hover:text-white transition-all';
 
+        btn1p.setAttribute('aria-pressed',String(readerPageMode === '1p'));
+        btn2p.setAttribute('aria-pressed',String(readerPageMode === '2p'));
+        btnFull.setAttribute('aria-pressed',String(isFullPageFit));
         btn1p.className = readerPageMode === '1p' ? activeClass : inactiveClass;
         btn2p.className = readerPageMode === '2p' ? activeClass : inactiveClass;
         btnFull.className = isFullPageFit
@@ -14159,7 +14162,53 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
       if (window.lucide) window.lucide.createIcons();
     })();
   </script>
-</body>
+<style id="compact-icon-navigation">/* Compact navigation: keep the original controls, handlers and authorization. */
+button[data-icon-nav],.compact-overflow>summary{position:relative;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;border:1px solid #b99a42!important;border-radius:11px!important;background:#0b3b2c!important;color:#f3e5ab!important;font-size:0!important;gap:0!important;align-items:center;justify-content:center;box-shadow:0 2px 5px #072a2022;vertical-align:middle;cursor:pointer;flex-shrink:0}
+button[data-icon-nav]:not(.hidden){display:inline-flex}
+button[data-icon-nav]>:not(.compact-nav-icon){display:none!important}
+.compact-nav-icon{display:block!important;width:19px!important;height:19px!important;stroke:currentColor;stroke-width:1.8;fill:none;flex-shrink:0;pointer-events:none}
+button[data-icon-nav]:hover,.compact-overflow>summary:hover{background:#15523e!important;box-shadow:0 0 0 2px #d4af3733}
+button[data-icon-nav]:focus-visible,.compact-overflow>summary:focus-visible{outline:2px solid #d4af37;outline-offset:3px}
+button[data-icon-nav][data-nav-active="true"],button[data-icon-nav][aria-pressed="true"]{background:#d4af37!important;color:#072a20!important;box-shadow:inset 0 0 0 1px #f3e5ab}
+button[data-icon-nav]:disabled{opacity:.4!important;cursor:wait}
+button[data-icon-nav][aria-busy="true"]:after{content:'';position:absolute;inset:3px;border:2px solid transparent;border-top-color:#d4af37;border-radius:9px;animation:spin 1s linear infinite}
+.compact-overflow,.compact-overflow-panel{display:contents}.compact-overflow>summary{display:none;list-style:none}.compact-overflow>summary::-webkit-details-marker{display:none}
+.compact-header-actions{gap:6px!important;flex-wrap:wrap!important}header nav{gap:5px!important}header nav>span{display:none!important}#header-cloud-sync-badge{display:inline-flex!important;max-width:190px;overflow:hidden}#header-cloud-sync-badge-text{overflow:hidden;text-overflow:ellipsis}
+#reader-top-strip{padding-top:6px!important;padding-bottom:6px!important;gap:6px!important}#reader-floating-dock{max-width:780px}#reader-floating-dock>div{padding:8px 10px!important}#reader-floating-dock [role="toolbar"]{gap:6px!important}.compact-zoom{display:flex!important;align-items:center;gap:3px!important;padding:0 5px!important}#slider-bar-container{min-width:0}#page-range-slider{min-width:35px}#compact-nav-tooltip{position:fixed;z-index:3000;max-width:min(310px,calc(100vw - 16px));padding:7px 10px;background:#072a20;color:#f3e5ab;border:1px solid #d4af37;border-radius:8px;font:12px/1.4 sans-serif;pointer-events:none;box-shadow:0 5px 15px #0003}#compact-nav-tooltip[hidden]{display:none}
+@media(max-width:767px){.compact-overflow{display:block;position:relative}.compact-overflow>summary{display:flex}.compact-overflow-panel{display:none;position:absolute;right:0;top:calc(100% + 7px);min-width:144px;max-width:calc(100vw - 24px);padding:9px;background:#072a20;border:1px solid #d4af37;border-radius:13px;box-shadow:0 8px 25px #0005;z-index:100;gap:6px;grid-template-columns:repeat(3,40px)}.compact-overflow[open]>.compact-overflow-panel{display:grid}#reader-floating-dock .compact-overflow-panel{top:auto;bottom:calc(100% + 7px)}.compact-overflow:has(.compact-overflow-panel):not(:has(.compact-overflow-panel button:not(.hidden))){display:none}#brand-home>div:last-child{display:none}#brand-home{padding:5px!important}header{gap:6px!important;padding:6px 8px!important}#header-cloud-sync-badge{max-width:130px;font-size:9px}#reader-floating-dock{width:calc(100% - 12px)!important}#reader-floating-dock [role="toolbar"]{justify-content:center!important}.compact-zoom{border:0!important}#reader-floating-dock [role="toolbar"]>div{gap:4px!important}}
+@media(prefers-reduced-motion:reduce){button[data-icon-nav]{transition:none!important}}
+</style><script>(()=>{
+ const specs={
+ 'tab-lobby-btn':['LayoutGrid','Rak 3D'],'tab-shelf-btn':['Layers','Etalase'],'tab-reader-btn':['BookOpen','Ruang baca'],
+ 'header-ambient-btn':['Headphones','Musik latar'],'header-share-btn':['Share2','Bagikan'],'header-secret-admin-btn':['Lock','Login Admin'],
+ 'header-branding-settings-btn':['Image','Logo dan ikon'],'header-music-settings-btn':['Music','Pengaturan musik'],'header-cloud-drive-btn':['HardDriveUpload','Database dan sinkronisasi'],'header-crud-etalase-btn':['FilePenLine','Kelola buku'],'header-admin-auth-btn':['ShieldCheck','Studio Admin'],'header-admin-security-btn':['KeyRound','Keamanan Admin'],'header-admin-logout-btn':['LogOut','Keluar Admin'],
+ 'btn-back-to-shelf-from-reader':['ArrowLeft','Kembali ke etalase'],'btn-reader-mode-1p':['File','Satu halaman'],'btn-reader-mode-2p':['BookOpen','Dua halaman'],'btn-reader-mode-full':['Maximize','Baca tanpa distraksi'],'btn-toggle-admin-drawer':['Settings2','Panel Admin'],'btn-stage-theme':['Palette','Tema pembaca'],'btn-hide-top-bar':['ChevronUp','Sembunyikan navigasi atas'],'btn-show-top-bar':['ChevronDown','Tampilkan navigasi atas'],'btn-hide-bottom-bar':['ChevronDown','Sembunyikan kontrol baca'],'btn-show-bottom-bar':['ChevronUp','Tampilkan kontrol baca'],
+ 'toolbar-prev-btn':['ChevronLeft','Halaman sebelumnya'],'toolbar-next-btn':['ChevronRight','Halaman berikutnya'],'zoom-in-btn':['ZoomIn','Perbesar'],'zoom-out-btn':['ZoomOut','Perkecil'],'zoom-reset-btn':['RotateCcw','Reset zoom'],'toolbar-thumbs-btn':['LayoutGrid','Daftar isi dan thumbnail'],'toolbar-sound-btn':['Volume2','Suara kertas'],'toolbar-ambient-btn':['Headphones','Musik latar'],'toolbar-music-settings-btn':['Music','Pengaturan musik'],'toolbar-print-btn':['Printer','Cetak'],'toolbar-download-btn':['Download','Unduh'],'toolbar-add-bookmark-btn':['BookmarkPlus','Tambah bookmark'],'toolbar-bookmarks-btn':['Bookmarks','Daftar bookmark'],'toolbar-share-btn':['Share2','Bagikan buku'],'toolbar-fullscreen-btn':['Maximize','Layar penuh']};
+ function icon(name){const def=window.lucide?.icons?.[name]||window.lucide?.icons?.Bookmark; if(!def||!window.lucide.createElement)return null;const svg=window.lucide.createElement(def);svg.setAttribute('class','compact-nav-icon');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');return svg;}
+ function refresh(b,s){
+  let label=s[1],name=s[0];const text=Array.from(b.childNodes).filter(n=>n.nodeType===3||n.nodeType===1&&!['svg','I'].includes(n.tagName)).map(n=>n.textContent).join(' ').replace(/\s+/g,' ').trim();
+  if(text&&/sound|bookmark/.test(b.id))label+=' — '+text;
+  if(b.title&&/musik|suasana/i.test(b.id))label=b.title;
+  const active=b.classList.contains('nav-tab-3d-active')||b.getAttribute('aria-pressed')==='true'||/Kertas: Aktif/.test(text)||b.id.includes('ambient')&&/Berhenti|Jeda|Aktif:/i.test(b.title);
+  b.dataset.navActive=String(active);if(b.id.startsWith('tab-'))b.setAttribute('aria-current',active?'page':'false');
+  if(b.id==='toolbar-sound-btn'){if(b.getAttribute('aria-pressed')!==String(/Aktif/.test(text)))b.setAttribute('aria-pressed',String(/Aktif/.test(text)));name=/Bisu/.test(text)?'VolumeX':'Volume2';}
+  if(b.getAttribute('aria-label')!==label)b.setAttribute('aria-label',label);
+  b.dataset.navTip=label;
+  const old=b.querySelector('.compact-nav-icon');if(!old||old.dataset.icon!==name){const svg=icon(name);if(svg){svg.dataset.icon=name;if(old)old.remove();b.appendChild(svg);}}
+ }
+ function overflow(parent,ids,label){if(!parent)return;const d=document.createElement('details');d.className='compact-overflow';const sum=document.createElement('summary');sum.setAttribute('aria-label',label);sum.title=label;sum.appendChild(icon('Ellipsis')||document.createTextNode('⋯'));const panel=document.createElement('div');panel.className='compact-overflow-panel';panel.setAttribute('role','group');panel.setAttribute('aria-label',label);d.append(sum,panel);parent.appendChild(d);const mq=matchMedia('(min-width:768px)');d.open=mq.matches;mq.addEventListener('change',()=>d.open=mq.matches);ids.forEach(id=>{const b=document.getElementById(id);if(b)panel.appendChild(b);});d.addEventListener('toggle',()=>sum.setAttribute('aria-expanded',String(d.open)));document.addEventListener('click',e=>{if(!mq.matches&&d.open&&!d.contains(e.target))d.open=false;});d.addEventListener('keydown',e=>{if(!mq.matches&&e.key==='Escape'){d.open=false;sum.focus();}});}
+ function init(){
+  Object.entries(specs).forEach(([id,s])=>{const b=document.getElementById(id);if(!b)return;b.dataset.iconNav='true';refresh(b,s);let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;refresh(b,s);});}).observe(b,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','title','aria-pressed','disabled']});});
+  const h=document.getElementById('header-ambient-btn')?.parentElement; if(h){h.classList.add('compact-header-actions');h.setAttribute('role','group');h.setAttribute('aria-label','Aksi dan pengaturan perpustakaan');overflow(h,['header-branding-settings-btn','header-music-settings-btn','header-cloud-drive-btn','header-crud-etalase-btn','header-admin-auth-btn','header-admin-security-btn','header-admin-logout-btn','header-share-btn'],'Pengaturan dan manajemen');}
+  const r=document.getElementById('toolbar-thumbs-btn')?.parentElement;overflow(r,['toolbar-sound-btn','toolbar-ambient-btn','toolbar-music-settings-btn','toolbar-print-btn','toolbar-download-btn','toolbar-share-btn','toolbar-fullscreen-btn'],'Kontrol pembaca lainnya');
+  const zoom=document.getElementById('zoom-out-btn')?.parentElement;if(zoom)zoom.classList.add('compact-zoom');
+  const tip=document.createElement('div');tip.id='compact-nav-tooltip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);
+  function show(b){if(!b?.dataset.navTip)return;tip.textContent=b.dataset.navTip;tip.hidden=false;const rect=b.getBoundingClientRect();const w=tip.getBoundingClientRect().width;tip.style.left=Math.max(8,Math.min(innerWidth-w-8,rect.left+rect.width/2-w/2))+'px';tip.style.top=(rect.bottom+40<innerHeight?rect.bottom+7:Math.max(8,rect.top-tip.offsetHeight-7))+'px';b.setAttribute('aria-describedby',tip.id);}
+  document.addEventListener('pointerover',e=>show(e.target.closest('[data-icon-nav]')));document.addEventListener('focusin',e=>show(e.target.closest('[data-icon-nav]')));['pointerout','focusout','click','scroll'].forEach(event=>document.addEventListener(event,()=>{tip.hidden=true;},true));
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script></body>
 </html>
 
 
