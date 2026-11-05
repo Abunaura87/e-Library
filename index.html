@@ -287,6 +287,10 @@
       animation: knobHaloPulse 2.2s ease-in-out infinite;
     }
 
+    #thumbnail-grid .thumbnail-retry { display: none; }
+    #thumbnail-grid [data-thumbnail-state="error"] .thumbnail-retry { display: block; }
+    #thumbnail-grid .thumbnail-media { min-height: 0; }
+
     /* Animasi Tarikan Sakelar Membal Elastis (Spring Recoil Physics) */
     .chain-dragging {
       animation: none !important;
@@ -2019,11 +2023,11 @@
           <div class="flex items-center justify-between px-5 py-4 border-b border-[#D4AF37]/40">
             <div>
               <h3 class="text-base font-bold font-serif-editorial text-[#F3E5AB]">Daftar Isi & Grid Thumbnail Halaman</h3>
-              <p class="text-xs text-[#FBF9F5]/70">Klik halaman untuk melompat langsung ke lembaran terkait.</p>
+              <p class="text-xs text-[#FBF9F5]/70">Gambar halaman dimuat otomatis saat digulir. Klik untuk membuka halaman.</p>
             </div>
             <button type="button" id="close-thumbs-btn" class="px-3 py-1 text-xs font-semibold rounded bg-[#0B3B2C] border border-[#D4AF37] text-[#F3E5AB]">Tutup</button>
           </div>
-          <div id="thumbnail-grid" class="flex-1 overflow-y-auto p-5 grid grid-cols-2 gap-4"></div>
+          <div id="thumbnail-grid" class="flex-1 min-h-0 overflow-y-auto p-5 grid grid-cols-2 gap-4 content-start"></div>
         </div>
       </section>
     </div>
@@ -6372,6 +6376,7 @@
       // =========================================================
       async function openBookInReader(book) {
         if (!book) return;
+        closeThumbnailDrawer();
         resetReaderViewport();
         normalizeBookLockState(book);
         activeBookId = book.id;
@@ -7481,29 +7486,224 @@
         }
       }
 
+      // Low-resolution thumbnails have their own bounded cache and render queue.
+      // They never populate/prune the full-size reader page cache or write book data.
+      const thumbnailImageCache = new Map();
+      let thumbnailSession = null;
+      let thumbnailGridPages = null;
+      let thumbnailGridKey = '';
+      let thumbnailLastOpenedKey = '';
+      const THUMBNAIL_CACHE_LIMIT = 96;
+
+      function thumbnailDrawerIsOpen() {
+        const drawer = document.getElementById('thumbnail-drawer');
+        return drawer && !drawer.classList.contains('hidden') && currentView === 'reader' && !isLocked;
+      }
+      function stopThumbnailLoading() {
+        const session = thumbnailSession;
+        thumbnailSession = null;
+        if (!session) return;
+        if (session.observer) session.observer.disconnect();
+        session.queue.length = 0;
+        session.tasks.forEach(task => { try { task.cancel(); } catch {} });
+        session.tasks.clear();
+        document.querySelectorAll('#thumbnail-grid [data-thumbnail-state="queued"], #thumbnail-grid [data-thumbnail-state="loading"]').forEach(card => {
+          card.dataset.thumbnailState = '';
+          thumbnailMessage(card, 'Pratinjau halaman ' + card.dataset.thumbnailPage, false);
+        });
+      }
+      function closeThumbnailDrawer() {
+        document.getElementById('thumbnail-drawer').classList.add('hidden');
+        document.getElementById('toolbar-thumbs-btn').setAttribute('aria-expanded', 'false');
+        stopThumbnailLoading();
+      }
+      function thumbnailSessionIsCurrent(session) {
+        return thumbnailSession === session && activeBookId === session.book.id && thumbnailDrawerIsOpen();
+      }
+      function thumbnailMessage(card, text, loading) {
+        const media = card.querySelector('.thumbnail-media');
+        media.replaceChildren();
+        if (loading) {
+          const spinner = document.createElement('span');
+          spinner.className = 'elib-spinner';
+          spinner.setAttribute('aria-hidden', 'true');
+          media.appendChild(spinner);
+        }
+        const label = document.createElement('span');
+        label.textContent = text;
+        media.appendChild(label);
+        media.setAttribute('aria-busy', String(loading));
+      }
+      function thumbnailShowImage(card, url) {
+        const media = card.querySelector('.thumbnail-media');
+        const img = document.createElement('img');
+        img.alt = 'Pratinjau halaman ' + card.dataset.thumbnailPage;
+        img.className = 'w-full h-full object-contain';
+        img.decoding = 'async';
+        img.onload = () => { media.setAttribute('aria-busy', 'false'); card.dataset.thumbnailState = 'ready'; };
+        img.onerror = () => {
+          card.dataset.thumbnailState = 'error';
+          thumbnailMessage(card, 'Gambar gagal dimuat. Klik Coba lagi.', false);
+        };
+        media.replaceChildren(img);
+        img.src = url;
+      }
+      function thumbnailWait(promise, timeoutMs, cancel) {
+        let timer;
+        return Promise.race([promise, new Promise((_, reject) => {
+          timer = setTimeout(() => { if (cancel) cancel(); reject(new Error('Pratinjau terlalu lama dimuat.')); }, timeoutMs);
+        })]).finally(() => clearTimeout(timer));
+      }
+      async function createPdfThumbnail(session, pageNumber) {
+        let canvas = null, renderTask = null;
+        try {
+          const pdf = await thumbnailWait(loadPdfDocumentForReader(session.book), 30000);
+          if (!thumbnailSessionIsCurrent(session)) return null;
+          if (!pdf || pageNumber > pdf.numPages) throw new Error('Sumber PDF belum tersedia.');
+          const page = await thumbnailWait(pdf.getPage(pageNumber), 15000);
+          if (!thumbnailSessionIsCurrent(session)) return null;
+          const base = page.getViewport({ scale: 1 });
+          const viewport = page.getViewport({ scale: Math.min(240 / base.width, 340 / base.height) });
+          canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(viewport.width));
+          canvas.height = Math.max(1, Math.round(viewport.height));
+          renderTask = page.render({canvasContext: canvas.getContext('2d', {alpha:false}), viewport, background:'#ffffff'});
+          session.tasks.add(renderTask);
+          await thumbnailWait(renderTask.promise, 15000, () => renderTask.cancel());
+          if (!thumbnailSessionIsCurrent(session)) return null;
+          return canvas.toDataURL('image/jpeg', 0.72);
+        } finally {
+          if (renderTask) session.tasks.delete(renderTask);
+          if (canvas) { canvas.width = 0; canvas.height = 0; }
+        }
+      }
+      function queueThumbnail(session, card) {
+        if (!thumbnailSessionIsCurrent(session) || !session.visible.has(card)) return;
+        if (['queued','loading','ready','error'].includes(card.dataset.thumbnailState)) return;
+        const number = Number(card.dataset.thumbnailPage);
+        const page = session.pages[number - 1];
+        const key = session.key + ':' + number;
+        const cached = thumbnailImageCache.get(key);
+        if (cached) {
+          thumbnailImageCache.delete(key); thumbnailImageCache.set(key, cached);
+          thumbnailShowImage(card, cached); return;
+        }
+        // Image/custom books already provide their page images. PDF thumbnails
+        // are rendered separately at a small size, including never-visited pages.
+        if (page && page.dataUrl && (!session.isPdf || number === 1)) {
+          thumbnailShowImage(card, page.dataUrl); return;
+        }
+        card.dataset.thumbnailState = 'queued';
+        thumbnailMessage(card, 'Memuat pratinjau...', true);
+        session.queue.push(card);
+        pumpThumbnailQueue(session);
+      }
+      async function pumpThumbnailQueue(session) {
+        if (!thumbnailSessionIsCurrent(session) || session.running >= 2) return;
+        const card = session.queue.shift();
+        if (!card) return;
+        if (!session.visible.has(card)) { card.dataset.thumbnailState = ''; pumpThumbnailQueue(session); return; }
+        session.running++;
+        card.dataset.thumbnailState = 'loading';
+        const number = Number(card.dataset.thumbnailPage);
+        try {
+          if (!session.isPdf) throw new Error('Gambar halaman belum tersedia.');
+          const url = await createPdfThumbnail(session, number);
+          if (!url || !thumbnailSessionIsCurrent(session)) return;
+          const key = session.key + ':' + number;
+          thumbnailImageCache.set(key, url);
+          while (thumbnailImageCache.size > THUMBNAIL_CACHE_LIMIT) thumbnailImageCache.delete(thumbnailImageCache.keys().next().value);
+          if (session.visible.has(card)) thumbnailShowImage(card, url);
+          else { card.dataset.thumbnailState = ''; thumbnailMessage(card, 'Pratinjau halaman ' + number, false); }
+        } catch (error) {
+          if (thumbnailSessionIsCurrent(session)) {
+            card.dataset.thumbnailState = 'error';
+            thumbnailMessage(card, 'Pratinjau gagal dimuat. Klik Coba lagi.', false);
+          }
+        } finally {
+          session.running--;
+          pumpThumbnailQueue(session);
+        }
+      }
+      function startThumbnailLoading() {
+        if (!thumbnailDrawerIsOpen()) return;
+        stopThumbnailLoading();
+        const book = books.find(b => b.id === activeBookId);
+        if (!book) return;
+        const grid = document.getElementById('thumbnail-grid');
+        if (thumbnailLastOpenedKey !== thumbnailGridKey) { grid.scrollTop = 0; thumbnailLastOpenedKey = thumbnailGridKey; }
+        const asset = bookAssetsCache[book.id] || {};
+        const session = {book:{...book}, key:thumbnailGridKey, pages:pagesDataUrls,
+          isPdf:Boolean(book.pdfUrl || book.drivePdfFileId || book.driveFileId || asset.pdfDataUrl || asset.pdfUrl),
+          queue:[], running:0, tasks:new Set(), visible:new Set(), observer:null};
+        thumbnailSession = session;
+        if ('IntersectionObserver' in window) {
+          session.observer = new IntersectionObserver(entries => {
+            if (!thumbnailSessionIsCurrent(session)) return;
+            entries.forEach(entry => {
+              const card = entry.target;
+              if (entry.isIntersecting) { session.visible.add(card); queueThumbnail(session, card); }
+              else {
+                session.visible.delete(card);
+                if (card.dataset.thumbnailState === 'ready') {
+                  card.dataset.thumbnailState = '';
+                  thumbnailMessage(card, 'Pratinjau halaman ' + card.dataset.thumbnailPage, false);
+                }
+              }
+            });
+          }, {root:grid, rootMargin:'300px 0px', threshold:0.01});
+          grid.querySelectorAll('[data-thumbnail-page]').forEach(card => session.observer.observe(card));
+        } else {
+          const update = () => {
+            if (!thumbnailSessionIsCurrent(session)) return;
+            const bounds = grid.getBoundingClientRect();
+            grid.querySelectorAll('[data-thumbnail-page]').forEach(card => {
+              const r = card.getBoundingClientRect();
+              if (r.bottom >= bounds.top - 300 && r.top <= bounds.bottom + 300) {session.visible.add(card); queueThumbnail(session, card);}
+              else session.visible.delete(card);
+            });
+          };
+          grid.onscroll = update; update();
+        }
+      }
       function renderThumbnailsGrid() {
         const grid = document.getElementById('thumbnail-grid');
-        grid.innerHTML = '';
-        pagesDataUrls.forEach((p) => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'flex flex-col items-start p-2.5 rounded-lg border border-[#D4AF37]/40 bg-[#0B3B2C]/80 hover:border-[#D4AF37] text-left transition-all';
-          const thumbMediaHtml = p.dataUrl
-            ? '<img src="' + p.dataUrl + '" alt="Thumbnail ' + p.pageNumber + '" class="w-full aspect-[3/4] object-contain bg-[#072A20] rounded mb-2 border border-[#D4AF37]/25" />'
-            : '<div class="w-full aspect-[3/4] flex flex-col items-center justify-center bg-[#072A20] rounded mb-2 border border-[#D4AF37]/25 text-[10px] text-[#F3E5AB]/70 gap-1.5"><i data-lucide="file-text" class="w-4 h-4 text-[#D4AF37]"></i><span>Hal ' + p.pageNumber + '</span></div>';
-          btn.innerHTML =
-            thumbMediaHtml +
-            '<span class="text-[11px] font-mono-tabular text-[#D4AF37]">Halaman ' + p.pageNumber + '</span>' +
-            '<span class="text-xs font-serif-editorial font-bold text-[#F3E5AB] truncate w-full">' + p.title + '</span>';
-          btn.onclick = () => {
-            const targetP = p.pageNumber;
-            const dir = targetP >= currentPage ? 'forward' : 'backward';
-            triggerRealisticPageTurn(targetP, dir);
-            document.getElementById('thumbnail-drawer').classList.add('hidden');
+        const book = books.find(b => b.id === activeBookId);
+        const key = (book ? book.id + ':' + (book.updatedAt || 0) : '') + ':' + pagesDataUrls.length;
+        if (thumbnailGridPages === pagesDataUrls && thumbnailGridKey === key) {
+          if (thumbnailDrawerIsOpen() && !thumbnailSession) startThumbnailLoading();
+          return;
+        }
+        stopThumbnailLoading();
+        thumbnailGridPages = pagesDataUrls; thumbnailGridKey = key;
+        grid.replaceChildren(); grid.scrollTop = 0;
+        const fragment = document.createDocumentFragment();
+        pagesDataUrls.forEach(p => {
+          const card = document.createElement('div');
+          card.dataset.thumbnailPage = String(p.pageNumber);
+          card.className = 'min-w-0 flex flex-col p-2.5 rounded-lg border border-[#D4AF37]/40 bg-[#0B3B2C]/80';
+          const jump = document.createElement('button');
+          jump.type = 'button'; jump.className = 'w-full text-left';
+          jump.setAttribute('aria-label', 'Buka halaman ' + p.pageNumber);
+          const media = document.createElement('span');
+          media.className = 'thumbnail-media w-full aspect-[3/4] flex flex-col items-center justify-center bg-[#072A20] rounded mb-2 border border-[#D4AF37]/25 text-[10px] text-[#F3E5AB]/70 gap-2 overflow-hidden';
+          const number = document.createElement('span'); number.className = 'block text-[11px] font-mono-tabular text-[#D4AF37]'; number.textContent = 'Halaman ' + p.pageNumber;
+          const title = document.createElement('span'); title.className = 'block text-xs font-serif-editorial font-bold text-[#F3E5AB] truncate w-full'; title.textContent = p.title || number.textContent;
+          jump.append(media, number, title); card.appendChild(jump);
+          thumbnailMessage(card, 'Pratinjau halaman ' + p.pageNumber, false);
+          jump.onclick = () => {
+            if (isLocked) return;
+            closeThumbnailDrawer();
+            triggerRealisticPageTurn(p.pageNumber, p.pageNumber >= currentPage ? 'forward' : 'backward');
           };
-          grid.appendChild(btn);
+          const retry = document.createElement('button'); retry.type = 'button';
+          retry.className = 'thumbnail-retry text-[11px] text-[#F3E5AB] underline mt-1';
+          retry.textContent = 'Coba lagi'; retry.setAttribute('aria-label', 'Coba lagi pratinjau halaman ' + p.pageNumber);
+          retry.onclick = () => {if (!thumbnailSession) return; card.dataset.thumbnailState = ''; queueThumbnail(thumbnailSession, card);};
+          card.appendChild(retry); fragment.appendChild(card);
         });
-        if (window.lucide) window.lucide.createIcons();
+        grid.appendChild(fragment);
+        if (thumbnailDrawerIsOpen()) startThumbnailLoading();
       }
 
       let lastPageNavTimestamp = 0;
@@ -7594,6 +7794,7 @@
       }
 
       function switchViewTo(view) {
+        if (view !== 'reader') closeThumbnailDrawer();
         currentView = view;
         syncSiaReaderFocus();
         const viewLobby = document.getElementById('view-lobby');
@@ -11415,12 +11616,18 @@
       setInterval(()=>{if(!document.hidden)void refreshSharedMusic();},30000);
       document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshSharedMusic();});
 
+      document.getElementById('toolbar-thumbs-btn').setAttribute('aria-controls', 'thumbnail-drawer');
+      document.getElementById('toolbar-thumbs-btn').setAttribute('aria-expanded', 'false');
       document.getElementById('toolbar-thumbs-btn').onclick = () => {
-        document.getElementById('thumbnail-drawer').classList.toggle('hidden');
+        if (isLocked) return;
+        const drawer = document.getElementById('thumbnail-drawer');
+        if (!drawer.classList.contains('hidden')) { closeThumbnailDrawer(); return; }
+        drawer.classList.remove('hidden');
+        document.getElementById('toolbar-thumbs-btn').setAttribute('aria-expanded', 'true');
+        renderThumbnailsGrid();
+        if (!thumbnailSession) startThumbnailLoading();
       };
-      document.getElementById('close-thumbs-btn').onclick = () => {
-        document.getElementById('thumbnail-drawer').classList.add('hidden');
-      };
+      document.getElementById('close-thumbs-btn').onclick = closeThumbnailDrawer;
 
       document.getElementById('toolbar-fullscreen-btn').onclick = () => {
         const stage = document.getElementById('reader-stage');
@@ -13415,6 +13622,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
       const strictReaderCache=new Map();
       openBookInReader=async function(book){
         if(!book)return;
+        closeThumbnailDrawer();
         const stopOpen=elibBusyActive(),stopNav=elibBusy(document.getElementById('tab-reader-btn'));
         const request=++strictReaderRequest;
         const revision=Number(book.updatedAt)||0;
@@ -13915,6 +14123,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
   </script>
 </body>
 </html>
+
 
 
 
