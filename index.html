@@ -1286,6 +1286,40 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
 @media (max-width:359px) {#view-lobby .catalog-books-row {gap:3px;padding-left:8px;padding-right:8px;}#view-lobby .catalog-books-row > .shelf-book-item {width:16px;}#view-lobby .catalog-books-row > .shelf-book-item:has(img) {width:56px;}#view-lobby .catalog-books-row > .shelf-book-item:has(img):nth-child(2n) {width:46px;}#view-lobby .catalog-books-row > div:not(.shelf-book-item) {width:40px;}}
 @media (prefers-reduced-motion:reduce) {#view-lobby .cubby-box,#view-lobby .shelf-book-item {transition:none;}}
 </style>
+
+<style id="catalog-book-interactions-v1">
+#view-lobby .cubby-interactive:hover .classical-plaque,#view-lobby .cubby-interactive:focus-within .classical-plaque,#view-lobby .cubby-interactive:hover .cubby-top-meta,#view-lobby .cubby-interactive:focus-within .cubby-top-meta{opacity:1;transform:none;pointer-events:auto}
+#view-lobby .cubby-interactive{cursor:default}
+#view-lobby .catalog-books-row{display:flex;align-items:flex-end;justify-content:safe center;gap:5px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#bba66d transparent;scroll-padding:12px;min-height:174px;padding:14px 12px 0}
+#view-lobby .catalog-books-row::after{display:none}
+#view-lobby button.catalog-book-trigger{appearance:none;position:relative;flex-shrink:0;cursor:pointer;border:1px solid #a98640;border-left:3px solid #ead598;border-radius:2px 3px 1px 1px;padding:0;background:linear-gradient(90deg,#ffffff25,transparent 30%,#0003),var(--book-color);width:24px;height:var(--book-height);transform:rotate(var(--book-tilt));transform-origin:center bottom;box-shadow:2px 1px 3px #132b274d,inset -2px 0 2px #0005;transition:transform .2s,filter .2s;overflow:hidden}
+#view-lobby button.catalog-book-cover{width:64px;height:140px}
+#view-lobby button.catalog-book-cover img{width:100%;height:100%;object-fit:fill;display:block}
+#view-lobby .catalog-spine-title{writing-mode:vertical-rl;display:block;max-height:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:9px/18px Georgia,serif;color:#f3e5ab;margin:8px auto}
+#view-lobby .catalog-book-spine::after{content:'';position:absolute;left:2px;right:2px;bottom:4px;border-bottom:2px solid #d4af37}
+#view-lobby .catalog-real-stack{display:flex;flex-direction:column-reverse;justify-content:flex-start;flex-shrink:0;gap:2px;padding-right:2px}
+#view-lobby button.catalog-book-horizontal{width:60px;height:22px;border-left-width:1px;border-bottom:3px solid #e4d8b6;transform:none}
+#view-lobby .catalog-book-horizontal .catalog-spine-title{writing-mode:horizontal-tb;max-height:100%;line-height:15px;margin:0 3px;font-size:8px}
+#view-lobby button.catalog-book-trigger:hover,#view-lobby button.catalog-book-trigger:focus-visible{transform:translateY(-9px) rotate(0deg) scale(1.07);filter:brightness(1.12);outline:2px solid #d4af37;outline-offset:2px;z-index:2}
+#view-lobby .catalog-book-trigger::before{display:none}
+#view-lobby .catalog-books-row>.catalog-book-spine:not(:has(img))::after{content:'';position:absolute;left:2px;right:2px;top:auto;bottom:4px;transform:none;border-bottom:2px solid #d4af37}
+#view-lobby .catalog-rack-actions{display:flex;justify-content:center;align-items:center;gap:6px;padding:5px 8px 7px;background:#ead9b8}
+#view-lobby .catalog-open-rack{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #b4954c;border-radius:4px;padding:6px 12px;color:#0b3b2c;background:#fff9eb;font-size:11px;font-weight:700;min-height:32px;cursor:pointer}
+#view-lobby .catalog-open-rack svg{width:15px;height:15px}
+#view-lobby .catalog-open-rack:focus-visible{outline:2px solid #0b3b2c;outline-offset:2px}
+.catalog-empty-rack{align-self:center;font-size:12px;color:#536859}
+#catalog-book-preview{position:fixed;z-index:44;width:204px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:13px;background:linear-gradient(145deg,#fff9ed,#efe0c2);color:#0b3b2c;border:1px solid #b5954b;border-radius:8px;box-shadow:0 16px 32px #072a2059}
+#catalog-book-preview[hidden]{display:none}
+.catalog-preview-open{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;border:0;background:transparent;color:inherit;cursor:pointer;text-align:center}
+.catalog-preview-open img{height:165px;max-width:135px;object-fit:contain;filter:drop-shadow(4px 5px 3px #072a2040)}
+.catalog-preview-open strong{font:700 14px/1.25 Georgia,serif;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.catalog-preview-open>span{font-size:11px;line-height:1.3;max-height:29px;overflow:hidden}
+.catalog-preview-open b{font:700 12px/1.4 sans-serif;background:#0b3b2c;color:#f3e5ab;padding:7px 14px;border-radius:4px;width:100%}
+.catalog-preview-close{position:absolute;right:3px;top:3px;width:28px;height:28px;z-index:1;border:0;border-radius:50%;background:#fff9ed;color:#0b3b2c;font-size:22px;cursor:pointer}
+.catalog-preview-fallback{display:grid;place-items:center;width:110px;height:145px;background:#0b3b2c;color:#d4af37;border:3px double #d4af37;font-size:48px!important;max-height:none!important}
+@media(max-width:767px){#view-lobby .catalog-books-row{min-height:166px;height:166px}#view-lobby .catalog-open-rack{min-height:40px}#view-lobby button.catalog-book-spine{width:30px}#catalog-book-preview{width:190px}.catalog-preview-open img{height:140px}}
+@media(prefers-reduced-motion:reduce){#view-lobby button.catalog-book-trigger{transition:none}}
+</style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
   <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
@@ -1542,7 +1576,7 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
             e-Library
           </h1>
           <p class="text-[11px] sm:text-sm text-[#12543F] font-serif-editorial italic mt-0.5">
-            Arahkan kursor ke kotak rak untuk meninjau detail klasifikasi, lalu klik untuk membuka etalase koleksi buku 3D.
+            Sorot buku untuk melihat sampul, klik untuk membaca. Geser deretan buku atau pilih “Lihat isi rak” untuk menjelajahi koleksi.
           </p>
         </div>
 
@@ -6036,52 +6070,94 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
       // =========================================================
       // VISUALISASI SUSUNAN BUKU 3D DI DALAM KOTAK RAK PUTIH (KOMPAK)
       // =========================================================
+      // Each visible volume represents a real catalog entry; previews never fetch reader data.
       function buildCubbyBooksVisual(shelf, shelfBooks) {
-        const spinePalette = ['#0B3B2C', '#9E7B1C', '#14532D', '#0F4C3A', '#854D0E', '#1E3A8A', '#78350F', '#115E59'];
-        let html = '<div class="catalog-books-row flex items-end justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 lg:px-4 pt-1 sm:pt-2.5 pb-[5px] h-20 sm:h-28 lg:h-32 relative z-10">';
+        const stacked = /^(stacked-and-leaning|mixed-stack)$/.test(shelf.bookStyle) && shelfBooks.length > 3;
+        const makeBook = (book, i, horizontal) => {
+          const cover = !horizontal && i < (stacked ? 4 : 2) && book.coverUrl;
+          const tilt = i === shelfBooks.length - 1 && shelf.bookStyle !== 'standing-row' ? '6deg' : i === 0 && shelf.bookStyle === 'leaning-left' ? '-5deg' : '0deg';
+          const color = /^#[0-9a-f]{3,8}$/i.test(book.spineColor || '') ? book.spineColor : '#0B3B2C';
+          return '<button type="button" class="shelf-book-item catalog-book-trigger ' + (horizontal ? 'catalog-book-horizontal' : cover ? 'catalog-book-cover' : 'catalog-book-spine') + '" data-book-id="' + escapeHtml(String(book.id)) + '" aria-label="Buka buku ' + escapeHtml(book.title) + '" aria-haspopup="dialog" aria-expanded="false" style="--book-tilt:' + tilt + ';--book-color:' + color + ';--book-height:' + (i % 3 === 0 ? 136 : i % 2 === 0 ? 118 : 108) + 'px">' +
+            (cover ? '<img src="' + escapeHtml(book.coverUrl) + '" alt="" loading="lazy" decoding="async" />' : '<span class="catalog-spine-title" dir="auto">' + escapeHtml(book.title) + '</span>') + '</button>';
+        };
+        let html = '<div class="catalog-books-row" aria-label="Buku dalam rak ' + escapeHtml(shelf.name) + '">';
+        if (!shelfBooks.length) html += '<span class="catalog-empty-rack">Belum ada buku</span>';
+        if (stacked) html += '<div class="catalog-real-stack">' + shelfBooks.slice(0, 2).map((book, i) => makeBook(book, i, true)).join('') + '</div>';
+        html += shelfBooks.slice(stacked ? 2 : 0).map((book, i) => makeBook(book, i + (stacked ? 2 : 0), false)).join('');
+        return html + '</div>';
+      }
 
-        // Tumpukan buku horizontal di sisi kiri pada rak tertentu (seperti gambar referensi)
-        if (shelf.bookStyle === 'stacked-and-leaning' || shelf.bookStyle === 'mixed-stack') {
-          html +=
-            '<div class="flex flex-col justify-end mr-1 sm:mr-2 shrink-0">' +
-              '<div class="shelf-book-item w-8 sm:w-14 h-2 sm:h-3.5 rounded-[1px] bg-[#D4AF37] border-b border-[#072A20]/30"></div>' +
-              '<div class="shelf-book-item w-9 sm:w-16 h-2.5 sm:h-4 rounded-[1px] bg-[#0B3B2C] border-b border-[#D4AF37]/40"></div>' +
-              '<div class="shelf-book-item w-8.5 sm:w-15 h-2 sm:h-3.5 rounded-[1px] bg-[#14532D] border-b border-[#D4AF37]/30"></div>' +
-              '<div class="shelf-book-item w-9 sm:w-16 h-2.5 sm:h-4 rounded-[1px] bg-[#9E7B1C]"></div>' +
-            '</div>';
+      var catalogBookPreview = null, catalogPreviewTrigger = null, catalogPreviewTimer = null, catalogPreviewPinned = false;
+      function closeCatalogBookPreview() {
+        clearTimeout(catalogPreviewTimer);
+        if (catalogPreviewTrigger) catalogPreviewTrigger.setAttribute('aria-expanded', 'false');
+        if (catalogBookPreview) catalogBookPreview.hidden = true;
+        catalogPreviewTrigger = null; catalogPreviewPinned = false;
+      }
+      function showCatalogBookPreview(trigger, book, pinned) {
+        clearTimeout(catalogPreviewTimer);
+        if (catalogPreviewTrigger && catalogPreviewTrigger !== trigger) catalogPreviewTrigger.setAttribute('aria-expanded', 'false');
+        if (!catalogBookPreview) {
+          catalogBookPreview = document.createElement('div');
+          catalogBookPreview.id = 'catalog-book-preview';
+          catalogBookPreview.setAttribute('role', 'dialog');
+          catalogBookPreview.setAttribute('aria-label', 'Pratinjau buku');
+          document.body.appendChild(catalogBookPreview);
+          catalogBookPreview.onpointerenter = () => clearTimeout(catalogPreviewTimer);
+          catalogBookPreview.onpointerleave = () => { if (!catalogPreviewPinned) catalogPreviewTimer = setTimeout(closeCatalogBookPreview, 180); };
+          catalogBookPreview.onfocusout = event => { if (!catalogBookPreview.contains(event.relatedTarget) && event.relatedTarget !== catalogPreviewTrigger) closeCatalogBookPreview(); };
+          document.addEventListener('pointerdown', event => {
+            if (catalogPreviewTrigger && !catalogBookPreview.contains(event.target) && !event.target.closest('.catalog-book-trigger')) closeCatalogBookPreview();
+          });
+          document.addEventListener('keydown', event => { if (event.key === 'Escape' && catalogPreviewTrigger) { const target = catalogPreviewTrigger; target.focus({preventScroll:true}); closeCatalogBookPreview(); } });
+          window.addEventListener('resize', positionCatalogBookPreview);
+          window.addEventListener('scroll', positionCatalogBookPreview, true);
         }
-
-        // Deretan buku berdiri & miring dengan sampul/punggung asli (skala adaptif HP)
-        const count = Math.max(3, Math.min(6, shelfBooks.length + 2));
-        for (let i = 0; i < count; i++) {
-          const matchedBook = shelfBooks[i];
-          const color = matchedBook ? (matchedBook.spineColor || shelf.accent) : spinePalette[(i + shelf.id.length) % spinePalette.length];
-          const heightClass = i % 3 === 0 ? 'h-14 sm:h-20 lg:h-24' : i % 2 === 0 ? 'h-11 sm:h-16 lg:h-20' : 'h-12 sm:h-18 lg:h-22';
-          const tiltStyle = (i === count - 1 && shelf.bookStyle !== 'standing-row')
-            ? 'transform: rotate(6deg); margin-left: 2px;'
-            : (i === 0 && shelf.bookStyle === 'leaning-left')
-            ? 'transform: rotate(-5deg); margin-right: 2px;'
-            : '';
-
-          if (matchedBook && matchedBook.coverUrl && i < 2) {
-            // Tampilkan miniatur sampul 3D buku asli
-            html +=
-              '<div class="shelf-book-item relative w-7 sm:w-10 lg:w-11 ' + heightClass + ' rounded-[2px] overflow-hidden border border-[#D4AF37]/60 shrink-0" style="' + tiltStyle + '">' +
-                '<img src="' + matchedBook.coverUrl + '" alt="' + escapeHtml(matchedBook.title) + '" class="w-full h-full object-cover" />' +
-                '<div class="absolute inset-y-0 left-0 w-1 sm:w-1.5 bg-[#072A20]/60"></div>' +
-              '</div>';
-          } else {
-            // Punggung buku hardcover klasik
-            html +=
-              '<div class="shelf-book-item relative w-2.5 sm:w-4 lg:w-5 ' + heightClass + ' rounded-t-[2px] shrink-0 flex flex-col justify-between py-1.5 sm:py-2 px-0.5 border-l border-[#F3E5AB]/30" style="background-color:' + color + '; ' + tiltStyle + '">' +
-                '<div class="w-full h-[1.5px] sm:h-[2px] bg-[#D4AF37]/80"></div>' +
-                '<div class="w-full h-[1.5px] sm:h-[2px] bg-[#D4AF37]/60"></div>' +
-              '</div>';
-          }
-        }
-
-        html += '</div>';
-        return html;
+        catalogPreviewTrigger = trigger; catalogPreviewPinned = !!pinned;
+        trigger.setAttribute('aria-expanded', 'true');
+        catalogBookPreview.innerHTML = '<button type="button" class="catalog-preview-close" aria-label="Tutup pratinjau">×</button>' +
+          '<button type="button" class="catalog-preview-open" aria-label="Buka buku ' + escapeHtml(book.title) + '">' +
+          (book.coverUrl ? '<img src="' + escapeHtml(book.coverUrl) + '" alt="Sampul ' + escapeHtml(book.title) + '" decoding="async" />' : '<span class="catalog-preview-fallback" aria-hidden="true">▤</span>') +
+          '<strong dir="auto">' + escapeHtml(book.title) + '</strong><span dir="auto">' + escapeHtml(book.author || '') + '</span><b>Buka Buku</b></button>';
+        catalogBookPreview.querySelector('.catalog-preview-close').onclick = closeCatalogBookPreview;
+        catalogBookPreview.querySelector('.catalog-preview-open').onclick = () => openCatalogBook(book, trigger);
+        catalogBookPreview.hidden = false;
+        positionCatalogBookPreview();
+      }
+      function positionCatalogBookPreview() {
+        if (!catalogPreviewTrigger || !catalogBookPreview || catalogBookPreview.hidden) return;
+        const rect = catalogPreviewTrigger.getBoundingClientRect(), box = catalogBookPreview.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > window.innerHeight) { closeCatalogBookPreview(); return; }
+        catalogBookPreview.style.left = Math.max(12, Math.min(window.innerWidth - box.width - 12, rect.left + rect.width / 2 - box.width / 2)) + 'px';
+        const above = rect.top - box.height - 10;
+        const bottomInset = window.innerWidth < 768 ? 112 : 12;
+        catalogBookPreview.style.top = Math.max(12, Math.min(window.innerHeight - box.height - bottomInset, above >= 64 ? above : rect.bottom + 10)) + 'px';
+      }
+      async function openCatalogBook(book, trigger) {
+        if (trigger.getAttribute('aria-busy') === 'true') return;
+        closeCatalogBookPreview();
+        const stop = elibBusy(trigger);
+        try { await openBookInReader(book); }
+        catch (error) { console.error('Catalog reader:', error); showToast('Buku belum dapat dibuka. Silakan coba kembali.'); }
+        finally { stop(); }
+      }
+      function bindCatalogBookInteractions(cubby, shelf, shelfBooks) {
+        cubby.querySelectorAll('.catalog-book-trigger').forEach(trigger => {
+          const book = shelfBooks.find(item => String(item.id) === trigger.dataset.bookId);
+          if (!book) return;
+          trigger.onpointerenter = event => { if (event.pointerType !== 'touch') showCatalogBookPreview(trigger, book, false); };
+          trigger.onpointerleave = () => { if (!catalogPreviewPinned) catalogPreviewTimer = setTimeout(closeCatalogBookPreview, 180); };
+          trigger.onfocus = () => showCatalogBookPreview(trigger, book, false);
+          trigger.onblur = event => { if (!catalogBookPreview || !catalogBookPreview.contains(event.relatedTarget)) closeCatalogBookPreview(); };
+          let touch = false;
+          trigger.onpointerdown = event => { touch = event.pointerType === 'touch'; };
+          trigger.onclick = event => {
+            event.stopPropagation();
+            if (touch) { showCatalogBookPreview(trigger, book, true); touch = false; }
+            else openCatalogBook(book, trigger);
+          };
+        });
+        cubby.querySelector('.catalog-open-rack').onclick = () => { closeCatalogBookPreview(); openShelfView(shelf.id); };
       }
 
       // =========================================================
@@ -6128,6 +6204,7 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
         const container = document.getElementById('shelves-grid-container');
         if(elibGate(container,searchQuery,'racks'))return;
         container.setAttribute('aria-busy','false');
+        closeCatalogBookPreview();
         container.innerHTML = '';
         const q = (searchQuery || '').toLowerCase().trim();
 
@@ -6153,19 +6230,10 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
           const spanClass = shelf.colSpan || 'lg:col-span-4';
 
           const cubby = document.createElement('article');
-          cubby.setAttribute('tabindex', '0');
-          cubby.setAttribute('role', 'button');
+          cubby.setAttribute('role', 'group');
           cubby.setAttribute('aria-label', shelf.code + ' ' + shelf.name + ' (' + shelfBooks.length + ' buku)');
           // Di layar HP: 2 kolom berjejer (col-span-1), di tablet 3 kolom (md:col-span-1), di desktop spanClass (lg:col-span-X)
           cubby.className = 'cubby-box cubby-interactive group col-span-1 md:col-span-1 ' + spanClass + ' rounded-[2px] flex flex-col justify-between p-2 sm:p-3.5 cursor-pointer select-none';
-          cubby.onclick = () => {const stop=elibBusy(cubby);openShelfView(shelf.id);setTimeout(stop,180);};
-          cubby.onkeydown = (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openShelfView(shelf.id);
-            }
-          };
-
           const previewTitles = shelfBooks.length > 0
             ? shelfBooks.slice(0, 2).map((b) => '<li class="truncate flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0"></span><span class="truncate">' + b.title + '</span></li>').join('')
             : '<li class="italic text-[#F3E5AB]/75">Belum ada koleksi buku di rak ini</li>';
@@ -6203,36 +6271,9 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
               '</div>' +
             '</div>' +
 
-            '<!-- TAMPILAN DETAIL LABEL BUKU MENYEMBUL SAAT KURSOR MENGARAH (KOMPAK & BEBAS TABRAKAN) -->' +
-            '<div class="cubby-popout-card absolute inset-1 sm:inset-2 z-40 rounded-md sm:rounded-xl p-2 sm:p-3 text-left text-[#F9F6EE] flex flex-col justify-between">' +
-              '<div>' +
-                '<div class="flex items-center justify-between gap-1 border-b border-[#D4AF37]/30 pb-1 mb-1">' +
-                  '<span class="text-[8px] sm:text-[10px] font-display-classical uppercase tracking-wider text-[#F3E5AB] font-bold truncate">' +
-                    shelf.code +
-                  '</span>' +
-                  '<span class="text-[8px] sm:text-[10px] font-mono-tabular px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded bg-[#D4AF37] text-[#072A20] font-bold shrink-0">' +
-                    shelfBooks.length + ' Buku' +
-                  '</span>' +
-                '</div>' +
-                '<h4 class="text-xs sm:text-sm md:text-base font-bold font-serif-editorial text-white leading-tight line-clamp-1 sm:line-clamp-2">' +
-                  shelf.name +
-                '</h4>' +
-                '<p class="text-[9px] sm:text-[11px] text-[#E6E1D6] mt-0.5 line-clamp-1 sm:line-clamp-2 leading-tight">' +
-                  shelf.description +
-                '</p>' +
-                '<ul class="hidden sm:block mt-1.5 space-y-0.5 text-[10px] sm:text-[11px] text-[#F3E5AB] font-sans border-t border-[#D4AF37]/25 pt-1">' +
-                  previewTitles +
-                '</ul>' +
-              '</div>' +
-              '<div class="pt-1.5 border-t border-[#D4AF37]/30 flex items-center justify-between gap-1 text-[9px] sm:text-[11px] font-bold text-[#F3E5AB]">' +
-                '<span class="flex items-center gap-1 hover:underline truncate">' +
-                  '<span>Buka Koleksi 3D</span>' +
-                  '<i data-lucide="arrow-up-right" class="w-3 h-3 text-[#D4AF37] shrink-0"></i>' +
-                '</span>' +
-                adminQuickEditBtnHtml +
-              '</div>' +
-            '</div>';
+            '<div class="catalog-rack-actions"><button type="button" class="catalog-open-rack" aria-label="Lihat isi rak ' + escapeHtml(shelf.name) + '"><i data-lucide="library" aria-hidden="true"></i><span>Lihat isi rak</span><span aria-hidden="true">&rsaquo;</span></button>' + adminQuickEditBtnHtml + '</div>';
 
+          bindCatalogBookInteractions(cubby, shelf, shelfBooks);
           container.appendChild(cubby);
         });
 
