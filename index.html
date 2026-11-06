@@ -6264,7 +6264,7 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
             '<!-- Baris Atas: Nomor Rak & Badge Jumlah Buku (Otomatis Meredup Saat Hover) -->' +
             '<div class="cubby-top-meta flex items-center justify-between gap-1 sm:gap-2 z-10">' +
               '<span class="text-[8px] sm:text-[10px] font-display-classical uppercase tracking-wider px-1.5 sm:px-2.5 py-0.5 rounded bg-[#0B3B2C]/10 text-[#072A20] font-bold border border-[#D4AF37]/50 truncate">' +
-                'KOTAK #' + String(idx + 1).padStart(2, '0') +
+                'KOTAK #' + String(shelves.findIndex(r=>r.id===shelf.id) + 1).padStart(2, '0') +
               '</span>' +
               '<span class="text-[8px] sm:text-[11px] font-mono-tabular font-semibold px-1.5 sm:px-2.5 py-0.5 rounded bg-[#0B3B2C] text-[#F3E5AB] border border-[#D4AF37]/60 shadow-2xs shrink-0">' +
                 shelfBooks.length + ' Buku' +
@@ -10983,35 +10983,58 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
         document.getElementById('modal-admin-shelves-crud').classList.add('hidden');
       }
 
-      function reorderShelfBox(shelfId, direction) {
-        const currIdx = shelves.findIndex((s) => s.id === shelfId);
-        if (currIdx < 0) return;
-        const targetIdx = direction === 'up' ? currIdx - 1 : currIdx + 1;
-        if (targetIdx < 0 || targetIdx >= shelves.length) return;
-
-        const nowTs = Date.now();
-        const temp = shelves[targetIdx];
-        shelves[targetIdx] = shelves[currIdx];
-        shelves[currIdx] = temp;
-        shelves.forEach((s, idx) => {
-          s.orderIndex = idx;
-          s.updatedAt = nowTs;
-          s.isCustomEdited = true;
-        });
-
-        saveShelvesToStorage(true);
-        if (window.SheetsApiHandler) {
-          window.SheetsApiHandler.saveRack(shelves[targetIdx], shelves).catch(() => {});
+      // Persist a complete, contiguous ordering without changing rack IDs or book membership.
+      var shelfOrderSavePending = false;
+      function sortRacksBySavedOrder(racks) {
+        return racks.map((rack, index) => ({rack, index, order: rack.orderIndex === null || rack.orderIndex === undefined || rack.orderIndex === '' ? index : Number(rack.orderIndex)}))
+          .sort((a,b) => (Number.isFinite(a.order) ? a.order : a.index) - (Number.isFinite(b.order) ? b.order : b.index) || a.index - b.index)
+          .map(item => ({...item.rack}));
+      }
+      function planShelfPlacement(racks, id, target, patch) {
+        const next = racks.map(rack => ({...rack}));
+        const from = next.findIndex(rack => String(rack.id) === String(id));
+        if (from < 0 || !Number.isInteger(target) || target < 0 || target >= next.length) throw Error('Posisi rak tidak valid. Muat ulang daftar rak.');
+        const moved = {...next.splice(from,1)[0], ...(patch || {}), id:racks[from].id};
+        next.splice(target,0,moved);
+        return next.map((rack, orderIndex) => ({...rack, orderIndex}));
+      }
+      async function persistShelfPlacement(id, next) {
+        if (shelfOrderSavePending) return false;
+        shelfOrderSavePending = true;
+        const controls = [...document.querySelectorAll('#modal-edit-shelf input,#modal-edit-shelf select,#modal-edit-shelf textarea,#modal-edit-shelf button[type="submit"],.btn-move-shelf-up,.btn-move-shelf-down,.btn-edit-shelf-action,.btn-delete-shelf-action')].map(el => ({el,disabled:el.disabled}));
+        controls.forEach(({el}) => {el.disabled=true;});
+        const button = document.querySelector('#form-edit-shelf button[type="submit"]') || document.activeElement;
+        const stop = elibBusy(button);
+        try {
+          await SheetsApiHandler.saveRack(next.find(rack => String(rack.id) === String(id)), next);
+          populateShelfDropdown();
+          populateCrudShelfSelectors();
+          renderShelfQuickSwitcher();
+          renderAdminShelvesList();
+          const active = shelves.find(rack => rack.id === activeShelfId);
+          if (currentView === 'shelf' && active) {
+            document.getElementById('active-shelf-badge').textContent=active.code;
+            document.getElementById('active-shelf-title').textContent=active.name;
+            document.getElementById('active-shelf-desc').textContent=active.description;
+            document.getElementById('bc-shelf-btn').textContent=active.name;
+            document.getElementById('tab-shelf-label').textContent=active.code;
+          }
+          return true;
+        } catch(error) {
+          showToast('Urutan rak belum terverifikasi: '+error.message+' Silakan muat ulang sebelum mencoba kembali.');
+          return false;
+        } finally {
+          shelfOrderSavePending=false;
+          controls.forEach(({el,disabled})=>{if(el.isConnected)el.disabled=disabled;});
+          stop();
         }
-        if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
-          window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
-        }
-        populateShelfDropdown();
-        if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
-        renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
-        renderShelfQuickSwitcher();
-        renderAdminShelvesList();
-        showToast('Perubahan urutan rak berhasil disimpan ke Google Sheets (Cloud DB).');
+      }
+      async function reorderShelfBox(shelfId, direction) {
+        if (shelfOrderSavePending) return;
+        const from = shelves.findIndex(rack => rack.id === shelfId);
+        const target = direction === 'up' ? from-1 : from+1;
+        if (from<0 || target<0 || target>=shelves.length) return;
+        await persistShelfPlacement(shelfId, planShelfPlacement(shelves,shelfId,target));
       }
 
       function renderAdminShelvesList() {
@@ -11120,68 +11143,20 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
         document.getElementById('modal-edit-shelf').classList.add('hidden');
       }
 
-      function handleSaveEditShelf(e) {
+      async function handleSaveEditShelf(e) {
         e.preventDefault();
-        const id = document.getElementById('edit-shelf-id').value;
-        const code = document.getElementById('edit-shelf-code').value.trim();
-        const name = document.getElementById('edit-shelf-name').value.trim();
-        const desc = document.getElementById('edit-shelf-desc').value.trim();
-        const orderSelect = document.getElementById('edit-shelf-order');
-        const targetOrderIdx = orderSelect ? parseInt(orderSelect.value, 10) : -1;
-
-        const currIdx = shelves.findIndex((s) => s.id === id);
-        if (currIdx >= 0) {
-          const shelf = shelves[currIdx];
-          const nowTs = Date.now();
-          shelf.code = code || shelf.code;
-          shelf.name = name || shelf.name;
-          shelf.description = desc || shelf.description;
-          shelf.updatedAt = nowTs;
-          shelf.isCustomEdited = true;
-
-          if (!isNaN(targetOrderIdx) && targetOrderIdx >= 0 && targetOrderIdx < shelves.length && targetOrderIdx !== currIdx) {
-            const [movedShelf] = shelves.splice(currIdx, 1);
-            shelves.splice(targetOrderIdx, 0, movedShelf);
-          }
-
-          shelves.forEach((s, idx) => {
-            s.orderIndex = idx;
-            if (s.isCustomEdited) {
-              s.updatedAt = s.updatedAt || nowTs;
-            }
-          });
-
-          // 1. Simpan ke cache lokal perangkat
-          saveShelvesToStorage(true);
-
-          // 2. Kirim aksi POST saveRack langsung ke Google Apps Script Web App API (SCRIPT_API_URL)
-          if (window.SheetsApiHandler) {
-            window.SheetsApiHandler.saveRack(shelf, shelves).catch(() => {});
-          }
-          if (window.CloudDriveSyncEngine && typeof window.CloudDriveSyncEngine.pushCatalogToCloud === 'function') {
-            window.CloudDriveSyncEngine.pushCatalogToCloud(shelves, books);
-          }
-
-          // 3. Render ulang seluruh komponen tampilan kartu rak di dashboard seketika tanpa refresh
-          populateShelfDropdown();
-          if (typeof populateCrudShelfSelectors === 'function') populateCrudShelfSelectors();
-          renderLobbyView((document.getElementById('lobby-search-input') && document.getElementById('lobby-search-input').value) || '');
-          renderShelfQuickSwitcher();
-          renderAdminShelvesList();
-
-          if (currentView === 'shelf' && activeShelfId === id) {
-            document.getElementById('active-shelf-badge').textContent = shelf.code;
-            document.getElementById('active-shelf-title').textContent = shelf.name;
-            document.getElementById('active-shelf-desc').textContent = shelf.description;
-            document.getElementById('bc-shelf-btn').textContent = shelf.name;
-            document.getElementById('tab-shelf-label').textContent = shelf.code;
-          }
-
-          // 4. Tutup modal edit rak secara otomatis dan tampilkan toast feedback
-          closeEditShelfModal();
-          closeAdminShelvesModal();
-          showToast('Data rak dan buku berhasil disinkronkan ke Google Sheets.');
-        }
+        if (shelfOrderSavePending) return;
+        const id=document.getElementById('edit-shelf-id').value;
+        const current=shelves.find(rack=>rack.id===id);
+        if (!current) {showToast('Rak tidak ditemukan. Muat ulang daftar rak.');return;}
+        const target=Number(document.getElementById('edit-shelf-order').value);
+        const patch={code:document.getElementById('edit-shelf-code').value.trim()||current.code,
+          name:document.getElementById('edit-shelf-name').value.trim()||current.name,
+          description:document.getElementById('edit-shelf-desc').value.trim(),isCustomEdited:true};
+        try {
+          const next=planShelfPlacement(shelves,id,target,patch);
+          if (await persistShelfPlacement(id,next)) {closeEditShelfModal();closeAdminShelvesModal();}
+        } catch(error) {showToast(error.message);}
       }
 
       function handleDeleteShelf(shelfId) {
@@ -13722,6 +13697,8 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         const response=await fetch('/api/gas',{cache:'no-store',headers,signal:options.signal||AbortSignal.timeout(35000)});
         const data=await response.json();
         if(!response.ok||data.status!=='success'||data.schemaVersion!==2||!Array.isArray(data.books)||!Array.isArray(data.racks))throw new Error(data.message||'Database cloud tidak tersedia.');
+        data.racks=sortRacksBySavedOrder(data.racks);
+        data.shelves=data.racks;
         return data;
       };
       SheetsApiHandler.postAction=async payload=>{
@@ -13746,7 +13723,22 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         if(serverBookRevisions.has(String(id)))payload.expectedRevision=serverBookRevisions.get(String(id));
         const result=await SheetsApiHandler.postAction(payload);markBookAsDeleted(id);return result;
       };
-      SheetsApiHandler.saveRack=async(rack)=>{const result=await SheetsApiHandler.postAction({action:'saveRack',rack});await strictLoadCatalog();showToast('Rak tersimpan dan terverifikasi di database cloud.');return result;};
+      SheetsApiHandler.saveRack=async(rack,orderedRacks)=>{
+        let payload={action:'saveRack',rack};
+        if (orderedRacks !== undefined) {
+          if (!Array.isArray(orderedRacks) || !orderedRacks.length || new Set(orderedRacks.map(r=>String(r.id))).size!==orderedRacks.length || !orderedRacks.some(r=>r.id===rack.id)) throw Error('Daftar urutan rak tidak valid.');
+          // Backend V2 merges these rack patches in one journaled transaction; books are untouched.
+          payload={action:'saveRack',racks:orderedRacks.map((r,orderIndex)=>r.id===rack.id?{...rack,orderIndex}:{id:r.id,name:r.name,orderIndex})};
+        }
+        const result=await SheetsApiHandler.postAction(payload);
+        await strictLoadCatalog({force:true});
+        if (orderedRacks && !orderedRacks.every((rack,index)=>{
+          const stored=shelves.find(item=>String(item.id)===String(rack.id));
+          return stored && Number(stored.orderIndex)===index;
+        })) throw Error('Database belum mengembalikan urutan yang dipilih.');
+        showToast('Rak dan urutannya tersimpan serta terverifikasi di database cloud.');
+        return result;
+      };
       SheetsApiHandler.deleteRack=async(id,fallbackRackId)=>{const result=await SheetsApiHandler.postAction({action:'deleteRack',id,fallbackRackId});await strictLoadCatalog();showToast('Perubahan rak tersimpan di database cloud.');return result;};
       SheetsApiHandler.syncAll=()=>strictLoadCatalog({force:true});
       normalizeBookLockState=book=>{if(!book)return false;book.passwordProtected=Boolean(book.passwordProtected);delete book.password;return false;};
