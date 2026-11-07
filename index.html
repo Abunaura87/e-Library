@@ -1354,6 +1354,10 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
 #interface-sound-toggle{font-size:17px;color:#f3e5ab;background:#0b3b2c;border:1px solid #b59645;border-radius:7px;min-width:32px;min-height:32px;cursor:pointer}
 @media(prefers-reduced-motion:reduce){#catalog-book-preview,button,.compact-overflow>summary{transition:none!important;translate:none!important}#view-lobby button.catalog-book-trigger:hover,#view-lobby button.catalog-book-trigger:focus-visible{transform:rotate(0deg)}#catalog-book-preview{transform:none}#catalog-book-preview .catalog-preview-open{animation:none}}
 </style>
+<style id="book-order-draft-layout">
+.book-order-position{max-width:68px;background:#072a20;color:#f3e5ab;border:1px solid #d4af3760;border-radius:4px;padding:2px;font-size:10px}
+@media(max-width:1023px){#modal-crud-etalase-book aside{max-height:42dvh;min-height:230px}}
+</style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
   <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
@@ -2343,6 +2347,14 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
                 <i data-lucide="search" class="w-3.5 h-3.5 text-[#D4AF37] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                 <input id="crud-search-book-input" type="text" placeholder="Cari buku di etalase..." class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-[#0B3B2C] border border-[#D4AF37]/60 rounded-lg text-white placeholder:text-[#F3E5AB]/45 focus:outline-none focus:border-[#D4AF37]" />
               </div>
+            </div>
+          </div>
+
+          <div id="crud-book-order-toolbar" class="px-3 py-2 border-b border-[#D4AF37]/30 shrink-0">
+            <p id="crud-book-order-status" role="status" aria-live="polite" class="text-[10px] text-[#F3E5AB] mb-1.5">Pilih nomor posisi atau geser beberapa buku, lalu simpan sekali.</p>
+            <div class="flex gap-2">
+              <button type="button" id="btn-save-book-order" disabled class="flex-1 px-2 py-1.5 rounded-lg bg-[#D4AF37] text-[#072A20] text-xs font-bold disabled:opacity-40">Simpan Urutan</button>
+              <button type="button" id="btn-cancel-book-order" disabled class="px-2 py-1.5 rounded-lg border border-[#D4AF37]/60 text-[#F3E5AB] text-xs disabled:opacity-40">Batalkan</button>
             </div>
           </div>
 
@@ -10138,12 +10150,15 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
       function renderCrudBooksListSidebar() {
         const container = document.getElementById('crud-books-list-container');
         if (!container) return;
+        const previousScroll=container.scrollTop;
         container.innerHTML = '';
+        updateBookOrderToolbar();
 
         const filterShelf = (document.getElementById('crud-filter-shelf-select') || {}).value || 'ALL';
         const q = ((document.getElementById('crud-search-book-input') || {}).value || '').toLowerCase().trim();
 
-        const filtered = books.filter((b) => {
+        const previewBooks=bookOrderPreviewBooks();
+        const filtered = previewBooks.filter((b) => {
           if (filterShelf !== 'ALL' && b.shelfId !== filterShelf) return false;
           if (!q) return true;
           return (
@@ -10163,6 +10178,9 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
         filtered.forEach((b) => {
           const isSelected = !crudIsNewBook && b.id === crudCurrentBookId;
           const shelfObj = shelves.find((s) => s.id === b.shelfId);
+          const rackBooks=previewBooks.filter(book=>bookShelfKey(book)===bookShelfKey(b));
+          const bookPosition=rackBooks.findIndex(book=>String(book.id)===String(b.id));
+          const positionOptions=rackBooks.map((_,index)=>'<option value="'+index+'"'+(index===bookPosition?' selected':'')+'>'+(index+1)+'</option>').join('');
           const item = document.createElement('div');
           item.className =
             'p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ' +
@@ -10184,6 +10202,7 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
               '<div class="flex items-center gap-1 mt-1.5" onclick="event.stopPropagation()">' +
                 '<button type="button" class="btn-crud-list-move-up px-1.5 py-0.5 rounded bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 text-[10px]" data-id="' + b.id + '" title="Geser Urutan ke Atas">&uarr;</button>' +
                 '<button type="button" class="btn-crud-list-move-down px-1.5 py-0.5 rounded bg-[#072A20] hover:bg-[#12543F] text-[#F3E5AB] border border-[#D4AF37]/40 text-[10px]" data-id="' + b.id + '" title="Geser Urutan ke Bawah">&darr;</button>' +
+                '<label class="text-[9px] text-[#F3E5AB] flex items-center gap-1">Posisi<select class="book-order-position" data-book-position="' + b.id + '">' + positionOptions + '</select></label>' +
                 '<button type="button" class="btn-crud-list-edit-pages px-2 py-0.5 rounded bg-[#D4AF37]/20 hover:bg-[#D4AF37] text-[#F3E5AB] hover:text-[#072A20] border border-[#D4AF37]/50 text-[10px] font-semibold ml-auto" data-id="' + b.id + '">Konten</button>' +
               '</div>' +
             '</div>';
@@ -10197,10 +10216,19 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
 
         container.querySelectorAll('.btn-crud-list-move-up,.btn-crud-list-move-down').forEach(btn=>{
           const book=books.find(item=>String(item.id)===btn.dataset.id);
-          const sameRack=book?books.filter(item=>bookShelfKey(item)===bookShelfKey(book)):[];
+          const sameRack=book?previewBooks.filter(item=>bookShelfKey(item)===bookShelfKey(book)):[];
           const index=sameRack.findIndex(item=>String(item.id)===btn.dataset.id);
-          btn.disabled=bookOrderSavePending || index<0 || (btn.classList.contains('btn-crud-list-move-up')?index===0:index===sameRack.length-1);
+          btn.disabled=index<0 || (btn.classList.contains('btn-crud-list-move-up')?index===0:index===sameRack.length-1);
           btn.setAttribute('aria-label',btn.title+(book?' — '+book.title:''));
+        });
+
+        container.scrollTop=previousScroll;
+        container.querySelectorAll('[data-book-position]').forEach(select=>{
+          const book=previewBooks.find(item=>String(item.id)===select.dataset.bookPosition);
+          select.setAttribute('aria-label','Posisi buku '+(book?book.title:''));
+          select.onclick=event=>event.stopPropagation();
+          select.onkeydown=event=>event.stopPropagation();
+          select.onchange=event=>{event.stopPropagation();moveBookToPosition(select.dataset.bookPosition,Number(select.value));};
         });
 
         container.querySelectorAll('.btn-crud-list-move-up').forEach((btn) => {
@@ -10543,7 +10571,8 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
         showToast('Buku berhasil diduplikasi menjadi "' + newTitle + '".');
       }
 
-      var bookOrderSavePending = false;
+      var bookOrderSavePending = false, bookOrderSavePromise = null, bookOrderSequence = 0;
+      var bookOrderDrafts = new Map(), bookOrderStatusMessage = '';
       function bookShelfKey(book) { return String(book.shelfId || book.rackId || book.kategoriRak || ''); }
       function sortBooksBySavedRackOrder(items, racks) {
         const groups = new Map();
@@ -10571,36 +10600,108 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
         [ids[index],ids[target]]=[ids[target],ids[index]];
         return {id:rack.id,name:rack.name,bookOrder:ids};
       }
-      async function reorderBookInEtalase(bookId, direction) {
-        if(bookOrderSavePending || shelfOrderSavePending)return false;
-        bookOrderSavePending=true; cloudWritePending++;
-        const controls=[...document.querySelectorAll('.btn-crud-list-move-up,.btn-crud-list-move-down')].map(el=>({el,disabled:el.disabled}));
-        controls.forEach(({el})=>{el.disabled=true;});
-        const stop=elibBusy(document.activeElement); let saved=false;
-        try {
-          // Plan against a fresh cloud snapshot; do not upload book contents or a stale rack record.
-          const fresh=await SheetsApiHandler.fetchCatalog();
-          const rack=planBookPlacement(fresh.books,fresh.racks,bookId,direction);
-          if(!rack)return false;
-          await SheetsApiHandler.postAction({action:'saveRack',rack});
-          await strictLoadCatalog({force:true});
-          const stored=shelves.find(item=>String(item.id)===String(rack.id));
-          const actual=books.filter(book=>bookShelfKey(book)===String(rack.id)).map(book=>String(book.id));
-          if(!stored || JSON.stringify(stored.bookOrder)!==JSON.stringify(rack.bookOrder) || JSON.stringify(actual)!==JSON.stringify(rack.bookOrder))throw Error('Urutan belum terverifikasi dari database.');
-          const sort=document.getElementById('shelf-book-sort');if(sort)sort.value='shelf';
-          if(currentView==='shelf')renderShelfBooksGrid(document.getElementById('shelf-search-input').value||'');
-          saved=true;
-        } catch(error) {
-          try { await strictLoadCatalog({force:true}); } catch(_) {}
-          showToast('Urutan buku belum terverifikasi: '+error.message);
-        } finally {
-          cloudWritePending--; bookOrderSavePending=false;
-          stop(); controls.forEach(({el,disabled})=>{if(el.isConnected)el.disabled=disabled;});
-          renderCrudBooksListSidebar();
-        }
-        if(saved)showToast('Urutan buku tersimpan dan terverifikasi di database cloud.');
-        return saved;
+      function reconcileBookOrder(ids, members) {
+        const valid=new Set(members.map(String)),seen=new Set();
+        return [...ids,...members].map(String).filter(id=>valid.has(id)&&!seen.has(id)&&seen.add(id));
       }
+      function bookOrderPreviewBooks() {
+        if(!bookOrderDrafts || !bookOrderDrafts.size)return books;
+        return sortBooksBySavedRackOrder(books,shelves.map(rack=>{
+          const draft=bookOrderDrafts.get(String(rack.id));
+          if(!draft)return rack;
+          const members=books.filter(book=>bookShelfKey(book)===String(rack.id)).map(book=>String(book.id));
+          return {...rack,bookOrder:reconcileBookOrder(draft.ids,members)};
+        }));
+      }
+      function updateBookOrderToolbar() {
+        const status=document.getElementById('crud-book-order-status'),save=document.getElementById('btn-save-book-order'),cancel=document.getElementById('btn-cancel-book-order');
+        const count=bookOrderDrafts?bookOrderDrafts.size:0;
+        if(status)status.textContent=bookOrderSavePending?'Menyimpan urutan sekaligus… Posisi masih dapat diatur.':bookOrderStatusMessage||(count?count+' rak berubah — belum disimpan.': 'Pilih nomor posisi atau geser beberapa buku, lalu simpan sekali.');
+        if(save){save.disabled=!!bookOrderSavePending||!count;save.textContent=bookOrderSavePending?'Menyimpan…':'Simpan Urutan';}
+        if(cancel)cancel.disabled=!!bookOrderSavePending||!count;
+      }
+      function moveBookToPosition(bookId,target) {
+        const preview=bookOrderPreviewBooks(),book=preview.find(item=>String(item.id)===String(bookId));
+        if(!book || !Number.isInteger(target))return false;
+        const key=bookShelfKey(book),members=preview.filter(item=>bookShelfKey(item)===key).map(item=>String(item.id));
+        const index=members.indexOf(String(bookId));
+        if(target<0||target>=members.length||index===target)return false;
+        const existing=bookOrderDrafts.get(key),baseIds=existing?existing.baseIds:members.slice();
+        members.splice(target,0,members.splice(index,1)[0]);
+        if(!bookOrderSavePending&&JSON.stringify(members)===JSON.stringify(baseIds))bookOrderDrafts.delete(key);
+        else bookOrderDrafts.set(key,{ids:members,baseIds:baseIds.slice(),version:++bookOrderSequence});
+        const active=document.activeElement,focusPosition=active&&active.dataset&&active.dataset.bookPosition===String(bookId);
+        const focusClass=active&&active.dataset&&active.dataset.id===String(bookId)?(active.classList.contains('btn-crud-list-move-up')?'btn-crud-list-move-up':active.classList.contains('btn-crud-list-move-down')?'btn-crud-list-move-down':''):'';
+        bookOrderStatusMessage='';renderCrudBooksListSidebar();
+        if(focusPosition||focusClass){const selector=focusPosition?'[data-book-position]':'.'+focusClass;const control=[...document.querySelectorAll('#crud-books-list-container '+selector)].find(el=>(el.dataset.bookPosition||el.dataset.id)===String(bookId));if(control&&!control.disabled)control.focus({preventScroll:true});}
+        return true;
+      }
+      function reorderBookInEtalase(bookId,direction) {
+        const preview=bookOrderPreviewBooks(),book=preview.find(item=>String(item.id)===String(bookId));
+        if(!book||!['up','down'].includes(direction))return false;
+        const members=preview.filter(item=>bookShelfKey(item)===bookShelfKey(book));
+        return moveBookToPosition(bookId,members.findIndex(item=>String(item.id)===String(bookId))+(direction==='up'?-1:1));
+      }
+      function discardBookOrderDrafts() {
+        if(bookOrderSavePending)return false;
+        bookOrderDrafts.clear();bookOrderStatusMessage='';renderCrudBooksListSidebar();return true;
+      }
+      function persistBookOrderDrafts() {
+        if(bookOrderSavePromise)return bookOrderSavePromise;
+        if(!bookOrderDrafts.size)return Promise.resolve(true);
+        if(shelfOrderSavePending){showToast('Tunggu penyimpanan rak selesai.');return Promise.resolve(false);}
+        const snapshot=[...bookOrderDrafts].map(([key,draft])=>({key,ids:draft.ids.slice(),baseIds:draft.baseIds.slice(),version:draft.version}));
+        bookOrderSavePending=true;cloudWritePending++;bookOrderStatusMessage='';updateBookOrderToolbar();
+        const task=(async()=>{let saved=false;
+          try {
+            const fresh=await SheetsApiHandler.fetchCatalog(),plans=[];
+            for(const draft of snapshot){
+              const rack=fresh.racks.find(item=>String(item.id)===draft.key);
+              if(!rack)throw Error('Rak sudah berubah atau dihapus. Batalkan draf lalu muat ulang.');
+              const live=fresh.books.filter(book=>bookShelfKey(book)===draft.key).map(book=>String(book.id));
+              const ids=reconcileBookOrder(draft.ids,live),baseSet=new Set(draft.baseIds),liveSet=new Set(live);
+              const base=draft.baseIds.filter(id=>liveSet.has(id)),current=live.filter(id=>baseSet.has(id));
+              const alreadyApplied=JSON.stringify(live)===JSON.stringify(ids)&&JSON.stringify(rack.bookOrder)===JSON.stringify(ids);
+              if(!alreadyApplied&&JSON.stringify(base)!==JSON.stringify(current))throw Error('Urutan rak diubah dari perangkat lain. Draf dipertahankan; batalkan dan muat ulang sebelum mengatur kembali.');
+              plans.push({key:draft.key,version:draft.version,rack:{id:rack.id,name:rack.name,bookOrder:ids},alreadyApplied});
+            }
+            const changed=plans.filter(plan=>!plan.alreadyApplied);
+            // One journaled transaction for every changed rack; never save on each arrow click.
+            if(changed.length)await SheetsApiHandler.postAction({action:'saveRack',racks:changed.map(plan=>plan.rack)});
+            await strictLoadCatalog({force:true});
+            for(const plan of plans){
+              const stored=shelves.find(rack=>String(rack.id)===plan.key);
+              const actual=books.filter(book=>bookShelfKey(book)===plan.key).map(book=>String(book.id));
+              if(!stored||JSON.stringify(stored.bookOrder)!==JSON.stringify(plan.rack.bookOrder)||JSON.stringify(actual.filter(id=>plan.rack.bookOrder.includes(id)))!==JSON.stringify(plan.rack.bookOrder.filter(id=>actual.includes(id))))throw Error('Urutan belum terverifikasi dari database. Draf tetap tersedia.');
+            }
+            for(const plan of plans){
+              const draft=bookOrderDrafts.get(plan.key);
+              if(!draft)continue;
+              if(draft.version===plan.version)bookOrderDrafts.delete(plan.key);
+              else {
+                const members=books.filter(book=>bookShelfKey(book)===plan.key).map(book=>String(book.id));
+                const ids=reconcileBookOrder(draft.ids,members);
+                if(JSON.stringify(ids)===JSON.stringify(members))bookOrderDrafts.delete(plan.key);
+                else bookOrderDrafts.set(plan.key,{...draft,ids,baseIds:members.slice()});
+              }
+            }
+            const sort=document.getElementById('shelf-book-sort');if(sort)sort.value='shelf';
+            if(currentView==='shelf')renderShelfBooksGrid(document.getElementById('shelf-search-input').value||'');
+            saved=true;bookOrderStatusMessage=bookOrderDrafts.size?'Tersimpan. Ada perubahan baru yang belum disimpan.':'Urutan tersimpan dan terverifikasi di database.';
+          } catch(error) {
+            bookOrderStatusMessage='Belum terverifikasi: '+error.message;
+            showToast(bookOrderStatusMessage);
+          } finally {
+            cloudWritePending--;bookOrderSavePending=false;bookOrderSavePromise=null;
+            renderCrudBooksListSidebar();updateBookOrderToolbar();
+          }
+          if(saved)showToast(bookOrderDrafts.size?'Urutan tersimpan; simpan kembali perubahan yang lebih baru.':'Urutan buku tersimpan dan terverifikasi di database cloud.');
+          return saved;
+        })();bookOrderSavePromise=task;return task;
+      }
+      document.getElementById('btn-save-book-order').onclick=()=>persistBookOrderDrafts();
+      document.getElementById('btn-cancel-book-order').onclick=discardBookOrderDrafts;
+      window.addEventListener('beforeunload',event=>{if(bookOrderSavePending||bookOrderDrafts.size){event.preventDefault();event.returnValue='';}});
 
       // Event Listeners Studio CRUD Etalase & Konten Buku
       const headerCrudBtn = document.getElementById('header-crud-etalase-btn');
@@ -14052,7 +14153,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         if(defaultShelf){if(!await startCreateNewBookInCrud(defaultShelf))return;}else{const requestedId=bookId||activeBookId;const id=books.some(b=>b.id===requestedId)?requestedId:(books[0]&&books[0].id);if(id){if(!await selectBookInCrudStudio(id))return;}else if(!await startCreateNewBookInCrud(activeShelfId||'rak-01'))return;}
         switchCrudTab(initialTab||'metadata');
       };
-      closeCrudEtalaseModal=async function(){if(!await editorMayLeave())return false;editorCheckpoint();editorAbortLoad();document.getElementById('modal-crud-etalase-book').classList.add('hidden');editorControls();return true;};
+      closeCrudEtalaseModal=async function(){if(bookOrderSavePending||bookOrderDrafts.size){showToast(bookOrderSavePending?'Penyimpanan urutan masih berjalan.':'Klik Simpan Urutan atau Batalkan sebelum menutup editor.');return false;}if(!await editorMayLeave())return false;editorCheckpoint();editorAbortLoad();document.getElementById('modal-crud-etalase-book').classList.add('hidden');editorControls();return true;};
       startCreateNewBookInCrud=async function(shelf){if(!await editorMayLeave())return false;editorCheckpoint();editorAbortLoad();strictOriginalCreateBook(shelf);editorSession.loadedId=crudCurrentBookId;editorDirty(false);editorStatus('Buku baru siap disunting.');editorControls();return true;};
       const editorOriginalSwitchTab=switchCrudTab;
       switchCrudTab=function(name){if(editorSession.loading)return;editorFlushPage();clearTimeout(editorSession.previewTimer);return editorOriginalSwitchTab(name);};
@@ -14190,6 +14291,22 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         return importOriginalSave(openAfter);
       };
 
+
+      // The existing permanent-save button also commits an order-only draft without uploading book assets.
+      const orderOriginalEditorSave=saveCrudWorkingBookPermanently;
+      saveCrudWorkingBookPermanently=async function(openAfter){
+        if(editorSession.operation||editorSession.saving||editorSession.loading)return false;
+        if(bookOrderDrafts.size||bookOrderSavePending){
+          if(!await persistBookOrderDrafts())return false;
+          if(bookOrderDrafts.size){showToast('Ada perubahan urutan baru. Simpan Urutan sekali lagi.');return false;}
+          if(!editorSession.dirty&&!crudIsNewBook){
+            editorStatus('Urutan buku tersimpan dan terverifikasi di database cloud.');
+            if(openAfter){document.getElementById('modal-crud-etalase-book').classList.add('hidden');const book=books.find(item=>item.id===crudCurrentBookId);if(book)await openBookInReader(book);}
+            return true;
+          }
+        }
+        return orderOriginalEditorSave(openAfter);
+      };
 
       // Personal bookmarks: local browser storage only; never sent to the catalog API.
       const BOOKMARK_KEY_PREFIX = 'elibrary_reader_bookmarks_v1:';
