@@ -1335,6 +1335,25 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
 @media(max-width:767px){#view-lobby .catalog-books-row{min-height:166px;height:166px}#view-lobby .catalog-open-rack{min-height:40px}#view-lobby button.catalog-book-spine{width:30px}#catalog-book-preview{width:190px}.catalog-preview-open img{height:140px}}
 @media(prefers-reduced-motion:reduce){#view-lobby button.catalog-book-trigger{transition:none}}
 </style>
+
+<style id="library-motion-v2">
+/* Keep the lamp chain outside any new ancestor stacking context. */
+#view-lobby .cubby-box{transition:none;transform-style:flat}
+#view-lobby .cubby-interactive:hover .shelf-book-item{filter:none}
+#view-lobby button.catalog-book-trigger{transition:transform 280ms cubic-bezier(.2,.75,.25,1);touch-action:manipulation}
+#view-lobby button.catalog-book-trigger:hover,#view-lobby button.catalog-book-trigger:focus-visible{filter:none}
+#view-lobby .catalog-books-row{touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+@supports(content-visibility:auto){#shelves-grid-container>.cubby-box{content-visibility:auto;contain-intrinsic-size:auto 300px}}
+#catalog-book-preview{opacity:0;transform:translateY(12px) scale(.96);transform-origin:center bottom;pointer-events:none;transition:opacity 220ms ease,transform 280ms cubic-bezier(.2,.75,.25,1)}
+#catalog-book-preview.is-visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+#catalog-book-preview .catalog-preview-open{animation:catalog-cover-enter 200ms ease-out}
+@keyframes catalog-cover-enter{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn-secret-admin-gate),.compact-overflow>summary{transition:translate 160ms ease,box-shadow 160ms ease,background-color 160ms ease;touch-action:manipulation}
+@media(hover:hover){button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn-secret-admin-gate):hover,.compact-overflow>summary:hover{translate:0 -1px;box-shadow:0 3px 0 #06291f55,0 5px 9px #06291f1c!important}}
+button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn-secret-admin-gate):active,.compact-overflow>summary:active{translate:0 1px;box-shadow:inset 0 2px 3px #06291f30!important}
+#interface-sound-toggle{font-size:17px;color:#f3e5ab;background:#0b3b2c;border:1px solid #b59645;border-radius:7px;min-width:32px;min-height:32px;cursor:pointer}
+@media(prefers-reduced-motion:reduce){#catalog-book-preview,button,.compact-overflow>summary{transition:none!important;translate:none!important}#view-lobby button.catalog-book-trigger:hover,#view-lobby button.catalog-book-trigger:focus-visible{transform:rotate(0deg)}#catalog-book-preview{transform:none}#catalog-book-preview .catalog-preview-open{animation:none}}
+</style>
 </head>
 <body id="app-body" class="lights-off h-screen overflow-hidden flex flex-col bg-[#EAE6DF] text-[#072A20] antialiased selection:bg-[#D4AF37]/30">
   <!-- Lapisan Gelap Remang Global Seluruh Layar (Menyelimuti Header, Rak, Katalog, dan Footer saat Lampu Mati) -->
@@ -4454,6 +4473,39 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
         }
       }
 
+      // User-gesture-only feedback; reuse the existing audio context and never block actions.
+      let interfaceSoundEnabled = true, lastInterfaceSound = 0;
+      try { interfaceSoundEnabled = localStorage.getItem('elib-interface-sound') !== 'off'; } catch (_) {}
+      const interfaceSoundToggle = document.createElement('button');
+      interfaceSoundToggle.id = 'interface-sound-toggle'; interfaceSoundToggle.type = 'button';
+      function updateInterfaceSoundToggle() {
+        interfaceSoundToggle.textContent = interfaceSoundEnabled ? '♪' : '♫';
+        interfaceSoundToggle.setAttribute('aria-pressed', String(interfaceSoundEnabled));
+        interfaceSoundToggle.setAttribute('aria-label', 'Suara tombol: ' + (interfaceSoundEnabled ? 'aktif — matikan' : 'bisu — aktifkan'));
+        interfaceSoundToggle.title = interfaceSoundToggle.getAttribute('aria-label');
+      }
+      updateInterfaceSoundToggle();
+      document.getElementById('header-ambient-btn')?.parentElement.appendChild(interfaceSoundToggle);
+      interfaceSoundToggle.addEventListener('click', () => {
+        interfaceSoundEnabled = !interfaceSoundEnabled;
+        try { localStorage.setItem('elib-interface-sound', interfaceSoundEnabled ? 'on' : 'off'); } catch (_) {}
+        updateInterfaceSoundToggle();
+      });
+      document.addEventListener('click', event => {
+        const button = event.target.closest('button,summary,[role="button"]');
+        if (!event.isTrusted || !interfaceSoundEnabled || document.hidden || !button || button.disabled || button.getAttribute('aria-disabled') === 'true' || button.getAttribute('aria-busy') === 'true') return;
+        if (button.closest('#header-secret-admin-btn,#btn-secret-admin-gate,#pull-chain-assembly') || button.id === 'interface-sound-toggle') return;
+        const now = performance.now(); if (now - lastInterfaceSound < 75) return; lastInterfaceSound = now;
+        try {
+          const ctx = getOrCreateAudioContext(); if (!ctx || ctx.state !== 'running') return;
+          const oscillator = ctx.createOscillator(), gain = ctx.createGain(), t = ctx.currentTime;
+          oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(680, t); oscillator.frequency.exponentialRampToValueAtTime(420, t + .045);
+          gain.gain.setValueAtTime(.0001,t); gain.gain.exponentialRampToValueAtTime(.025,t+.004); gain.gain.exponentialRampToValueAtTime(.0001,t+.065);
+          oscillator.connect(gain); gain.connect(ctx.destination); oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+          oscillator.start(t); oscillator.stop(t+.07);
+        } catch (_) {}
+      }, {capture:true,passive:true});
+
       function unlockAudioContextOnGesture() {
         const ctx = getOrCreateAudioContext();
         if (ctx && ctx.state === 'suspended') {
@@ -6103,14 +6155,25 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
       }
 
       var catalogBookPreview = null, catalogPreviewTrigger = null, catalogPreviewTimer = null, catalogPreviewPinned = false;
+      var catalogPreviewExitTimer = null, catalogPreviewFrame = 0, catalogPreviewBookId = null;
+      function scheduleCatalogPreviewPosition() {
+        if (!catalogPreviewFrame && catalogPreviewTrigger) catalogPreviewFrame = requestAnimationFrame(() => { catalogPreviewFrame = 0; positionCatalogBookPreview(); });
+      }
       function closeCatalogBookPreview() {
         clearTimeout(catalogPreviewTimer);
         if (catalogPreviewTrigger) catalogPreviewTrigger.setAttribute('aria-expanded', 'false');
-        if (catalogBookPreview) catalogBookPreview.hidden = true;
+        if (catalogBookPreview) {
+          catalogBookPreview.classList.remove("is-visible");
+          catalogBookPreview.inert = true;
+          clearTimeout(catalogPreviewExitTimer);
+          catalogPreviewExitTimer = setTimeout(() => { if (!catalogPreviewTrigger) catalogBookPreview.hidden = true; }, 230);
+        }
         catalogPreviewTrigger = null; catalogPreviewPinned = false;
       }
       function showCatalogBookPreview(trigger, book, pinned) {
         clearTimeout(catalogPreviewTimer);
+        clearTimeout(catalogPreviewExitTimer);
+        if (catalogPreviewTrigger === trigger && catalogPreviewBookId === book.id && catalogBookPreview && !catalogBookPreview.inert) { catalogPreviewPinned = catalogPreviewPinned || !!pinned; return; }
         if (catalogPreviewTrigger && catalogPreviewTrigger !== trigger) catalogPreviewTrigger.setAttribute('aria-expanded', 'false');
         if (!catalogBookPreview) {
           catalogBookPreview = document.createElement('div');
@@ -6125,11 +6188,12 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
             if (catalogPreviewTrigger && !catalogBookPreview.contains(event.target) && !event.target.closest('.catalog-book-trigger')) closeCatalogBookPreview();
           });
           document.addEventListener('keydown', event => { if (event.key === 'Escape' && catalogPreviewTrigger) { const target = catalogPreviewTrigger; target.focus({preventScroll:true}); closeCatalogBookPreview(); } });
-          window.addEventListener('resize', positionCatalogBookPreview);
-          window.addEventListener('scroll', positionCatalogBookPreview, true);
+          window.addEventListener('resize', scheduleCatalogPreviewPosition, {passive:true});
+          window.addEventListener('scroll', scheduleCatalogPreviewPosition, {capture:true,passive:true});
         }
         catalogPreviewTrigger = trigger; catalogPreviewPinned = !!pinned;
         trigger.setAttribute('aria-expanded', 'true');
+        catalogPreviewBookId = book.id;
         catalogBookPreview.innerHTML = '<button type="button" class="catalog-preview-close" aria-label="Tutup pratinjau">×</button>' +
           '<button type="button" class="catalog-preview-open" aria-label="Buka buku ' + escapeHtml(book.title) + '">' +
           (book.coverUrl ? '<img src="' + escapeHtml(book.coverUrl) + '" alt="Sampul ' + escapeHtml(book.title) + '" decoding="async" />' : '<span class="catalog-preview-fallback" aria-hidden="true">▤</span>') +
@@ -6137,7 +6201,9 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
         catalogBookPreview.querySelector('.catalog-preview-close').onclick = closeCatalogBookPreview;
         catalogBookPreview.querySelector('.catalog-preview-open').onclick = () => openCatalogBook(book, trigger);
         catalogBookPreview.hidden = false;
+        catalogBookPreview.inert = false;
         positionCatalogBookPreview();
+        requestAnimationFrame(() => { if (catalogPreviewTrigger === trigger && !catalogBookPreview.inert) catalogBookPreview.classList.add("is-visible"); });
       }
       function positionCatalogBookPreview() {
         if (!catalogPreviewTrigger || !catalogBookPreview || catalogBookPreview.hidden) return;
@@ -14291,7 +14357,7 @@ button[data-icon-nav][aria-busy="true"]:after{content:'';position:absolute;inset
  function overflow(parent,ids,label){if(!parent)return;const d=document.createElement('details');d.className='compact-overflow';const sum=document.createElement('summary');sum.setAttribute('aria-label',label);sum.title=label;sum.appendChild(icon('Ellipsis')||document.createTextNode('⋯'));const panel=document.createElement('div');panel.className='compact-overflow-panel';panel.setAttribute('role','group');panel.setAttribute('aria-label',label);d.append(sum,panel);parent.appendChild(d);const mq=matchMedia('(min-width:768px)');d.open=mq.matches;mq.addEventListener('change',()=>d.open=mq.matches);ids.forEach(id=>{const b=document.getElementById(id);if(b)panel.appendChild(b);});d.addEventListener('toggle',()=>sum.setAttribute('aria-expanded',String(d.open)));document.addEventListener('click',e=>{if(!mq.matches&&d.open&&!d.contains(e.target))d.open=false;});d.addEventListener('keydown',e=>{if(!mq.matches&&e.key==='Escape'){d.open=false;sum.focus();}});}
  function init(){
   Object.entries(specs).forEach(([id,s])=>{const b=document.getElementById(id);if(!b)return;b.dataset.iconNav='true';refresh(b,s);let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;refresh(b,s);});}).observe(b,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','title','aria-pressed','disabled']});});
-  const h=document.getElementById('header-ambient-btn')?.parentElement; if(h){h.classList.add('compact-header-actions');h.setAttribute('role','group');h.setAttribute('aria-label','Aksi dan pengaturan perpustakaan');overflow(h,['header-branding-settings-btn','header-music-settings-btn','header-cloud-drive-btn','header-crud-etalase-btn','header-admin-auth-btn','header-admin-security-btn','header-admin-logout-btn','header-share-btn'],'Pengaturan dan manajemen');}
+  const h=document.getElementById('header-ambient-btn')?.parentElement; if(h){h.classList.add('compact-header-actions');h.setAttribute('role','group');h.setAttribute('aria-label','Aksi dan pengaturan perpustakaan');overflow(h,['interface-sound-toggle','header-branding-settings-btn','header-music-settings-btn','header-cloud-drive-btn','header-crud-etalase-btn','header-admin-auth-btn','header-admin-security-btn','header-admin-logout-btn','header-share-btn'],'Pengaturan dan manajemen');}
   const r=document.getElementById('toolbar-thumbs-btn')?.parentElement;overflow(r,['toolbar-sound-btn','toolbar-ambient-btn','toolbar-music-settings-btn','toolbar-print-btn','toolbar-download-btn','toolbar-share-btn','toolbar-fullscreen-btn'],'Kontrol pembaca lainnya');
   const zoom=document.getElementById('zoom-out-btn')?.parentElement;if(zoom)zoom.classList.add('compact-zoom');
   const tip=document.createElement('div');tip.id='compact-nav-tooltip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);
