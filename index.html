@@ -10668,6 +10668,8 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
             const changed=plans.filter(plan=>!plan.alreadyApplied);
             // One journaled transaction for every changed rack; never save on each arrow click.
             if(changed.length)await SheetsApiHandler.postAction({action:'saveRack',racks:changed.map(plan=>plan.rack)});
+            // Preserve newer local moves against the acknowledged server order, even if readback fails.
+            for(const plan of plans){const draft=bookOrderDrafts.get(plan.key);if(draft)bookOrderDrafts.set(plan.key,{...draft,baseIds:plan.rack.bookOrder.slice()});}
             await strictLoadCatalog({force:true});
             for(const plan of plans){
               const stored=shelves.find(rack=>String(rack.id)===plan.key);
