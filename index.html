@@ -10195,6 +10195,14 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
           container.appendChild(item);
         });
 
+        container.querySelectorAll('.btn-crud-list-move-up,.btn-crud-list-move-down').forEach(btn=>{
+          const book=books.find(item=>String(item.id)===btn.dataset.id);
+          const sameRack=book?books.filter(item=>bookShelfKey(item)===bookShelfKey(book)):[];
+          const index=sameRack.findIndex(item=>String(item.id)===btn.dataset.id);
+          btn.disabled=bookOrderSavePending || index<0 || (btn.classList.contains('btn-crud-list-move-up')?index===0:index===sameRack.length-1);
+          btn.setAttribute('aria-label',btn.title+(book?' — '+book.title:''));
+        });
+
         container.querySelectorAll('.btn-crud-list-move-up').forEach((btn) => {
           btn.onclick = () => reorderBookInEtalase(btn.getAttribute('data-id'), 'up');
         });
@@ -10535,21 +10543,63 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
         showToast('Buku berhasil diduplikasi menjadi "' + newTitle + '".');
       }
 
-      function reorderBookInEtalase(bookId, direction) {
-        const idx = books.findIndex((b) => b.id === bookId);
-        if (idx < 0) return;
-        const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-        if (targetIdx < 0 || targetIdx >= books.length) return;
-        const temp = books[targetIdx];
-        books[targetIdx] = books[idx];
-        books[idx] = temp;
-        saveBooksToStorage();
-        autoSyncCatalogEverywhere();
-        renderCrudBooksListSidebar();
-        renderLobbyView(document.getElementById('lobby-search-input').value || '');
-        if (currentView === 'shelf') {
-          renderShelfBooksGrid(document.getElementById('shelf-search-input').value || '');
+      var bookOrderSavePending = false;
+      function bookShelfKey(book) { return String(book.shelfId || book.rackId || book.kategoriRak || ''); }
+      function sortBooksBySavedRackOrder(items, racks) {
+        const groups = new Map();
+        items.forEach(book => { const key=bookShelfKey(book); if(!groups.has(key))groups.set(key,[]); groups.get(key).push(book); });
+        racks.forEach(rack => {
+          const key=String(rack.id), group=groups.get(key);
+          if(!group || !Array.isArray(rack.bookOrder))return;
+          const ranks=new Map(); rack.bookOrder.forEach(id=>{id=String(id);if(!ranks.has(id))ranks.set(id,ranks.size);});
+          groups.set(key,group.map((book,index)=>({book,index,rank:ranks.has(String(book.id))?ranks.get(String(book.id)):Infinity}))
+            .sort((a,b)=>a.rank-b.rank || a.index-b.index).map(entry=>entry.book));
+        });
+        const offsets=new Map();
+        return items.map(book=>{const key=bookShelfKey(book),index=offsets.get(key)||0;offsets.set(key,index+1);return groups.get(key)[index];});
+      }
+      function planBookPlacement(items, racks, bookId, direction) {
+        if(!['up','down'].includes(direction))throw Error('Arah urutan buku tidak valid.');
+        const ordered=sortBooksBySavedRackOrder(items,racks),book=ordered.find(b=>String(b.id)===String(bookId));
+        if(!book)throw Error('Buku tidak ditemukan. Muat ulang katalog.');
+        const shelfId=bookShelfKey(book),rack=racks.find(r=>String(r.id)===shelfId);
+        if(!rack)throw Error('Rak buku tidak ditemukan.');
+        const ids=ordered.filter(b=>bookShelfKey(b)===shelfId).map(b=>String(b.id));
+        if(new Set(ids).size!==ids.length)throw Error('Daftar buku tidak valid.');
+        const index=ids.indexOf(String(bookId)),target=index+(direction==='up'?-1:1);
+        if(target<0 || target>=ids.length)return null;
+        [ids[index],ids[target]]=[ids[target],ids[index]];
+        return {id:rack.id,name:rack.name,bookOrder:ids};
+      }
+      async function reorderBookInEtalase(bookId, direction) {
+        if(bookOrderSavePending || shelfOrderSavePending)return false;
+        bookOrderSavePending=true; cloudWritePending++;
+        const controls=[...document.querySelectorAll('.btn-crud-list-move-up,.btn-crud-list-move-down')].map(el=>({el,disabled:el.disabled}));
+        controls.forEach(({el})=>{el.disabled=true;});
+        const stop=elibBusy(document.activeElement); let saved=false;
+        try {
+          // Plan against a fresh cloud snapshot; do not upload book contents or a stale rack record.
+          const fresh=await SheetsApiHandler.fetchCatalog();
+          const rack=planBookPlacement(fresh.books,fresh.racks,bookId,direction);
+          if(!rack)return false;
+          await SheetsApiHandler.postAction({action:'saveRack',rack});
+          await strictLoadCatalog({force:true});
+          const stored=shelves.find(item=>String(item.id)===String(rack.id));
+          const actual=books.filter(book=>bookShelfKey(book)===String(rack.id)).map(book=>String(book.id));
+          if(!stored || JSON.stringify(stored.bookOrder)!==JSON.stringify(rack.bookOrder) || JSON.stringify(actual)!==JSON.stringify(rack.bookOrder))throw Error('Urutan belum terverifikasi dari database.');
+          const sort=document.getElementById('shelf-book-sort');if(sort)sort.value='shelf';
+          if(currentView==='shelf')renderShelfBooksGrid(document.getElementById('shelf-search-input').value||'');
+          saved=true;
+        } catch(error) {
+          try { await strictLoadCatalog({force:true}); } catch(_) {}
+          showToast('Urutan buku belum terverifikasi: '+error.message);
+        } finally {
+          cloudWritePending--; bookOrderSavePending=false;
+          stop(); controls.forEach(({el,disabled})=>{if(el.isConnected)el.disabled=disabled;});
+          renderCrudBooksListSidebar();
         }
+        if(saved)showToast('Urutan buku tersimpan dan terverifikasi di database cloud.');
+        return saved;
       }
 
       // Event Listeners Studio CRUD Etalase & Konten Buku
@@ -11064,7 +11114,7 @@ button:enabled:not(.catalog-book-trigger):not(#header-secret-admin-btn):not(#btn
         return next.map((rack, orderIndex) => ({...rack, orderIndex}));
       }
       async function persistShelfPlacement(id, next) {
-        if (shelfOrderSavePending) return false;
+        if (shelfOrderSavePending || bookOrderSavePending) return false;
         shelfOrderSavePending = true;
         const controls = [...document.querySelectorAll('#modal-edit-shelf input,#modal-edit-shelf select,#modal-edit-shelf textarea,#modal-edit-shelf button[type="submit"],.btn-move-shelf-up,.btn-move-shelf-down,.btn-edit-shelf-action,.btn-delete-shelf-action')].map(el => ({el,disabled:el.disabled}));
         controls.forEach(({el}) => {el.disabled=true;});
@@ -13763,6 +13813,7 @@ function strictUnpack(p){if(!p||p.format!=='elib-string-table-v1')return p;funct
         const data=await response.json();
         if(!response.ok||data.status!=='success'||data.schemaVersion!==2||!Array.isArray(data.books)||!Array.isArray(data.racks))throw new Error(data.message||'Database cloud tidak tersedia.');
         data.racks=sortRacksBySavedOrder(data.racks);
+        data.books=sortBooksBySavedRackOrder(data.books,data.racks);
         data.shelves=data.racks;
         return data;
       };
