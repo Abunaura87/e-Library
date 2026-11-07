@@ -6201,10 +6201,9 @@ document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementBy
         if(currentView==='shelf')renderShelfBooksGrid((document.getElementById('shelf-search-input')||{}).value||'');
       }
       function elibConnectionNotice(){
-        let el=document.getElementById('elib-connection-status');
-        if(!el){el=document.createElement('div');el.id='elib-connection-status';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.appendChild(el);}
-        el.hidden=!(catalogUX.loaded&&(catalogUX.phase==='error'||catalogUX.slow));
-        if(!el.hidden){el.innerHTML='<span></span><button type="button" class="elib-retry">Coba Lagi</button>';el.querySelector('span').textContent=catalogUX.phase==='error'?'Pembaruan gagal. Koleksi terakhir tetap ditampilkan.':'Pembaruan lebih lama dari biasanya. Koleksi tetap dapat dibaca.';el.querySelector('button').onclick=elibRetry;}
+        // Connection status remains in the header DB indicator; avoid covering the catalog.
+        const notice=document.getElementById('elib-connection-status');
+        if(notice)notice.remove();
       }
       var elibBusyCounts=new WeakMap();
       function elibBusy(el){
